@@ -1,6 +1,7 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -64,6 +65,98 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
         if (admitCard == null || !IsInScope(admitCard)) return null;
         await EnrichAdmitCardAsync(admitCard);
         return admitCard;
+    }
+
+    public async Task<AdmitCard?> GetAdmitCardByIdForStudentAsync(int id, string userId, int studentRegistrationId)
+    {
+        var admitCard = await LoadAdmitCardAsync(id);
+        if (admitCard == null || !admitCard.IsActive) return null;
+
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        var isOwner = studentErIds.Contains(admitCard.ExamRegistrationId)
+                      || admitCard.StudentRegistrationId == studentRegistrationId;
+        if (!isOwner) return null;
+
+        await EnrichAdmitCardAsync(admitCard);
+        return admitCard;
+    }
+
+    private async Task<List<int>> GetStudentExamRegistrationIdsAsync(string userId)
+    {
+        var user = await context.Users.FindAsync(userId);
+        if (user?.Email == null) return [];
+
+        var sr = await context.StudentRegistrations!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Email == user.Email && s.IsActive);
+        if (sr == null) return [];
+
+        var voucherIds = await context.ApplicationVouchers!
+            .AsNoTracking()
+            .Where(av => av.StudentRegistrationId == sr.Id)
+            .Select(av => av.Id)
+            .ToListAsync();
+
+        if (voucherIds.Count == 0) return [];
+
+        return await context.ExamRegistrations!
+            .AsNoTracking()
+            .Where(er => er.ApplicationVoucherId != null
+                      && voucherIds.Contains(er.ApplicationVoucherId!.Value)
+                      && er.IsActive)
+            .Select(er => er.Id)
+            .ToListAsync();
+    }
+
+    private async Task<List<Subject>> LoadRegisteredSubjectsAsync(AdmitCard admitCard)
+    {
+        var results = await context.ExamSubjectResults
+            .AsNoTracking()
+            .Include(r => r.SubjectOffering)
+                .ThenInclude(so => so!.SubjectCatalog)
+            .Where(r => r.ExamRegistrationId == admitCard.ExamRegistrationId && r.IsActive)
+            .OrderBy(r => r.SubjectOffering!.DisplayOrder)
+            .ThenBy(r => r.Id)
+            .ToListAsync();
+
+        return results
+            .Where(r => r.SubjectOffering?.SubjectCatalog != null)
+            .Select(r => new Subject
+            {
+                Code = r.SubjectOffering!.SubjectCatalog!.SubjectCode,
+                Name = r.SubjectOffering.SubjectCatalog.SubjectName,
+                Theory = r.IsTheoryRegistered ?? r.SubjectOffering.HasTheory,
+                Practical = r.IsPracticalRegistered ?? r.SubjectOffering.HasPractical,
+                Remarks = null
+            })
+            .ToList();
+    }
+
+    private async Task<List<Subject>> LoadCurriculumSubjectsAsync(AdmitCard admitCard)
+    {
+        var schedule = admitCard.ExamSchedule;
+        var semesterId = schedule?.SemesterInstance?.SemesterId ?? 0;
+        if (schedule == null || semesterId == 0) return [];
+
+        var subjectOfferings = await context.SubjectOfferings
+            .AsNoTracking()
+            .Include(so => so.SubjectCatalog)
+            .Where(so => so.ProgramId == schedule.ProgramId
+                      && so.SemesterId == semesterId)
+            .OrderBy(so => so.DisplayOrder)
+            .ToListAsync();
+
+        return subjectOfferings
+            .Where(so => so.SubjectCatalog != null)
+            .Select(so => new Subject
+            {
+                Code = so.SubjectCatalog!.SubjectCode,
+                Name = so.SubjectCatalog.SubjectName,
+                Theory = so.HasTheory,
+                Practical = so.HasPractical,
+                Remarks = null
+            })
+            .ToList();
     }
 
     public async Task<List<AdmitCard>> GetAdmitCardsForPrintAsync(int? examScheduleId = null, string? search = null)
@@ -154,27 +247,10 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
     {
         if (admitCard.ExamSchedule != null)
         {
-            var offeringQuery = context.SubjectOfferings
-                .AsNoTracking()
-                .Include(so => so.SubjectCatalog)
-                .Where(so => so.ProgramId == admitCard.ExamSchedule.ProgramId
-                          && so.SemesterId == admitCard.ExamSchedule.SemesterInstance!.SemesterId);
+            admitCard.Subjects = await LoadRegisteredSubjectsAsync(admitCard);
 
-            var subjectOfferings = await offeringQuery
-                .OrderBy(so => so.DisplayOrder)
-                .ToListAsync();
-
-            admitCard.Subjects = subjectOfferings
-                .Where(so => so.SubjectCatalog != null)
-                .Select(so => new Subject
-                {
-                    Code = so.SubjectCatalog!.SubjectCode,
-                    Name = so.SubjectCatalog.SubjectName,
-                    Theory = so.HasTheory,
-                    Practical = so.HasPractical,
-                    Remarks = null
-                })
-                .ToList();
+            if (admitCard.Subjects.Count == 0)
+                admitCard.Subjects = await LoadCurriculumSubjectsAsync(admitCard);
         }
 
         var sr = admitCard.StudentRegistration

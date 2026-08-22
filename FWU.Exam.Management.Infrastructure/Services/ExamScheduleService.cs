@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ExamScheduleService(AppDbContext context, IUserContext userContext) : IExamScheduleService
+public class ExamScheduleService(AppDbContext context, IUserContext userContext, ITenantContext tenantContext) : IExamScheduleService
 {
     public async Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, string? examTypeName = null)
     {
@@ -104,7 +104,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
         if (!string.IsNullOrWhiteSpace(examSchedule.ExamScheduleCode) &&
             await context.ExamSchedules.AnyAsync(e =>
-                e.TenantId == examSchedule.TenantId &&
+                e.TenantId == tenantContext.TenantId &&
                 e.ExamScheduleCode == examSchedule.ExamScheduleCode))
         {
             throw new InvalidOperationException(
@@ -126,7 +126,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
         if (!string.IsNullOrWhiteSpace(examSchedule.ExamScheduleCode) &&
             await context.ExamSchedules.AnyAsync(e =>
-                e.TenantId == examSchedule.TenantId &&
+                e.TenantId == tenantContext.TenantId &&
                 e.ExamScheduleCode == examSchedule.ExamScheduleCode &&
                 e.Id != examSchedule.Id))
         {

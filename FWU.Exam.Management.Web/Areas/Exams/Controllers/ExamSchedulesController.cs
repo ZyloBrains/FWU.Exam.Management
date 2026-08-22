@@ -197,7 +197,26 @@ public class ExamSchedulesController(
     {
         if (ModelState.IsValid)
         {
-            await examScheduleService.CreateExamScheduleAsync(examSchedule);
+            try
+            {
+                await examScheduleService.CreateExamScheduleAsync(examSchedule);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(nameof(ExamSchedule.ExamScheduleCode), ex.Message);
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError(nameof(ExamSchedule.ExamScheduleCode),
+                    $"An exam schedule with code '{examSchedule.ExamScheduleCode}' already exists. Please use a different code.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var retrySelectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
+                PopulateDropdowns(retrySelectLists, examSchedule);
+                return View(examSchedule);
+            }
 
             await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleCreated, $"Exam schedule created (Code {examSchedule.ExamScheduleCode})", new { scheduleId = examSchedule.Id, code = examSchedule.ExamScheduleCode, programId = examSchedule.ProgramId, semesterInstanceId = examSchedule.SemesterInstanceId, type = examSchedule.ExamType?.Name }, entityName: "ExamSchedule", entityId: examSchedule.Id.ToString());
             TempData["SuccessMessage"] = "Exam schedule created successfully!";
