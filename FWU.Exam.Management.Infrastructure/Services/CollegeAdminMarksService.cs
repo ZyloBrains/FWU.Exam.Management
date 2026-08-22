@@ -198,7 +198,7 @@ public class CollegeAdminMarksService(
                  Code = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectCode : "",
                  HasTheory = so.HasTheory,
                  HasPractical = so.HasPractical,
-                 TheoryFullMarks = so.TheoryFullMarks,
+                 TheoryFullMarks = so.TheoryFullMarks ?? 0f,
                  InternalTheoryFullMarks = so.InternalTheoryFullMarks
              });
 
@@ -233,8 +233,8 @@ public class CollegeAdminMarksService(
             HasTheory = subjectOffering.HasTheory,
             HasPractical = subjectOffering.HasPractical,
             HasInternal = subjectOffering.HasInternal,
-            TheoryFullMarks = subjectOffering.TheoryFullMarks,
-            TheoryPassMarks = subjectOffering.TheoryPassMarks,
+            TheoryFullMarks = subjectOffering.TheoryFullMarks ?? 0f,
+            TheoryPassMarks = subjectOffering.TheoryPassMarks ?? 0f,
             InternalTheoryFullMarks = subjectOffering.InternalTheoryFullMarks,
             InternalTheoryPassMarks = subjectOffering.InternalTheoryPassMarks
         };

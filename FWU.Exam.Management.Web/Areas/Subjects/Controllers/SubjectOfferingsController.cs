@@ -96,7 +96,7 @@ public class SubjectOfferingsController : Controller
                            $"{(s.Program?.ProgramName ?? "-").EscapeCsv()}," +
                            $"{(s.Semester?.Name ?? "-").EscapeCsv()}," +
                            $"{(s.IsCompulsory ? "Yes" : "No")}," +
-                           $"{s.TheoryFullMarks}," +
+                           $"{s.TheoryFullMarks ?? 0}," +
                            $"{s.PracticalFullMarks ?? 0}," +
                            $"{s.InternalTheoryFullMarks ?? 0}");
         }
@@ -130,7 +130,7 @@ public class SubjectOfferingsController : Controller
             worksheet.Cell(row, 2).Value = s.Program?.ProgramName ?? "-";
             worksheet.Cell(row, 3).Value = s.Semester?.Name ?? "-";
             worksheet.Cell(row, 4).Value = s.IsCompulsory ? "Yes" : "No";
-            worksheet.Cell(row, 5).Value = s.TheoryFullMarks;
+            worksheet.Cell(row, 5).Value = s.TheoryFullMarks ?? 0;
             worksheet.Cell(row, 6).Value = s.PracticalFullMarks ?? 0;
             worksheet.Cell(row, 7).Value = s.InternalTheoryFullMarks ?? 0;
             row++;
@@ -453,6 +453,21 @@ public class SubjectOfferingsController : Controller
         {
             ModelState.AddModelError(string.Empty,
                 "The evaluation scheme (marks) cannot be edited once the subject has been used in exams or assigned to college admins. Other fields can still be updated.");
+        }
+
+        if (subjectOffering.HasTheory)
+        {
+            if (!subjectOffering.TheoryFullMarks.HasValue)
+                ModelState.AddModelError(nameof(subjectOffering.TheoryFullMarks), "Theory full marks are required when theory is enabled.");
+
+            if (!subjectOffering.TheoryPassMarks.HasValue)
+                ModelState.AddModelError(nameof(subjectOffering.TheoryPassMarks), "Theory pass marks are required when theory is enabled.");
+
+            if (subjectOffering.TheoryFullMarks.HasValue && subjectOffering.TheoryPassMarks.HasValue
+                && subjectOffering.TheoryPassMarks.Value > subjectOffering.TheoryFullMarks.Value)
+            {
+                ModelState.AddModelError(nameof(subjectOffering.TheoryPassMarks), "Theory pass marks cannot exceed theory full marks.");
+            }
         }
 
         if (subjectOffering.ProgramId > 0 && subjectOffering.SemesterId > 0)
