@@ -48,11 +48,11 @@ public class SubjectOffering : ITenantScoped
 
     [Range(0, float.MaxValue)]
     [Display(Name = "Theory Full Marks")]
-    public float TheoryFullMarks { get; set; }
+    public float? TheoryFullMarks { get; set; }
 
     [Range(0, float.MaxValue)]
     [Display(Name = "Theory Pass Marks")]
-    public float TheoryPassMarks { get; set; }
+    public float? TheoryPassMarks { get; set; }
 
     [Range(0, float.MaxValue)]
     [Display(Name = "Practical Full Marks")]

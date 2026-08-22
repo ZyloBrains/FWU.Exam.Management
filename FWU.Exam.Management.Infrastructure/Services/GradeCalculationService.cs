@@ -16,7 +16,7 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         if (gradingScheme == null)
             gradingScheme = GetSchemeForOffering(subjectOffering);
 
-        var theoryFull = subjectOffering.TheoryFullMarks;
+        var theoryFull = subjectOffering.TheoryFullMarks ?? 0f;
         var practicalFull = subjectOffering.PracticalFullMarks ?? 0f;
         var internalTheoryFull = subjectOffering.InternalTheoryFullMarks ?? 0f;
         var totalFullMarks = theoryFull + practicalFull + internalTheoryFull;
@@ -33,7 +33,7 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         if (!offering.HasTheory || !theoryMarks.HasValue)
             return NoPart();
 
-        var full = offering.TheoryFullMarks + (offering.InternalTheoryFullMarks ?? 0f);
+        var full = (offering.TheoryFullMarks ?? 0f) + (offering.InternalTheoryFullMarks ?? 0f);
         if (full <= 0) return NoPart();
 
         var obtained = theoryMarks.Value + (offering.HasInternal ? (theoryInternalMarks ?? 0f) : 0f);
@@ -194,7 +194,8 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
 
     public bool IsStudentPassing(float? theoryMarks, float? practicalMarks, SubjectOffering offering, bool isSupplementary = false)
     {
-        if (offering.HasTheory && theoryMarks.HasValue && theoryMarks.Value < offering.TheoryPassMarks)
+        if (offering.HasTheory && theoryMarks.HasValue && offering.TheoryPassMarks.HasValue
+            && theoryMarks.Value < offering.TheoryPassMarks.Value)
             return false;
 
         if (!isSupplementary)

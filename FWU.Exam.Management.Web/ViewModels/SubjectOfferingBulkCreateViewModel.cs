@@ -50,11 +50,11 @@ public class SubjectOfferingItemViewModel : IValidatableObject
 
     [Display(Name = "Theory Full Marks")]
     [Range(0, float.MaxValue, ErrorMessage = "Theory full marks cannot be negative.")]
-    public float TheoryFullMarks { get; set; } = 75;
+    public float? TheoryFullMarks { get; set; }
 
     [Display(Name = "Theory Pass Marks")]
     [Range(0, float.MaxValue, ErrorMessage = "Theory pass marks cannot be negative.")]
-    public float TheoryPassMarks { get; set; } = 27;
+    public float? TheoryPassMarks { get; set; }
 
     [Display(Name = "Practical Full Marks")]
     [Range(0, float.MaxValue, ErrorMessage = "Practical full marks cannot be negative.")]
@@ -74,11 +74,28 @@ public class SubjectOfferingItemViewModel : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (HasTheory && TheoryPassMarks > TheoryFullMarks)
+        if (HasTheory)
         {
-            yield return new ValidationResult(
-                "Theory pass marks cannot exceed theory full marks.",
-                new[] { nameof(TheoryPassMarks), nameof(TheoryFullMarks) });
+            if (!TheoryFullMarks.HasValue)
+            {
+                yield return new ValidationResult(
+                    "Theory full marks are required when theory is enabled.",
+                    new[] { nameof(TheoryFullMarks) });
+            }
+
+            if (!TheoryPassMarks.HasValue)
+            {
+                yield return new ValidationResult(
+                    "Theory pass marks are required when theory is enabled.",
+                    new[] { nameof(TheoryPassMarks) });
+            }
+
+            if (TheoryFullMarks.HasValue && TheoryPassMarks.HasValue && TheoryPassMarks.Value > TheoryFullMarks.Value)
+            {
+                yield return new ValidationResult(
+                    "Theory pass marks cannot exceed theory full marks.",
+                    new[] { nameof(TheoryPassMarks), nameof(TheoryFullMarks) });
+            }
         }
 
         if (HasPractical)

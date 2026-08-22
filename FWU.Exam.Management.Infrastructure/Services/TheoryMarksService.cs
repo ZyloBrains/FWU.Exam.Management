@@ -179,7 +179,7 @@ public class TheoryMarksService(
                  Code = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectCode : "",
                  HasTheory = so.HasTheory,
                  HasPractical = so.HasPractical,
-                 TheoryFullMarks = so.TheoryFullMarks,
+                 TheoryFullMarks = so.TheoryFullMarks ?? 0f,
                  InternalTheoryFullMarks = so.InternalTheoryFullMarks
              });
 
@@ -214,8 +214,8 @@ public class TheoryMarksService(
             HasTheory = subjectOffering.HasTheory,
             HasPractical = subjectOffering.HasPractical,
             HasInternal = subjectOffering.HasInternal,
-            TheoryFullMarks = subjectOffering.TheoryFullMarks,
-            TheoryPassMarks = subjectOffering.TheoryPassMarks,
+            TheoryFullMarks = subjectOffering.TheoryFullMarks ?? 0f,
+            TheoryPassMarks = subjectOffering.TheoryPassMarks ?? 0f,
             InternalTheoryFullMarks = subjectOffering.InternalTheoryFullMarks,
             InternalTheoryPassMarks = subjectOffering.InternalTheoryPassMarks
         };
@@ -284,8 +284,8 @@ public class TheoryMarksService(
         {
             ExamScheduleId = examScheduleId,
             SubjectOfferingId = subjectOfferingId,
-            TheoryFullMarks = subjectOffering.TheoryFullMarks,
-            TheoryPassMarks = subjectOffering.TheoryPassMarks,
+            TheoryFullMarks = subjectOffering.TheoryFullMarks ?? 0f,
+            TheoryPassMarks = subjectOffering.TheoryPassMarks ?? 0f,
             Students = rows
         };
     }
