@@ -72,6 +72,14 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         if (enrolledSemesterInstanceIds.Count == 0) return [];
 
+        var enrolledSemesterNumbers = await context.SemesterInstances!
+            .AsNoTracking()
+            .Where(si => enrolledSemesterInstanceIds.Contains(si.Id) && si.Semester != null)
+            .Select(si => (int?)si.Semester!.Number)
+            .Distinct()
+            .ToListAsync();
+        var maxEnrolledSemesterNumber = enrolledSemesterNumbers.Count > 0 ? enrolledSemesterNumbers.Max() : null;
+
         var query = context.ExamSchedules!
             .AsNoTracking()
             .IgnoreQueryFilters()
@@ -82,7 +90,6 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(es => es.SemesterInstance).ThenInclude(si => si!.AcademicYear)
             .Where(es => es.IsActive
                       && es.ProgramId == student.ProgramId
-                      && enrolledSemesterInstanceIds.Contains(es.SemesterInstanceId)
                       && es.ExamType!.Name != "Entrance");
 
         if (student.LevelId != 0)
@@ -108,18 +115,37 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             if (effectiveEnd.HasValue && effectiveEnd.Value < today)
                 continue;
 
-            var isSupplementary = IsReExamType(schedule.ExamType?.Name);
-
-            if (isSupplementary)
+            if (IsReExamType(schedule.ExamType?.Name))
             {
-                var isEligible = await IsEligibleForReExamAsync(userId, schedule.SemesterInstance!.SemesterId, student.ProgramId ?? 0);
-                if (!isEligible)
+                // Re-exams target papers of already-completed semesters: a student only
+                // ever sees forms for semesters strictly below their highest enrolled
+                // one. Eligibility then requires recorded failures, or no result
+                // history at all (legacy data not yet imported).
+                if (maxEnrolledSemesterNumber == null
+                    || schedule.SemesterInstance!.Semester!.Number >= maxEnrolledSemesterNumber.Value)
+                    continue;
+
+                if (!await IsEligibleForReExamAsync(userId, schedule.SemesterInstance.SemesterId, student.ProgramId ?? 0))
                     continue;
             }
+            else if (!enrolledSemesterInstanceIds.Contains(schedule.SemesterInstanceId))
+            {
+                // Regular forms follow current enrollment.
+                continue;
+            }
+
             filtered.Add(schedule);
         }
 
         return filtered;
+    }
+
+    // Single source of truth for schedule visibility; the controller gates use it
+    // so direct-URL access obeys the same rules as the Exam Forms listing.
+    public async Task<bool> IsScheduleVisibleToStudentAsync(StudentRegistration student, string userId, int examScheduleId)
+    {
+        var schedules = await GetExamSchedulesForStudentAsync(student, userId);
+        return schedules.Any(s => s.Id == examScheduleId);
     }
 
     public async Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId)
@@ -574,6 +600,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return await context.ExamSchedules!
             .AsNoTracking()
             .IgnoreQueryFilters()
+            .Include(es => es.ExamType)
             .Include(es => es.Program)
             .Include(es => es.SemesterInstance).ThenInclude(si => si!.Semester)
             .Include(es => es.Level)

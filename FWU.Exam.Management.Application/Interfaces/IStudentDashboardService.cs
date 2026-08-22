@@ -10,6 +10,7 @@ public interface IStudentDashboardService
 {
     Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email);
     Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId);
+    Task<bool> IsScheduleVisibleToStudentAsync(StudentRegistration student, string userId, int examScheduleId);
     Task<StudentRegistration?> GetStudentRegistrationByUserIdAsync(string userId);
     Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId);
     Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId);
