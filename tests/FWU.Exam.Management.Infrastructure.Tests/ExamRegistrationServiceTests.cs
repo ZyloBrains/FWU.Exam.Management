@@ -3,6 +3,7 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -565,6 +566,188 @@ public class ExamRegistrationServiceTests
         Assert.False(success);
         Assert.Contains("admit card", message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(RegistrationStatus.Pending, db.Context.ExamRegistrations!.Single(r => r.Id == 1).Status);
+    }
+
+    private static void SeedCrossCohortPartial(AppDbContext ctx, bool stampSupplementaryFlag = true)
+    {
+        TestData.SeedBase(ctx);
+        TestData.SeedCollegeForStandardTenant(ctx);
+        ctx.Users.Add(TestData.User(AdminUserId, AdminEmail));
+        ctx.Set<PaymentType>().Add(new PaymentType { Id = 1, PaymentTypeName = "Online", IsActive = true });
+
+        ctx.Faculties.Add(new Faculty { Id = 1, Name = "Management", OfficeCode = "L001", ShortName = "MG", TenantId = TestData.TenantId });
+        ctx.CollegeFaculties.Add(new CollegeFaculty { TenantId = TestData.TenantId, CollegeId = TestData.CollegeId, FacultyId = 1 });
+        ctx.AcademicYears.Add(new AcademicYear { Id = 2, TenantId = TestData.TenantId, AcademicYearCode = "2082", AcademicYearName = "2026", AcademicYearNameNepali = "2082", IsActive = true });
+
+        // Schedule instance belongs to the newer AY 2, but the student's batch is AY 1.
+        ctx.SemesterInstances.Add(new SemesterInstance
+        {
+            Id = 20,
+            TenantId = TestData.TenantId,
+            AcademicYearId = 2,
+            SemesterId = 1,
+            ProgramId = TestData.ProgramId,
+            StartDate = DateTime.UtcNow.AddMonths(-1),
+            EndDate = DateTime.UtcNow.AddMonths(5)
+        });
+
+        ctx.CurriculumVersions.Add(new CurriculumVersion
+        {
+            Id = 90,
+            TenantId = TestData.TenantId,
+            Name = "Batch 2025",
+            ProgramId = TestData.ProgramId,
+            EffectiveAcademicYearId = 1,
+            IsActive = true
+        });
+        ctx.CurriculumVersions.Add(new CurriculumVersion
+        {
+            Id = 91,
+            TenantId = TestData.TenantId,
+            Name = "New 2026",
+            ProgramId = TestData.ProgramId,
+            EffectiveAcademicYearId = 2,
+            IsActive = true
+        });
+
+        ctx.SubjectCatalogs.Add(new SubjectCatalog { Id = 2, TenantId = TestData.TenantId, SubjectCode = "SUB2", SubjectName = "Subject 2", SubjectTypeId = 1, IsActive = true });
+
+        var oldOffering = TestData.Offering(301, 1, TestData.ProgramId);
+        oldOffering.Id = 301;
+        oldOffering.SubjectCatalogId = 2;
+        oldOffering.CurriculumVersionId = 90;
+        ctx.SubjectOfferings.Add(oldOffering);
+
+        var newOffering = TestData.Offering(401, 1, TestData.ProgramId);
+        newOffering.Id = 401;
+        newOffering.SubjectCatalogId = 2;
+        newOffering.CurriculumVersionId = 91;
+        ctx.SubjectOfferings.Add(newOffering);
+
+        ctx.ExamSchedules.Add(TestData.Schedule(30, 20, TestData.Partial,
+            DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1)), DateTime.UtcNow.AddMonths(2)));
+
+        var sr = TestData.StudentRegistration(1, "stu1@test.com");
+        sr.AcademicYearId = 1;
+        ctx.StudentRegistrations.Add(sr);
+
+        ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 30));
+
+        var er = TestData.ExamRegistration(1, 30, 1);
+        er.CollegeId = TestData.CollegeId;
+        er.IsSupplementary = stampSupplementaryFlag;
+        ctx.ExamRegistrations.Add(er);
+
+        ctx.PaymentRequestLogs.Add(new PaymentRequestLog
+        {
+            TenantId = TestData.TenantId,
+            PaymentRequestLogStatus = 1,
+            InvoiceNumber = "INV-CROSS",
+            ForwardedTimestamp = DateTime.UtcNow,
+            FullName = "Test Student",
+            Amount = 800,
+            FullRequestContent = "{}",
+            PaymentTypeId = 1,
+            StudentRegistrationId = 1,
+            ExamScheduleId = 30,
+            SelectedSubjectIds = "301",
+            CollegeId = TestData.CollegeId
+        });
+    }
+
+    [Fact]
+    public async Task GetEditableSubjectsAsync_CrossCohortPartial_ShowsBatchVersionSubject()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), ctx => SeedCrossCohortPartial(ctx));
+        var service = CreateService(db);
+
+        var model = await service.GetEditableSubjectsAsync(1);
+
+        Assert.NotNull(model);
+        Assert.True(model!.CanEdit);
+        var subject = Assert.Single(model.AvailableSubjects);
+        Assert.Equal(301, subject.SubjectOfferingId);
+        Assert.True(subject.IsSelected);
+        Assert.DoesNotContain(model.AvailableSubjects, s => s.SubjectOfferingId == 401);
+    }
+
+    [Fact]
+    public async Task GetStudentExamFormDetailAsync_CrossCohortPartial_ShowsPaidBatchVersionSubject()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), ctx => SeedCrossCohortPartial(ctx));
+        var service = CreateService(db);
+
+        var result = await service.GetStudentExamFormDetailAsync(1);
+
+        Assert.NotNull(result);
+        var subject = Assert.Single(result!.Subjects);
+        Assert.Equal(301, subject.SubjectOfferingId);
+    }
+
+    [Fact]
+    public async Task GetEditableSubjectsAsync_CrossCohortPartial_FallsBackToUnversioned_WhenBatchSubjectNotSelected()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), ctx => SeedCrossCohortPartial(ctx));
+        db.Context.PaymentRequestLogs!.Single(l => l.InvoiceNumber == "INV-CROSS").SelectedSubjectIds = "101";
+        db.Context.SaveChanges();
+        var service = CreateService(db);
+
+        var model = await service.GetEditableSubjectsAsync(1);
+
+        Assert.NotNull(model);
+        Assert.True(model!.CanEdit);
+        var subject = Assert.Single(model.AvailableSubjects);
+        Assert.Equal(101, subject.SubjectOfferingId);
+        Assert.True(subject.IsSelected);
+    }
+
+    [Fact]
+    public async Task GetStudentExamFormDetailAsync_CrossCohortPartial_LegacyRowWithoutFlag_ShowsPaidSubjectAndBatchYear()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId),
+            ctx => SeedCrossCohortPartial(ctx, stampSupplementaryFlag: false));
+        var service = CreateService(db);
+
+        var detail = await service.GetStudentExamFormDetailAsync(1);
+
+        Assert.NotNull(detail);
+        var subject = Assert.Single(detail!.Subjects);
+        Assert.Equal(301, subject.SubjectOfferingId);
+        // The student's cohort year (AY 1), not the schedule instance's (AY 2).
+        Assert.Equal("2081", detail.AcademicYearName);
+    }
+
+    [Fact]
+    public async Task GetEditableSubjectsAsync_CrossCohortPartial_LegacyRowWithoutFlag_ShowsBatchVersionSubjectAndYear()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId),
+            ctx => SeedCrossCohortPartial(ctx, stampSupplementaryFlag: false));
+        var service = CreateService(db);
+
+        var model = await service.GetEditableSubjectsAsync(1);
+
+        Assert.NotNull(model);
+        Assert.True(model!.CanEdit);
+        var subject = Assert.Single(model.AvailableSubjects);
+        Assert.Equal(301, subject.SubjectOfferingId);
+        Assert.True(subject.IsSelected);
+        Assert.DoesNotContain(model.AvailableSubjects, s => s.SubjectOfferingId == 401);
+        Assert.Equal("2081", model.AcademicYearName);
+    }
+
+    [Fact]
+    public async Task UpdateRegistrationSubjectsAsync_CrossCohortPartial_LegacyRowWithoutFlag_SavesBatchVersionSubject()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId),
+            ctx => SeedCrossCohortPartial(ctx, stampSupplementaryFlag: false));
+        var service = CreateService(db);
+
+        var (success, message) = await service.UpdateRegistrationSubjectsAsync(1, [301]);
+
+        Assert.True(success, message);
+        var log = db.Context.PaymentRequestLogs!.Single(l => l.InvoiceNumber == "INV-CROSS");
+        Assert.Equal("301", log.SelectedSubjectIds);
+        Assert.Contains(db.Context.ExamSubjectResults!, r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 301 && r.IsActive);
     }
 
     private static void SeedFormsWithExistingResult(AppDbContext ctx)
