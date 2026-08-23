@@ -115,6 +115,10 @@
                         <div class="space-y-4 sm:space-y-6">
                             @foreach (var semesterGroup in subjectsBySemester!)
                             {
+                                var compulsorySubjects = semesterGroup.Where(so => so.IsCompulsory).ToList();
+                                var homeElectiveGroups = semesterGroup.Where(so => !so.IsCompulsory)
+                                    .GroupBy(so => so.SubjectCatalog?.SubjectTypeId ?? 0)
+                                    .ToList();
                                 <div>
                                     <div class="flex items-center gap-2 mb-2 sm:mb-3">
                                         <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500"></div>
@@ -123,14 +127,17 @@
                                     </div>
                                     <div class="space-y-1.5 sm:space-y-2">
                                         @{ int idx = 0; }
-                                        @foreach (var so in semesterGroup)
+                                        @foreach (var so in compulsorySubjects)
                                         {
                                             idx++;
                                             <div class="group flex items-center justify-between p-2.5 sm:p-4 bg-gray-50/80 rounded-lg sm:rounded-xl hover:bg-emerald-50/60 border border-gray-100 hover:border-emerald-200 transition-all duration-200">
                                                 <div class="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
                                                     <span class="hidden sm:flex flex-shrink-0 w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 items-center justify-center text-xs font-bold text-gray-400 group-hover:text-emerald-600">@idx</span>
                                                     <div class="min-w-0 flex-1">
-                                                        <p class="text-xs sm:text-sm font-semibold text-gray-900 truncate">@so.SubjectCatalog?.SubjectName</p>
+                                                        <div class="flex items-center gap-1.5 min-w-0">
+                                                            <p class="text-xs sm:text-sm font-semibold text-gray-900 truncate">@so.SubjectCatalog?.SubjectName</p>
+                                                            <span class="shrink-0 px-1 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">C</span>
+                                                        </div>
                                                         <p class="text-[10px] sm:text-xs text-gray-500 font-mono mt-0.5">@so.SubjectCatalog?.SubjectCode</p>
                                                     </div>
                                                 </div>
@@ -149,6 +156,49 @@
                                                     }
                                                 </div>
                                             </div>
+                                        }
+                                        @if (homeElectiveGroups.Any(g => g.Any()))
+                                        {
+                                            @foreach (var eGroup in homeElectiveGroups.Where(g => g.Any()))
+                                            {
+                                                var electiveTypeName = eGroup.First().SubjectCatalog?.SubjectType?.Name;
+                                                <div class="rounded-lg sm:rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/40 p-2 sm:p-3 mt-2 space-y-1.5">
+                                                    <div class="flex items-center justify-between gap-2 px-0.5 pt-0.5 pb-1">
+                                                        <h5 class="text-[10px] sm:text-xs font-bold text-purple-700 uppercase tracking-wider truncate">Elective Subjects@(string.IsNullOrWhiteSpace(electiveTypeName) ? "" : $" - {electiveTypeName}")</h5>
+                                                        <span class="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-purple-100 text-purple-700">@eGroup.Count()</span>
+                                                    </div>
+                                                    @foreach (var so in eGroup)
+                                                    {
+                                                        idx++;
+                                                        <div class="group flex items-center justify-between p-2.5 sm:p-4 bg-white rounded-lg hover:bg-purple-50/60 border border-purple-100 hover:border-purple-300 transition-all duration-200">
+                                                            <div class="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                                                                <span class="hidden sm:flex flex-shrink-0 w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 items-center justify-center text-xs font-bold text-gray-400 group-hover:text-purple-600">@idx</span>
+                                                                <div class="min-w-0 flex-1">
+                                                                    <div class="flex items-center gap-1.5 min-w-0">
+                                                                        <p class="text-xs sm:text-sm font-semibold text-gray-900 truncate">@so.SubjectCatalog?.SubjectName</p>
+                                                                        <span class="shrink-0 px-1 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-600 border border-purple-100">E</span>
+                                                                    </div>
+                                                                    <p class="text-[10px] sm:text-xs text-gray-500 font-mono mt-0.5">@so.SubjectCatalog?.SubjectCode</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 ml-2 sm:ml-4">
+                                                                @if (so.HasTheory)
+                                                                {
+                                                                    <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">T</span>
+                                                                }
+                                                                @if (so.HasPractical)
+                                                                {
+                                                                    <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100">P</span>
+                                                                }
+                                                                @if (so.HasInternal)
+                                                                {
+                                                                    <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">I</span>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
                                         }
                                     </div>
                                 </div>

@@ -49,6 +49,7 @@ public class ExamFormEditableSubjectsDto
     public string? StudentName { get; set; }
     public string? RegistrationNumber { get; set; }
     public string? ExamScheduleName { get; set; }
+    public string? AcademicYearName { get; set; }
     public string? ExamTypeName { get; set; }
     public bool CanEdit { get; set; }
     public string? NotEditableReason { get; set; }

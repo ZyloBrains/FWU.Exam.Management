@@ -72,6 +72,14 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         if (enrolledSemesterInstanceIds.Count == 0) return [];
 
+        var enrolledSemesterNumbers = await context.SemesterInstances!
+            .AsNoTracking()
+            .Where(si => enrolledSemesterInstanceIds.Contains(si.Id) && si.Semester != null)
+            .Select(si => (int?)si.Semester!.Number)
+            .Distinct()
+            .ToListAsync();
+        var maxEnrolledSemesterNumber = enrolledSemesterNumbers.Count > 0 ? enrolledSemesterNumbers.Max() : null;
+
         var query = context.ExamSchedules!
             .AsNoTracking()
             .IgnoreQueryFilters()
@@ -82,7 +90,6 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(es => es.SemesterInstance).ThenInclude(si => si!.AcademicYear)
             .Where(es => es.IsActive
                       && es.ProgramId == student.ProgramId
-                      && enrolledSemesterInstanceIds.Contains(es.SemesterInstanceId)
                       && es.ExamType!.Name != "Entrance");
 
         if (student.LevelId != 0)
@@ -108,18 +115,37 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             if (effectiveEnd.HasValue && effectiveEnd.Value < today)
                 continue;
 
-            var isSupplementary = IsReExamType(schedule.ExamType?.Name);
-
-            if (isSupplementary)
+            if (IsReExamType(schedule.ExamType?.Name))
             {
-                var hasFailed = await HasFailedSubjectsInSemesterAsync(userId, schedule.SemesterInstance!.SemesterId, student.ProgramId ?? 0);
-                if (!hasFailed)
+                // Re-exams target papers of already-completed semesters: a student only
+                // ever sees forms for semesters strictly below their highest enrolled
+                // one. Eligibility then requires recorded failures, or no result
+                // history at all (legacy data not yet imported).
+                if (maxEnrolledSemesterNumber == null
+                    || schedule.SemesterInstance!.Semester!.Number >= maxEnrolledSemesterNumber.Value)
+                    continue;
+
+                if (!await IsEligibleForReExamAsync(userId, schedule.SemesterInstance.SemesterId, student.ProgramId ?? 0))
                     continue;
             }
+            else if (!enrolledSemesterInstanceIds.Contains(schedule.SemesterInstanceId))
+            {
+                // Regular forms follow current enrollment.
+                continue;
+            }
+
             filtered.Add(schedule);
         }
 
         return filtered;
+    }
+
+    // Single source of truth for schedule visibility; the controller gates use it
+    // so direct-URL access obeys the same rules as the Exam Forms listing.
+    public async Task<bool> IsScheduleVisibleToStudentAsync(StudentRegistration student, string userId, int examScheduleId)
+    {
+        var schedules = await GetExamSchedulesForStudentAsync(student, userId);
+        return schedules.Any(s => s.Id == examScheduleId);
     }
 
     public async Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId)
@@ -170,6 +196,62 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .OrderBy(so => so.DisplayOrder).ToListAsync();
     }
 
+    // Re-exam forms are taken by students of older cohorts than the schedule's
+    // academic year, so the free-selection list resolves from the STUDENT's
+    // batch curriculum version (StudentRegistration.AcademicYearId) instead of
+    // the schedule's. Fallback order: batch-version offerings → unversioned
+    // offerings → the schedule's own resolution.
+    public async Task<List<SubjectOffering>> GetReExamSelectableOfferingsAsync(int examScheduleId, string userId)
+    {
+        var schedule = await context.ExamSchedules!
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+        if (schedule == null) return [];
+
+        var instance = await context.SemesterInstances!
+            .AsNoTracking()
+            .Where(si => si.Id == schedule.SemesterInstanceId)
+            .Select(si => new { si.SemesterId })
+            .FirstOrDefaultAsync();
+        if (instance == null) return [];
+
+        var semesterNumber = await context.Semesters
+            .AsNoTracking()
+            .Where(s => s.Id == instance.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var registration = await GetStudentRegistrationByUserIdAsync(userId);
+        var baseQuery = context.SubjectOfferings!
+            .AsNoTracking()
+            .Include(so => so.SubjectCatalog)
+                .ThenInclude(sc => sc!.SubjectType)
+            .Where(so => so.ProgramId == schedule.ProgramId
+                      && so.IsActive
+                      && so.Semester != null && so.Semester.Number == semesterNumber);
+
+        int? batchAcademicYearId = registration != null && registration.AcademicYearId > 0
+            ? registration.AcademicYearId
+            : null;
+        var batchVersionId = batchAcademicYearId.HasValue
+            ? await CurriculumVersionResolver.ResolveAsync(context, schedule.ProgramId, batchAcademicYearId.Value)
+            : null;
+
+        if (batchVersionId.HasValue)
+        {
+            var versioned = await baseQuery.Where(so => so.CurriculumVersionId == batchVersionId.Value)
+                .OrderBy(so => so.DisplayOrder).ToListAsync();
+            if (versioned.Count > 0) return versioned;
+        }
+
+        var unversioned = await baseQuery.Where(so => so.CurriculumVersionId == null)
+            .OrderBy(so => so.DisplayOrder).ToListAsync();
+        if (unversioned.Count > 0) return unversioned;
+
+        return await GetSubjectOfferingsForScheduleAsync(examScheduleId);
+    }
+
     public async Task<List<SubjectOffering>> GetSubjectOfferingsForStudentAsync(string userId, int programId)
     {
         var admission = await ResolveStudentAdmissionAsync(userId);
@@ -177,6 +259,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         var query = context.SubjectOfferings!
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
+                .ThenInclude(sc => sc!.SubjectType)
             .Include(so => so.Semester)
             .Where(so => so.ProgramId == programId && so.IsActive);
 
@@ -574,6 +657,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return await context.ExamSchedules!
             .AsNoTracking()
             .IgnoreQueryFilters()
+            .Include(es => es.ExamType)
             .Include(es => es.Program)
             .Include(es => es.SemesterInstance).ThenInclude(si => si!.Semester)
             .Include(es => es.Level)
@@ -883,6 +967,74 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return failedIds.Count > 0;
     }
 
+    public async Task<bool> HasAnyExamResultsInSemesterAsync(string userId, int semesterId, int programId)
+    {
+        var scheduleIds = await context.ExamSchedules!
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(es => es.IsActive
+                      && es.ProgramId == programId
+                      && es.SemesterInstance!.SemesterId == semesterId)
+            .Select(es => es.Id)
+            .ToListAsync();
+
+        if (scheduleIds.Count == 0) return false;
+
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        if (studentErIds.Count == 0) return false;
+
+        return await context.ExamSubjectResults!
+            .AsNoTracking()
+            .Where(esr => scheduleIds.Contains(esr.ExamScheduleId ?? 0)
+                       && esr.IsActive
+                       && esr.ExamRegistration != null
+                       && esr.ExamRegistration.IsActive
+                       && studentErIds.Contains(esr.ExamRegistrationId)
+                       && !string.IsNullOrEmpty(esr.GradeLetter))
+            .AnyAsync();
+    }
+
+    public async Task<bool> IsEligibleForReExamAsync(string userId, int semesterId, int programId)
+    {
+        // Students with recorded failures qualify normally. Students with no result
+        // history at all (legacy data not yet imported) are allowed through; the
+        // gate tightens automatically once real results exist.
+        if (await HasFailedSubjectsInSemesterAsync(userId, semesterId, programId))
+            return true;
+
+        return !await HasAnyExamResultsInSemesterAsync(userId, semesterId, programId);
+    }
+
+    public async Task<List<SubjectOffering>> GetFailedSubjectOfferingsForStudentAsync(int examScheduleId, string userId)
+    {
+        var schedule = await context.ExamSchedules!
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+
+        if (schedule == null) return [];
+
+        var instance = await context.SemesterInstances!
+            .AsNoTracking()
+            .Where(si => si.Id == schedule.SemesterInstanceId)
+            .Select(si => new { si.SemesterId })
+            .FirstOrDefaultAsync();
+        if (instance == null) return [];
+
+        var failedOfferingIds = await GetFailedSubjectOfferingIdsForSemesterAsync(userId, instance.SemesterId, schedule.ProgramId);
+        if (failedOfferingIds.Count == 0) return [];
+
+        // Re-exam forms cover theory papers only; practicals were completed in
+        // the original attempt, so pure-practical offerings are excluded.
+        return await context.SubjectOfferings!
+            .AsNoTracking()
+            .Include(so => so.SubjectCatalog)
+                .ThenInclude(sc => sc!.SubjectType)
+            .Where(so => failedOfferingIds.Contains(so.Id) && so.HasTheory)
+            .OrderBy(so => so.DisplayOrder)
+            .ToListAsync();
+    }
+
     public async Task<List<int>> GetFailedSubjectOfferingIdsForSemesterAsync(string userId, int semesterId, int programId)
     {
         var scheduleIds = await context.ExamSchedules!
@@ -903,7 +1055,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive
                       && (studentErIds.Count == 0 || studentErIds.Contains(er.Id)))
             .SelectMany(er => er.ExamSubjectResults!)
-            .Where(esr => esr.IsActive)
+            .Where(esr => esr.IsActive && !string.IsNullOrEmpty(esr.GradeLetter))
             .ToListAsync();
 
         var latestPerSubject = results
@@ -1005,8 +1157,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         "Supplementary", "Partial", "Chance", "Special Chance"
     };
 
-    public static bool IsReExamType(string? examTypeName) =>
+    public static bool IsReExamTypeStatic(string? examTypeName) =>
         !string.IsNullOrEmpty(examTypeName) && ReExamTypeNames.Contains(examTypeName);
+
+    public bool IsReExamType(string? examTypeName) => IsReExamTypeStatic(examTypeName);
 
     public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null)
     {
