@@ -90,7 +90,10 @@
             @for (int i = 0; i < Model.ExamForms.Count; i++)
             {
                 var form = Model.ExamForms[i];
-                var semesterNum = form.Semester?.Contains('/') == true ? form.Semester.Split('/')[1].Trim() : form.Semester;
+                var semesterRaw = form.Semester?.Contains('/') == true ? form.Semester.Split('/')[1].Trim() : form.Semester;
+                if (!string.IsNullOrWhiteSpace(semesterRaw) && semesterRaw.StartsWith("Semester", StringComparison.OrdinalIgnoreCase))
+                    semesterRaw = semesterRaw["Semester".Length..].Trim();
+                var semesterNum = semesterRaw;
                 var hasDeadline = !string.IsNullOrWhiteSpace(form.EndDateBs);
 
                 <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-blue-100 transition-all duration-300 group">
@@ -107,7 +110,7 @@
                                     <h3 class="text-lg sm:text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">@form.ExamScheduleName</h3>
                                     <div class="mt-1 inline-flex items-center gap-1.5 text-sm text-gray-500">
                                         <i class="fas fa-graduation-cap text-blue-400 text-xs"></i>
-                                        Semester @semesterNum
+                                        <span>Semester @(string.IsNullOrWhiteSpace(semesterNum) ? "-" : semesterNum)</span>
                                     </div>
                                 </div>
 
