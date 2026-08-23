@@ -1,3 +1,5 @@
+using FWU.Exam.Management.Application.DTOs;
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -436,7 +438,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     }
 
     public async Task<(bool Success, string Message)> ReapplyExamRegistrationAsync(
-        int examScheduleId, string userId, int studentRegistrationId, List<int> subjectOfferingIds)
+        int examScheduleId, string userId, int studentRegistrationId, List<int> subjectOfferingIds, Dictionary<int, ReExamLegs>? subjectLegs = null)
     {
         var requestedIds = (subjectOfferingIds ?? [])
             .Where(id => id > 0)
@@ -520,6 +522,25 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             result.IsActive = false;
         }
 
+        // Subjects kept from the previous attempt may change legs at re-apply
+        // (e.g. practical added after paying theory only). Patch those rows in
+        // place so admit cards and marks grids match the rewritten log tokens.
+        foreach (var offeringId in finalIds.Where(activeByOffering.ContainsKey))
+        {
+            if (subjectLegs == null || !subjectLegs.TryGetValue(offeringId, out var legs) || legs == ReExamLegs.None)
+                continue;
+
+            var row = activeByOffering[offeringId];
+            var addedPractical = legs.HasFlag(ReExamLegs.Practical) && row.IsPracticalRegistered != true;
+            row.IsTheoryRegistered = legs.HasFlag(ReExamLegs.Theory);
+            row.IsPracticalRegistered = legs.HasFlag(ReExamLegs.Practical);
+
+            // A newly re-sat practical needs a blank external for fresh entry;
+            // internal marks always carry forward.
+            if (addedPractical)
+                row.ObtainedMarksPractical = null;
+        }
+
         HashSet<int>? previousScheduleIds = null;
         if (target.IsSupplementary)
         {
@@ -544,6 +565,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             float? carriedPracticalInternal = null;
             float? carriedTheoryInternal = null;
 
+            var legs = ResolveRegistrationLegs(subjectLegs, offeringId, offering);
+
             if (target.IsSupplementary && previousScheduleIds is { Count: > 0 })
             {
                 var previousResult = await context.ExamSubjectResults!
@@ -558,7 +581,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
                 if (previousResult != null)
                 {
-                    carriedPractical = previousResult.ObtainedMarksPractical;
+                    // Marks carry forward; only the external marks of a re-sat
+                    // leg are cleared for fresh entry.
+                    var retakesPractical = legs.HasFlag(ReExamLegs.Practical);
+                    carriedPractical = retakesPractical ? null : previousResult.ObtainedMarksPractical;
                     carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
                     carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
                 }
@@ -571,8 +597,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                 SubjectOfferingId = offeringId,
                 ExamScheduleId = examScheduleId,
                 ExamTypeId = schedule.ExamTypeId,
-                IsTheoryRegistered = offering.HasTheory,
-                IsPracticalRegistered = offering.HasPractical,
+                IsTheoryRegistered = legs.HasFlag(ReExamLegs.Theory),
+                IsPracticalRegistered = legs.HasFlag(ReExamLegs.Practical),
                 IsActive = true,
                 IsSubmitted = false,
                 IsSupplementary = target.IsSupplementary,
@@ -587,7 +613,22 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         target.Status = RegistrationStatus.Pending;
         target.RegistrationDate = DateTime.UtcNow;
 
-        paymentLog.SelectedSubjectIds = string.Join(",", finalIds.OrderBy(id => id));
+        var finalSelection = subjectLegs is { Count: > 0 }
+            ? subjectLegs.Where(kvp => finalIds.Contains(kvp.Key)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+            : new Dictionary<int, ReExamLegs>();
+        paymentLog.SelectedSubjectIds = finalSelection.Count > 0
+            ? ReExamSubjectSelection.Format(finalSelection)
+            : string.Join(",", finalIds.OrderBy(id => id));
+
+        // Keep the practical-count child row in sync with the final selection.
+        if (finalSelection.Count > 0)
+        {
+            var practicalCountRow = await context.Set<PaymentPracticalSubjects>()
+                .FirstOrDefaultAsync(pps => pps.PaymentRequestLogId == paymentLog.Id);
+            if (practicalCountRow != null)
+                practicalCountRow.PracticalSubjectsCount =
+                    finalSelection.Values.Count(v => v.HasFlag(ReExamLegs.Practical));
+        }
 
         await context.SaveChangesAsync();
         logger.LogInformation("ReapplyExamRegistrationAsync: ExamRegistration {RegId} re-applied for scheduleId={ScheduleId}, userId={UserId}, subjects={SubjectCount}",
@@ -743,7 +784,100 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .FirstOrDefaultAsync(prl => prl.Id == logId);
     }
 
-    public async Task CreateExamRegistrationAsync(int examScheduleId, string userId, decimal amount, List<int> subjectOfferingIds, int studentRegistrationId)
+    // Server-side fee recomputation: the flat schedule exam fee plus one
+    // practical charge per ticked practical leg. The client-posted amount is
+    // never trusted; gateway initiation and reapply deltas both derive from this.
+    public async Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection)
+    {
+        var examFee = await GetExamFeeForScheduleAsync(examScheduleId);
+        var practicalFee = await GetPracticalSubjectFeeForScheduleAsync(examScheduleId);
+        var practicalLegs = (selection ?? []).Values.Count(v => v.HasFlag(ReExamLegs.Practical));
+        return examFee + practicalLegs * practicalFee;
+    }
+
+    // A confirmed payment on a rejected form is a reapply top-up when an older
+    // confirmed payment for the same schedule already exists. Completing it must
+    // revive the rejected registration with THIS log's subject tokens instead of
+    // creating a duplicate registration.
+    public async Task<bool> TryCompleteApplyAgainTopUpAsync(int logId, string userId)
+    {
+        var log = await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(prl => prl.Id == logId);
+        if (log?.StudentRegistrationId == null)
+            return false;
+
+        if (!await IsRejectedOnlyForScheduleAsync(log.ExamScheduleId, userId))
+            return false;
+
+        var hasPriorConfirmedPayment = await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .AnyAsync(prl => prl.ExamScheduleId == log.ExamScheduleId
+                          && prl.StudentRegistrationId == log.StudentRegistrationId
+                          && prl.Id != log.Id
+                          && prl.PaymentRequestLogStatus == 1);
+        if (!hasPriorConfirmedPayment)
+            return false;
+
+        var selection = ReExamSubjectSelection.Parse(log.SelectedSubjectIds);
+        if (selection.Count == 0)
+        {
+            logger.LogWarning("TryCompleteApplyAgainTopUpAsync: no subject tokens on top-up logId={LogId}", logId);
+            return false;
+        }
+
+        logger.LogInformation("TryCompleteApplyAgainTopUpAsync: completing reapply top-up for logId={LogId}, scheduleId={ScheduleId}, subjects={SubjectCount}",
+            logId, log.ExamScheduleId, selection.Count);
+        await ReapplyExamRegistrationAsync(
+            log.ExamScheduleId, userId, log.StudentRegistrationId.Value, selection.Keys.ToList(), selection);
+        return true;
+    }
+
+    // Marks stale unpaid attempts as superseded so at most one open top-up
+    // exists per student and schedule. Status 2 = superseded/cancelled;
+    // 1 stays reserved for confirmed payments.
+    public async Task SupersedeOpenApplyAgainPaymentsAsync(int examScheduleId, int studentRegistrationId, int exceptLogId)
+    {
+        // Only genuinely-open attempts (no status yet / pending). Confirmed (1)
+        // stays untouched; superseded (2) is never revisited.
+        var openLogs = await context.Set<PaymentRequestLog>()
+            .Where(prl => prl.ExamScheduleId == examScheduleId
+                       && prl.StudentRegistrationId == studentRegistrationId
+                       && prl.Id != exceptLogId
+                       && (prl.PaymentRequestLogStatus ?? 0) == 0)
+            .ToListAsync();
+
+        if (openLogs.Count == 0)
+            return;
+
+        foreach (var log in openLogs)
+        {
+            log.PaymentRequestLogStatus = 2;
+            context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+            {
+                PaymentRequestLogId = log.Id,
+                ResponseTimestamp = DateTime.UtcNow,
+                IsSuccess = false,
+                ResponseMessage = "Superseded by a newer payment attempt for this exam form."
+            });
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<bool> HasOpenApplyAgainPaymentAsync(int examScheduleId, int studentRegistrationId)
+    {
+        // Open = still pending (no status / 0); confirmed (1) and superseded
+        // (2) attempts do not count.
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .AnyAsync(prl => prl.ExamScheduleId == examScheduleId
+                          && prl.StudentRegistrationId == studentRegistrationId
+                          && !string.IsNullOrEmpty(prl.SelectedSubjectIds)
+                          && (prl.PaymentRequestLogStatus ?? 0) == 0);
+    }
+
+    public async Task CreateExamRegistrationAsync(int examScheduleId, string userId, decimal amount, List<int> subjectOfferingIds, int studentRegistrationId, Dictionary<int, ReExamLegs>? subjectLegs = null)
     {
         var schedule = await context.ExamSchedules!
             .AsNoTracking()
@@ -904,6 +1038,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             float? carriedPracticalInternal = null;
             float? carriedTheoryInternal = null;
 
+            var legs = ResolveRegistrationLegs(subjectLegs, subjectOfferingId, subjectOffering);
+
             if (registration.IsSupplementary && previousScheduleIds != null && previousScheduleIds.Count > 0)
             {
                 var previousResult = await context.ExamSubjectResults!
@@ -918,7 +1054,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
                 if (previousResult != null)
                 {
-                    carriedPractical = previousResult.ObtainedMarksPractical;
+                    // Marks carry forward; only the external marks of a re-sat
+                    // leg are cleared for fresh entry.
+                    var retakesPractical = legs.HasFlag(ReExamLegs.Practical);
+                    carriedPractical = retakesPractical ? null : previousResult.ObtainedMarksPractical;
                     carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
                     carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
                 }
@@ -930,8 +1069,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                 SubjectOfferingId = subjectOfferingId,
                 ExamScheduleId = examScheduleId,
                 ExamTypeId = schedule.ExamTypeId,
-                IsTheoryRegistered = subjectOffering.HasTheory,
-                IsPracticalRegistered = subjectOffering.HasPractical,
+                IsTheoryRegistered = legs.HasFlag(ReExamLegs.Theory),
+                IsPracticalRegistered = legs.HasFlag(ReExamLegs.Practical),
                 IsActive = true,
                 IsSubmitted = false,
                 IsSupplementary = registration.IsSupplementary,
@@ -1005,7 +1144,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return !await HasAnyExamResultsInSemesterAsync(userId, semesterId, programId);
     }
 
-    public async Task<List<SubjectOffering>> GetFailedSubjectOfferingsForStudentAsync(int examScheduleId, string userId)
+    public async Task<List<FailedSubjectOption>> GetFailedSubjectOptionsForStudentAsync(int examScheduleId, string userId)
     {
         var schedule = await context.ExamSchedules!
             .AsNoTracking()
@@ -1021,21 +1160,41 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .FirstOrDefaultAsync();
         if (instance == null) return [];
 
-        var failedOfferingIds = await GetFailedSubjectOfferingIdsForSemesterAsync(userId, instance.SemesterId, schedule.ProgramId);
-        if (failedOfferingIds.Count == 0) return [];
+        var latestResults = await GetLatestResultsPerSubjectForSemesterAsync(userId, instance.SemesterId, schedule.ProgramId);
+        var failedById = latestResults.Where(IsFailedResult).ToDictionary(r => r.SubjectOfferingId);
+        if (failedById.Count == 0) return [];
 
-        // Re-exam forms cover theory papers only; practicals were completed in
-        // the original attempt, so pure-practical offerings are excluded.
-        return await context.SubjectOfferings!
+        var failedIds = failedById.Keys.ToList();
+        var offerings = await context.SubjectOfferings!
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
                 .ThenInclude(sc => sc!.SubjectType)
-            .Where(so => failedOfferingIds.Contains(so.Id) && so.HasTheory)
+            .Where(so => failedIds.Contains(so.Id))
             .OrderBy(so => so.DisplayOrder)
             .ToListAsync();
+
+        var options = new List<FailedSubjectOption>();
+        foreach (var offering in offerings)
+        {
+            var legs = ResolveFailedLegs(failedById[offering.Id], offering);
+            if (legs != ReExamLegs.None)
+                options.Add(new FailedSubjectOption { Offering = offering, FailedLegs = legs });
+        }
+
+        return options;
     }
 
     public async Task<List<int>> GetFailedSubjectOfferingIdsForSemesterAsync(string userId, int semesterId, int programId)
+    {
+        var latestPerSubject = await GetLatestResultsPerSubjectForSemesterAsync(userId, semesterId, programId);
+
+        return latestPerSubject
+            .Where(IsFailedResult)
+            .Select(esr => esr.SubjectOfferingId)
+            .ToList();
+    }
+
+    private async Task<List<ExamSubjectResult>> GetLatestResultsPerSubjectForSemesterAsync(string userId, int semesterId, int programId)
     {
         var scheduleIds = await context.ExamSchedules!
             .AsNoTracking()
@@ -1055,18 +1214,58 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive
                       && (studentErIds.Count == 0 || studentErIds.Contains(er.Id)))
             .SelectMany(er => er.ExamSubjectResults!)
-            .Where(esr => esr.IsActive && !string.IsNullOrEmpty(esr.GradeLetter))
+            .Where(esr => esr.IsActive
+                       && (!string.IsNullOrEmpty(esr.GradeLetter)
+                        || !string.IsNullOrEmpty(esr.GradeLetterTheory)
+                        || !string.IsNullOrEmpty(esr.GradeLetterPractical)))
             .ToListAsync();
 
-        var latestPerSubject = results
+        return results
             .GroupBy(esr => esr.SubjectOfferingId)
             .Select(g => g.OrderByDescending(esr => esr.Id).First())
             .ToList();
+    }
 
-        return latestPerSubject
-            .Where(esr => IsFailedGrade(esr.GradeLetter))
-            .Select(esr => esr.SubjectOfferingId)
-            .ToList();
+    private static bool IsFailedResult(ExamSubjectResult esr) =>
+        IsFailedGrade(esr.GradeLetter)
+        || IsFailedGrade(esr.GradeLetterTheory)
+        || IsFailedGrade(esr.GradeLetterPractical);
+
+    internal static ReExamLegs ResolveFailedLegs(ExamSubjectResult esr, SubjectOffering offering)
+    {
+        var legs = ReExamLegs.None;
+        if (IsFailedGrade(esr.GradeLetterTheory)) legs |= ReExamLegs.Theory;
+        if (IsFailedGrade(esr.GradeLetterPractical)) legs |= ReExamLegs.Practical;
+
+        if (legs == ReExamLegs.None && IsFailedGrade(esr.GradeLetter))
+        {
+            // Legacy row without per-part grades: assume the theory paper,
+            // unless the offering has no theory at all.
+            legs = offering.HasTheory ? ReExamLegs.Theory
+                 : offering.HasPractical ? ReExamLegs.Practical
+                 : ReExamLegs.None;
+        }
+
+        return legs;
+    }
+
+    /// <summary>
+    /// Maps a student's chosen legs onto an offering. Missing/empty choices fall
+    /// back to the offering's own flags; explicit legs are clamped to what the
+    /// offering actually provides.
+    /// </summary>
+    private static ReExamLegs ResolveRegistrationLegs(Dictionary<int, ReExamLegs>? selection, int offeringId, SubjectOffering offering)
+    {
+        if (selection != null && selection.TryGetValue(offeringId, out var chosen) && chosen != ReExamLegs.None)
+        {
+            var resolved = ReExamLegs.None;
+            if (offering.HasTheory && chosen.HasFlag(ReExamLegs.Theory)) resolved |= ReExamLegs.Theory;
+            if (offering.HasPractical && chosen.HasFlag(ReExamLegs.Practical)) resolved |= ReExamLegs.Practical;
+            if (resolved != ReExamLegs.None) return resolved;
+        }
+
+        return (offering.HasTheory ? ReExamLegs.Theory : ReExamLegs.None)
+             | (offering.HasPractical ? ReExamLegs.Practical : ReExamLegs.None);
     }
 
     private async Task<StudentAdmission?> ResolveStudentAdmissionAsync(string userId)
@@ -1162,7 +1361,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
     public bool IsReExamType(string? examTypeName) => IsReExamTypeStatic(examTypeName);
 
-    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null)
+    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, Dictionary<int, ReExamLegs> subjectSelection, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null)
     {
         var paymentTypes = await context.Set<PaymentType>()
             .AsNoTracking()
@@ -1175,7 +1374,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (!string.IsNullOrEmpty(dateOfBirthAd) && DateTime.TryParse(dateOfBirthAd, out var parsedDob))
             dob = parsedDob;
 
-        var requestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount},\"subjects\":[{string.Join(",", subjectOfferingIds)}]}}";
+        var subjectIds = subjectSelection.Keys.OrderBy(id => id).ToList();
+        var selectedSubjectIds = ReExamSubjectSelection.Format(subjectSelection);
+
+        var requestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount},\"subjects\":[{string.Join(",", subjectIds)}]}}";
         if (!string.IsNullOrEmpty(transactionUuid))
             requestContent = requestContent[..^1] + $",\"transaction_uuid\":\"{transactionUuid}\"}}";
 
@@ -1193,20 +1395,20 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             FullRequestContent = requestContent,
             PaymentTypeId = paymentType?.Id ?? 0,
             ForwardedTimestamp = DateTime.UtcNow,
-            StudentCount = subjectOfferingIds.Count,
-            SelectedSubjectIds = string.Join(",", subjectOfferingIds),
+            StudentCount = subjectIds.Count,
+            SelectedSubjectIds = selectedSubjectIds,
             TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
         };
 
         context.Set<PaymentRequestLog>().Add(log);
         await context.SaveChangesAsync();
 
-        if (subjectOfferingIds.Count > 0)
+        if (subjectIds.Count > 0)
         {
             context.Set<PaymentPracticalSubjects>().Add(new PaymentPracticalSubjects
             {
                 PaymentRequestLogId = log.Id,
-                PracticalSubjectsCount = subjectOfferingIds.Count,
+                PracticalSubjectsCount = subjectSelection.Values.Count(v => v.HasFlag(ReExamLegs.Practical)),
                 TotalAmount = amount
             });
         }

@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Application.DTOs;
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
@@ -397,7 +398,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                     : "Payment has not been confirmed for this form yet.";
         }
 
-        var selectedIds = ParseSelectedSubjectIds(matchedLog?.SelectedSubjectIds);
+        var selection = ReExamSubjectSelection.Parse(matchedLog?.SelectedSubjectIds);
+        var selectedIds = selection.Keys.ToHashSet();
 
         var schedule = er.ExamSchedule!;
         var semesterNumber = schedule.SemesterInstance!.Semester?.Number ?? 0;
@@ -499,14 +501,20 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
         dto.AvailableSubjects = offerings
             .Where(so => so.SubjectCatalog != null)
-            .Select(so => new ExamFormSelectableSubjectDto
+            .Select(so =>
             {
-                SubjectOfferingId = so.Id,
-                Code = so.SubjectCatalog!.SubjectCode,
-                Name = so.SubjectCatalog.SubjectName,
-                Theory = so.HasTheory,
-                Practical = so.HasPractical,
-                IsSelected = selectedIds.Contains(so.Id)
+                var legs = selection.GetValueOrDefault(so.Id);
+                return new ExamFormSelectableSubjectDto
+                {
+                    SubjectOfferingId = so.Id,
+                    Code = so.SubjectCatalog!.SubjectCode,
+                    Name = so.SubjectCatalog.SubjectName,
+                    Theory = so.HasTheory,
+                    Practical = so.HasPractical,
+                    IsSelected = selectedIds.Contains(so.Id),
+                    SelectedTheory = legs.HasFlag(ReExamLegs.Theory) || (legs == ReExamLegs.None && selectedIds.Contains(so.Id) && so.HasTheory),
+                    SelectedPractical = legs.HasFlag(ReExamLegs.Practical) || (legs == ReExamLegs.None && selectedIds.Contains(so.Id) && so.HasPractical)
+                };
             })
             .ToList();
 
@@ -572,6 +580,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         if (matchedLog == null)
             return (false, "Payment has not been confirmed for this form yet.");
 
+        var existingSelection = ReExamSubjectSelection.Parse(matchedLog.SelectedSubjectIds);
+
         var existingResults = await context.ExamSubjectResults!
             .Where(esr => esr.ExamRegistrationId == er.Id)
             .ToListAsync();
@@ -608,6 +618,15 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         {
             var offering = validOfferings[offeringId];
 
+            // Chosen legs for this subject; fall back to the offering's own
+            // papers when the payment log carries no explicit leg entry.
+            var chosenLegs = existingSelection.TryGetValue(offeringId, out var legs) && legs != ReExamLegs.None
+                ? legs
+                : (offering.HasTheory ? ReExamLegs.Theory : ReExamLegs.None)
+                | (offering.HasPractical ? ReExamLegs.Practical : ReExamLegs.None);
+            var theorySelected = chosenLegs.HasFlag(ReExamLegs.Theory);
+            var practicalSelected = chosenLegs.HasFlag(ReExamLegs.Practical);
+
             float? carriedPractical = null;
             float? carriedPracticalInternal = null;
             float? carriedTheoryInternal = null;
@@ -626,7 +645,9 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
                 if (previousResult != null)
                 {
-                    carriedPractical = previousResult.ObtainedMarksPractical;
+                    // Marks carry forward; only the external marks of a re-sat
+                    // leg are cleared for fresh entry.
+                    carriedPractical = practicalSelected ? null : previousResult.ObtainedMarksPractical;
                     carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
                     carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
                 }
@@ -639,8 +660,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 SubjectOfferingId = offeringId,
                 ExamScheduleId = er.ExamScheduleId,
                 ExamTypeId = schedule.ExamTypeId,
-                IsTheoryRegistered = offering.HasTheory,
-                IsPracticalRegistered = offering.HasPractical,
+                IsTheoryRegistered = theorySelected,
+                IsPracticalRegistered = practicalSelected,
                 IsActive = true,
                 IsSubmitted = false,
                 IsSupplementary = er.IsSupplementary,
@@ -648,9 +669,13 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 ObtainedMarksPracticalInternal = carriedPracticalInternal,
                 ObtainedMarksTheoryInternal = carriedTheoryInternal
             });
+
+            existingSelection[offeringId] = chosenLegs;
         }
 
-        matchedLog.SelectedSubjectIds = string.Join(",", finalIds.OrderBy(id => id));
+        matchedLog.SelectedSubjectIds = ReExamSubjectSelection.Format(
+            existingSelection.Where(kvp => finalIds.Contains(kvp.Key))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
 
         await context.SaveChangesAsync();
         return (true, "Subjects updated successfully.");
@@ -696,13 +721,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
     private static HashSet<int> ParseSelectedSubjectIds(string? selectedSubjectIds)
     {
-        return string.IsNullOrWhiteSpace(selectedSubjectIds)
-            ? []
-            : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(id => int.TryParse(id, out var value) ? value : (int?)null)
-                .Where(value => value.HasValue)
-                .Select(value => value!.Value)
-                .ToHashSet();
+        return ReExamSubjectSelection.Parse(selectedSubjectIds).Keys.ToHashSet();
     }
 
     // Rows created before the IsSupplementary stamping shipped (e.g. by a stale
@@ -940,6 +959,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             bool paymentConfirmed = false;
             string? invoiceNumber = null;
             HashSet<int>? selectedSubjectIds = null;
+            Dictionary<int, ReExamLegs>? selectedLegsByOffering = null;
 
             if (er.ApplicationVoucherId.HasValue
                 && erIdToSrId.TryGetValue(er.ApplicationVoucherId.Value, out var srId)
@@ -979,13 +999,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 paymentConfirmed = true;
                 invoiceNumber = matchedLog.InvoiceNumber;
                 paidAmount = matchedLog.Amount;
-                selectedSubjectIds = string.IsNullOrWhiteSpace(matchedLog.SelectedSubjectIds)
-                    ? new HashSet<int>()
-                    : matchedLog.SelectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                        .Select(id => int.TryParse(id, out var value) ? value : (int?)null)
-                        .Where(value => value.HasValue)
-                        .Select(value => value!.Value)
-                        .ToHashSet();
+                selectedSubjectIds = ReExamSubjectSelection.Parse(matchedLog.SelectedSubjectIds).Keys.ToHashSet();
+                selectedLegsByOffering = ReExamSubjectSelection.Parse(matchedLog.SelectedSubjectIds);
             }
 
             var schedule = er.ExamSchedule;
@@ -1049,13 +1064,21 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 }
 
                 subjects = eligible
-                    .Select(so => new ExamFormSubjectDto
+                    .Select(so =>
                     {
-                        SubjectOfferingId = so.Id,
-                        Code = so.SubjectCatalog!.SubjectCode,
-                        Name = so.SubjectCatalog.SubjectName,
-                        Theory = so.HasTheory,
-                        Practical = so.HasPractical
+                        // Leg-aware registration may cover fewer papers than the
+                        // offering provides; reflect what was actually paid for.
+                        var legs = selectedLegsByOffering?.GetValueOrDefault(so.Id) ?? ReExamLegs.None;
+                        return new ExamFormSubjectDto
+                        {
+                            SubjectOfferingId = so.Id,
+                            Code = so.SubjectCatalog!.SubjectCode,
+                            Name = so.SubjectCatalog.SubjectName,
+                            Theory = so.HasTheory,
+                            Practical = so.HasPractical,
+                            RegisteredTheory = legs == ReExamLegs.None ? so.HasTheory : legs.HasFlag(ReExamLegs.Theory),
+                            RegisteredPractical = legs == ReExamLegs.None ? so.HasPractical : legs.HasFlag(ReExamLegs.Practical)
+                        };
                     })
                     .ToList();
             }

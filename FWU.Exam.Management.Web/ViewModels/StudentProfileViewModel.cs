@@ -61,6 +61,15 @@ public class ReapplyExamViewModel
     public string? RejectionReason { get; set; }
     public List<SubjectFeeDetail> Subjects { get; set; } = new();
     public HashSet<int> PreSelectedSubjectIds { get; set; } = new();
+
+    // Schedule rates for the client-side charge-delta preview. The server
+    // recomputes everything authoritatively on submit.
+    public decimal ExamFee { get; set; }
+    public decimal PracticalFee { get; set; }
+
+    // True when an earlier top-up attempt was left unpaid and will be
+    // superseded by the next submission.
+    public bool HasUnpaidTopUp { get; set; }
 }
 
 public class SubjectFeeDetail
@@ -73,6 +82,15 @@ public class SubjectFeeDetail
     public decimal PracticalFee { get; set; }
     public bool IsSelected { get; set; }
     public bool IsFailed { get; set; }
+
+    // Per-leg failure/selection state (re-exam forms). A subject whose
+    // practical failed but theory passed shows FailedPractical=true and the
+    // student may re-register just that leg.
+    public bool FailedTheory { get; set; }
+    public bool FailedPractical { get; set; }
+    public bool SelectedTheory { get; set; }
+    public bool SelectedPractical { get; set; }
+
     public bool IsCompulsory { get; set; }
     public int SubjectTypeId { get; set; }
     public string? SubjectTypeName { get; set; }

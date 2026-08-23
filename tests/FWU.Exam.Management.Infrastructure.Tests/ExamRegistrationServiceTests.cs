@@ -388,7 +388,7 @@ public class ExamRegistrationServiceTests
         Assert.True(success, message);
 
         var log = db.Context.PaymentRequestLogs!.Single(l => l.ExamScheduleId == 21 && l.StudentRegistrationId == 1 && l.PaymentRequestLogStatus == 1);
-        Assert.Equal("301", log.SelectedSubjectIds);
+        Assert.Equal("301:T", log.SelectedSubjectIds);
 
         var removed = db.Context.ExamSubjectResults!.Single(r => r.Id == 1);
         Assert.False(removed.IsActive);
@@ -413,10 +413,14 @@ public class ExamRegistrationServiceTests
         Assert.True(success, message);
 
         var log = db.Context.PaymentRequestLogs!.Single(l => l.ExamScheduleId == 24 && l.StudentRegistrationId == 1 && l.PaymentRequestLogStatus == 1);
-        Assert.Equal("101,301", log.SelectedSubjectIds);
+        // Both rows are new additions stamped with their offering's papers
+        // (theory-only in this seed).
+        Assert.Equal("101:T,301:T", log.SelectedSubjectIds);
 
         var carried = db.Context.ExamSubjectResults!.Single(r => r.ExamRegistrationId == 6 && r.SubjectOfferingId == 101);
         Assert.True(carried.IsSupplementary);
+        // Offering 101 registers the theory leg only; its external was already
+        // sat, so everything carries forward untouched.
         Assert.Equal(50f, carried.ObtainedMarksPractical);
         Assert.Equal(40f, carried.ObtainedMarksTheoryInternal);
         Assert.Equal(45f, carried.ObtainedMarksPracticalInternal);
@@ -746,7 +750,9 @@ public class ExamRegistrationServiceTests
 
         Assert.True(success, message);
         var log = db.Context.PaymentRequestLogs!.Single(l => l.InvoiceNumber == "INV-CROSS");
-        Assert.Equal("301", log.SelectedSubjectIds);
+        // Legacy plain-id input is normalized to an explicit theory-leg token
+        // (offering 301 is theory-only).
+        Assert.Equal("301:T", log.SelectedSubjectIds);
         Assert.Contains(db.Context.ExamSubjectResults!, r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 301 && r.IsActive);
     }
 
