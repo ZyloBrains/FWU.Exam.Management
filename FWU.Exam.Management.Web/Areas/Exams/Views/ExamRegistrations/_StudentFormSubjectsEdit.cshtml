@@ -10,7 +10,7 @@
                 </div>
                 <div>
                     <h2 class="text-white font-bold text-base">Edit Registered Subjects</h2>
-                    <p class="text-amber-50 text-xs">@(Model.StudentName ?? "N/A") &middot; @(Model.RegistrationNumber ?? "-") &middot; @(Model.ExamScheduleName ?? "-")</p>
+                    <p class="text-amber-50 text-xs">@(Model.StudentName ?? "N/A") &middot; @(Model.RegistrationNumber ?? "-") &middot; @(Model.ExamScheduleName ?? "-")@(string.IsNullOrEmpty(Model.AcademicYearName) ? null : $" · {Model.AcademicYearName}")</p>
                 </div>
             </div>
             <button type="button" class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors" data-close-subjects-modal title="Close">

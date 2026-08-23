@@ -10,8 +10,10 @@ public interface IStudentDashboardService
 {
     Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email);
     Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId);
+    Task<bool> IsScheduleVisibleToStudentAsync(StudentRegistration student, string userId, int examScheduleId);
     Task<StudentRegistration?> GetStudentRegistrationByUserIdAsync(string userId);
     Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId);
+    Task<List<SubjectOffering>> GetReExamSelectableOfferingsAsync(int examScheduleId, string userId);
     Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId);
     Task<decimal> GetPracticalSubjectFeeForScheduleAsync(int examScheduleId);
     Task<bool> HasExistingPaymentAsync(int examScheduleId, int studentRegistrationId);
@@ -35,7 +37,11 @@ public interface IStudentDashboardService
     Task<List<ExamSubjectResult>> GetExamSubjectResultsForStudentAsync(string userId, int examScheduleId);
     Task<int?> GetCurrentSemesterIdForStudentAsync(string userId);
     Task<bool> HasFailedSubjectsInSemesterAsync(string userId, int semesterId, int programId);
+    bool IsReExamType(string? examTypeName);
+    Task<bool> HasAnyExamResultsInSemesterAsync(string userId, int semesterId, int programId);
+    Task<bool> IsEligibleForReExamAsync(string userId, int semesterId, int programId);
     Task<List<int>> GetFailedSubjectOfferingIdsForSemesterAsync(string userId, int semesterId, int programId);
+    Task<List<SubjectOffering>> GetFailedSubjectOfferingsForStudentAsync(int examScheduleId, string userId);
     Task<List<AdmitCard>> GetAdmitCardsForStudentAsync(string userId, int studentRegistrationId);
     Task<bool> HasAdmitCardForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId);
     Task<int?> GetAdmitCardIdForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId);

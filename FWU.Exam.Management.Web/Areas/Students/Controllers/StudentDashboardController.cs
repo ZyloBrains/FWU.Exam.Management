@@ -457,25 +457,13 @@ public class StudentDashboardController(
             return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
         }
 
-        var reExamTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Supplementary", "Partial", "Chance", "Special Chance" };
-        var isSupplementary = !string.IsNullOrEmpty(schedule.ExamType?.Name) && reExamTypes.Contains(schedule.ExamType.Name);
-        if (isSupplementary)
+        // Direct-URL guard: enforce the same visibility rules as the Exam Forms
+        // listing (regular = own semester instance; re-exam = strictly below the
+        // student's highest enrolled semester, plus failure/history eligibility).
+        if (!await dashboardService.IsScheduleVisibleToStudentAsync(registration, user.Id, examScheduleId))
         {
-            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterInstance.SemesterId, programId);
-            if (!hasFailed)
-            {
-                TempData["ErrorMessage"] = "You are not eligible for this supplementary exam.";
-                return RedirectToAction(nameof(ExamForms));
-            }
-        }
-        else
-        {
-            //var currentSemesterId = await dashboardService.GetCurrentSemesterIdForStudentAsync(user.Id);
-            //if (!currentSemesterId.HasValue || schedule.SemesterId != currentSemesterId.Value)
-            //{
-            //    TempData["ErrorMessage"] = "You are not eligible for this exam schedule.";
-            //    return RedirectToAction(nameof(ExamForms));
-            //}
+            TempData["ErrorMessage"] = "You are not eligible for this exam form.";
+            return RedirectToAction(nameof(ExamForms));
         }
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
@@ -492,24 +480,62 @@ public class StudentDashboardController(
             hasESewa = await context.ESewaConfigurations.AnyAsync();
         }
 
-        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsForSemesterAsync(user.Id, schedule.SemesterInstance.SemesterId, programId);
-        var isRegular = failedSubjectIds.Count == 0;
+        var isReExam = dashboardService.IsReExamType(schedule.ExamType?.Name);
+        var isRegular = !isReExam;
 
-        var failedSet = new HashSet<int>(failedSubjectIds);
-        var subjectList = subjects.Select(s => new SubjectFeeDetail
+        List<SubjectFeeDetail> subjectList;
+        List<int> selectedSubjectIds;
+
+        if (isRegular)
         {
-            SubjectOfferingId = s.Id,
-            SubjectName = s.SubjectCatalog?.SubjectName,
-            SubjectCode = s.SubjectCatalog?.SubjectCode,
-            HasTheory = s.HasTheory,
-            HasPractical = s.HasPractical,
-            PracticalFee = s.HasPractical ? practicalFee : 0,
-            IsSelected = isRegular ? s.IsCompulsory : failedSet.Contains(s.Id),
-            IsFailed = failedSet.Contains(s.Id),
-            IsCompulsory = s.IsCompulsory,
-            SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
-            SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
-        }).ToList();
+            subjectList = subjects.Select(s => new SubjectFeeDetail
+            {
+                SubjectOfferingId = s.Id,
+                SubjectName = s.SubjectCatalog?.SubjectName,
+                SubjectCode = s.SubjectCatalog?.SubjectCode,
+                HasTheory = s.HasTheory,
+                HasPractical = s.HasPractical,
+                PracticalFee = s.HasPractical ? practicalFee : 0,
+                IsSelected = s.IsCompulsory,
+                IsFailed = false,
+                IsCompulsory = s.IsCompulsory,
+                SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
+                SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
+            }).ToList();
+            selectedSubjectIds = subjectList.Where(s => s.IsCompulsory).Select(s => s.SubjectOfferingId).ToList();
+        }
+        else
+        {
+            // Re-exam forms: students with recorded failures get exactly those
+            // subjects (their own curriculum version) pre-selected. Students with
+            // no result history yet choose freely from THEIR batch curriculum.
+            // Practicals are never offered: only theory-bearing subjects appear,
+            // and no practical fee applies.
+            var failedOfferings = await dashboardService.GetFailedSubjectOfferingsForStudentAsync(examScheduleId, user.Id);
+            var knownFailures = failedOfferings.Count > 0;
+
+            subjectList = (knownFailures
+                    ? failedOfferings.AsEnumerable()
+                    : (await dashboardService.GetReExamSelectableOfferingsAsync(examScheduleId, user.Id)).AsEnumerable())
+                .Where(s => s.HasTheory)
+                .Select(s => new SubjectFeeDetail
+            {
+                SubjectOfferingId = s.Id,
+                SubjectName = s.SubjectCatalog?.SubjectName,
+                SubjectCode = s.SubjectCatalog?.SubjectCode,
+                HasTheory = s.HasTheory,
+                HasPractical = s.HasPractical,
+                PracticalFee = 0,
+                IsSelected = knownFailures,
+                IsFailed = knownFailures,
+                IsCompulsory = s.IsCompulsory,
+                SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
+                SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
+            }).ToList();
+            selectedSubjectIds = knownFailures
+                ? failedOfferings.Select(s => s.Id).ToList()
+                : [];
+        }
 
         var vm = new ExamPaymentViewModel
         {
@@ -528,7 +554,7 @@ public class StudentDashboardController(
             HasConnectIPS = hasConnectIPS,
             IsRegular = isRegular,
             Subjects = subjectList,
-            SelectedSubjectIds = isRegular ? subjectList.Where(s => s.IsCompulsory).Select(s => s.SubjectOfferingId).ToList() : failedSubjectIds,
+            SelectedSubjectIds = selectedSubjectIds,
             PaymentTypes = paymentTypes.Select(pt => new PaymentTypeDetail
             {
                 Id = pt.Id,
@@ -632,6 +658,14 @@ public class StudentDashboardController(
             user.Id, schedule.SemesterInstance.SemesterId, programId);
         var failedSet = new HashSet<int>(failedSubjectIds);
 
+        // Re-exam forms list theory papers from the student's own batch
+        // curriculum and never charge practical fees.
+        var isReExamForm = dashboardService.IsReExamType(schedule.ExamType?.Name);
+        if (isReExamForm)
+            subjects = (await dashboardService.GetReExamSelectableOfferingsAsync(examScheduleId, user.Id))
+                .Where(s => s.HasTheory)
+                .ToList();
+
         var subjectList = subjects.Select(s => new SubjectFeeDetail
         {
             SubjectOfferingId = s.Id,
@@ -639,7 +673,7 @@ public class StudentDashboardController(
             SubjectCode = s.SubjectCatalog?.SubjectCode,
             HasTheory = s.HasTheory,
             HasPractical = s.HasPractical,
-            PracticalFee = s.HasPractical ? practicalFee : 0,
+            PracticalFee = !isReExamForm && s.HasPractical ? practicalFee : 0,
             IsSelected = preSelected.Count > 0 ? preSelected.Contains(s.Id) : s.IsCompulsory,
             IsFailed = failedSet.Contains(s.Id),
             IsCompulsory = s.IsCompulsory,
@@ -1232,6 +1266,13 @@ public class StudentDashboardController(
 
     private async Task<(bool Ok, string? Error)> ValidateSubjectSelectionAsync(int examScheduleId, List<int> subjectIds)
     {
+        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
+        if (schedule == null)
+            return (false, "Exam schedule not found.");
+
+        if (dashboardService.IsReExamType(schedule.ExamType?.Name))
+            return await ValidateReExamSubjectSelectionAsync(examScheduleId, subjectIds);
+
         var offerings = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var offeringLookup = offerings.ToDictionary(o => o.Id);
         foreach (var id in subjectIds)
@@ -1255,6 +1296,37 @@ public class StudentDashboardController(
         }
 
         return (true, null);
+    }
+
+    // Re-exam forms draw subjects from the student's failed history, which may
+    // reference offerings of an older curriculum version than the schedule
+    // resolves to. Membership is therefore validated against every offering of
+    // the same program + semester number regardless of version; only theory
+    // papers are accepted (practicals were completed in the original attempt),
+    // and the elective-group rule is skipped (students may sit what they failed).
+    private async Task<(bool Ok, string? Error)> ValidateReExamSubjectSelectionAsync(int examScheduleId, List<int> subjectIds)
+    {
+        if (subjectIds.Count == 0)
+            return (false, "Please select at least one subject.");
+
+        var info = await context.ExamSchedules.AsNoTracking()
+            .Where(es => es.Id == examScheduleId)
+            .Select(es => new { es.ProgramId, SemesterNumber = es.SemesterInstance!.Semester!.Number })
+            .FirstOrDefaultAsync();
+        if (info == null)
+            return (false, "Exam schedule not found.");
+
+        var validIds = (await context.SubjectOfferings.AsNoTracking()
+                .Where(so => so.ProgramId == info.ProgramId
+                          && so.Semester != null && so.Semester.Number == info.SemesterNumber
+                          && so.HasTheory)
+                .Select(so => so.Id)
+                .ToListAsync())
+            .ToHashSet();
+
+        return subjectIds.All(validIds.Contains)
+            ? (true, null)
+            : (false, "Selected subject is not part of this exam schedule.");
     }
 
     private async Task HandlePostPaymentRegistration(int logId)
