@@ -186,6 +186,83 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetExamSchedulesForStudentAsync_ShowsPartial_WhenOnlyPendingResultsExistAfterPayment()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, Past, null));   // original sem1 exam
+            ctx.ExamSchedules.Add(TestData.Schedule(12, 1, TestData.Partial, Future, null)); // partial sem1
+
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 11));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 11, 1));
+            ctx.ExamSubjectResults.Add(TestData.Result(1, 1, 101, TestData.Regular, "F", 11));
+
+            ctx.ApplicationVouchers.Add(TestData.Voucher(2, 1, 12));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(2, 12, 1));
+            ctx.ExamSubjectResults.Add(new ExamSubjectResult
+            {
+                Id = 2,
+                TenantId = TestData.TenantId,
+                ExamRegistrationId = 2,
+                SubjectOfferingId = 101,
+                ExamTypeId = TestData.Partial,
+                ExamScheduleId = 12,
+                GradeLetter = null,
+                IsActive = true,
+                IsSubmitted = false
+            });
+        });
+
+        var student = db.Context.StudentRegistrations!.Single();
+        var service = CreateService(db);
+
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+
+        Assert.Contains(result, s => s.Id == 12);
+    }
+
+    [Fact]
+    public async Task GetExamSchedulesForStudentAsync_HidesPartial_WhenRetakePassedWithGradedResult()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, Past, null));   // original sem1 exam
+            ctx.ExamSchedules.Add(TestData.Schedule(12, 1, TestData.Partial, Future, null)); // partial sem1
+
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 11));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 11, 1));
+            ctx.ExamSubjectResults.Add(TestData.Result(1, 1, 101, TestData.Regular, "F", 11));
+
+            ctx.ApplicationVouchers.Add(TestData.Voucher(2, 1, 12));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(2, 12, 1));
+            ctx.ExamSubjectResults.Add(TestData.Result(2, 2, 101, TestData.Partial, "A", 12));
+        });
+
+        var student = db.Context.StudentRegistrations!.Single();
+        var service = CreateService(db);
+
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
     public async Task IsScheduleVisibleToStudentAsync_MatchesListingRules()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>

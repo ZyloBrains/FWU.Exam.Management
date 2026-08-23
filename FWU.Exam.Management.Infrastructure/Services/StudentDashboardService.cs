@@ -989,7 +989,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                        && esr.IsActive
                        && esr.ExamRegistration != null
                        && esr.ExamRegistration.IsActive
-                       && studentErIds.Contains(esr.ExamRegistrationId))
+                       && studentErIds.Contains(esr.ExamRegistrationId)
+                       && !string.IsNullOrEmpty(esr.GradeLetter))
             .AnyAsync();
     }
 
@@ -1054,7 +1055,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive
                       && (studentErIds.Count == 0 || studentErIds.Contains(er.Id)))
             .SelectMany(er => er.ExamSubjectResults!)
-            .Where(esr => esr.IsActive)
+            .Where(esr => esr.IsActive && !string.IsNullOrEmpty(esr.GradeLetter))
             .ToListAsync();
 
         var latestPerSubject = results
