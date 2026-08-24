@@ -23,7 +23,7 @@ namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 [Area("Students")]
 [Authorize(Roles = Role.BackOfficeRoles)]
 [RequirePermission("students.view")]
-public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context, IFileUploadHelper fileUploadHelper, IUserContext userContext) : Controller
+public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context, IFileUploadHelper fileUploadHelper, IUserContext userContext, ITenantContext tenantContext) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
     {
@@ -56,7 +56,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().OrderBy(f => f.Name).ToListAsync(), "Id", "Name");
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ApplyScope(userContext).OrderBy(c => c.Name).ToListAsync(), "Id", "Name");
         ViewBag.Levels = new SelectList(await context.Levels.AsNoTracking().OrderBy(l => l.LevelName).ToListAsync(), "Id", "LevelName");
-        ViewBag.Programs = new SelectList(await context.Programs.AsNoTracking().OrderBy(p => p.ProgramName).ToListAsync(), "Id", "ProgramName");
+        ViewBag.Programs = new SelectList(await context.Programs.AsNoTracking().ApplyTenantScope(tenantContext).OrderBy(p => p.ProgramName).ToListAsync(), "Id", "ProgramName");
         return View();
     }
 
