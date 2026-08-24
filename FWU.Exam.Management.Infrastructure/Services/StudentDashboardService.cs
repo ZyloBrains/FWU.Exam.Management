@@ -482,8 +482,18 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             return (false, "Exam schedule not found.");
 
         var semesterNumber = schedule.SemesterInstance.Semester?.Number ?? 0;
-        var resolvedVersion = await CurriculumVersionResolver.ResolveAsync(
-            context, schedule.ProgramId, schedule.SemesterInstance.AcademicYearId);
+
+        // Re-exam forms draw subjects from the student's own failure history,
+        // which may reference an older curriculum version than the schedule
+        // resolves to — membership is checked on program + semester number
+        // only (mirrors ValidateReExamSubjectSelectionAsync and
+        // ExamRegistrationService.UpdateExamFormSubjectsAsync). Regular forms
+        // stay pinned to the schedule's resolved version.
+        var isReExamSchedule = IsReExamType(schedule.ExamType?.Name);
+        var resolvedVersion = isReExamSchedule
+            ? null
+            : await CurriculumVersionResolver.ResolveAsync(
+                context, schedule.ProgramId, schedule.SemesterInstance.AcademicYearId);
 
         var validOfferings = await context.SubjectOfferings!
             .AsNoTracking()
@@ -787,11 +797,30 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     // Server-side fee recomputation: the flat schedule exam fee plus one
     // practical charge per ticked practical leg. The client-posted amount is
     // never trusted; gateway initiation and reapply deltas both derive from this.
+    // Legacy plain-id tokens ("101", no leg suffix) mean both available papers
+    // were registered, so their practical legs are charged too — matching how
+    // ResolveRegistrationLegs stamps the registration rows.
     public async Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection)
     {
         var examFee = await GetExamFeeForScheduleAsync(examScheduleId);
         var practicalFee = await GetPracticalSubjectFeeForScheduleAsync(examScheduleId);
-        var practicalLegs = (selection ?? []).Values.Count(v => v.HasFlag(ReExamLegs.Practical));
+
+        var sel = selection ?? new Dictionary<int, ReExamLegs>();
+        if (sel.Count == 0)
+            return examFee;
+
+        var practicalLegs = sel.Values.Count(v => v.HasFlag(ReExamLegs.Practical));
+
+        var legacyIds = sel.Where(kvp => kvp.Value == ReExamLegs.None)
+            .Select(kvp => kvp.Key)
+            .ToList();
+        if (legacyIds.Count > 0)
+        {
+            practicalLegs += await context.SubjectOfferings!.AsNoTracking()
+                .Where(so => legacyIds.Contains(so.Id) && so.HasPractical)
+                .CountAsync();
+        }
+
         return examFee + practicalLegs * practicalFee;
     }
 

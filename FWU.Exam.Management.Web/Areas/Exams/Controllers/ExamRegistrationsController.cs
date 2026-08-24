@@ -1,7 +1,8 @@
-using System.Text;
-using ClosedXML.Excel;
-using FWU.Exam.Management.Application.DTOs;
-using FWU.Exam.Management.Application.Interfaces;
+ using System.Text;
+ using ClosedXML.Excel;
+ using FWU.Exam.Management.Application.DTOs;
+ using FWU.Exam.Management.Application.Helpers;
+ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -238,9 +239,29 @@ public class ExamRegistrationsController(
     [HttpPost]
     [RequirePermission("examregistration.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateStudentFormSubjects(int id, List<int> subjectOfferingIds)
+    public async Task<IActionResult> UpdateStudentFormSubjects(
+        int id,
+        List<int> subjectOfferingIds,
+        List<int>? legTheory,
+        List<int>? legPractical)
     {
-        var (success, message) = await examRegistrationService.UpdateRegistrationSubjectsAsync(id, subjectOfferingIds);
+        Dictionary<int, ReExamLegs>? subjectLegs = null;
+        if ((legTheory?.Count ?? 0) > 0 || (legPractical?.Count ?? 0) > 0)
+        {
+            subjectLegs = [];
+            foreach (var offeringId in legTheory ?? [])
+            {
+                subjectLegs[offeringId] = ReExamLegs.Theory;
+            }
+            foreach (var offeringId in legPractical ?? [])
+            {
+                subjectLegs[offeringId] = subjectLegs.TryGetValue(offeringId, out var legs)
+                    ? legs | ReExamLegs.Practical
+                    : ReExamLegs.Practical;
+            }
+        }
+
+        var (success, message) = await examRegistrationService.UpdateRegistrationSubjectsAsync(id, subjectOfferingIds, subjectLegs);
         return Json(new { success, message });
     }
 

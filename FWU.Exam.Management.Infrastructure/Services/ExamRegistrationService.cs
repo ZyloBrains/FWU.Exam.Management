@@ -379,7 +379,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         {
             ExamRegistrationId = er.Id,
             ExamScheduleName = er.ExamSchedule!.ExamScheduleName,
-            ExamTypeName = er.ExamSchedule.ExamType?.Name
+            ExamTypeName = er.ExamSchedule.ExamType?.Name,
+            IsReExamForm = IsReExamForm(er)
         };
 
         var matchedLog = await FindConfirmedPaymentLogAsync(er);
@@ -521,7 +522,10 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         return dto;
     }
 
-    public async Task<(bool Success, string Message)> UpdateRegistrationSubjectsAsync(int examRegistrationId, List<int> subjectOfferingIds)
+    public async Task<(bool Success, string Message)> UpdateRegistrationSubjectsAsync(
+        int examRegistrationId,
+        List<int> subjectOfferingIds,
+        Dictionary<int, ReExamLegs>? subjectLegs = null)
     {
         var requestedIds = (subjectOfferingIds ?? [])
             .Where(id => id > 0)
@@ -564,6 +568,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
         var validOfferings = await context.SubjectOfferings
             .AsNoTracking()
+            .Include(so => so.SubjectCatalog)
             .Where(so => requestedIds.Contains(so.Id)
                       && so.ProgramId == schedule.ProgramId
                       && so.Semester != null && so.Semester.Number == semesterNumber
@@ -593,9 +598,50 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
         var finalIds = validOfferings.Keys.ToHashSet();
 
+        // Desired papers per retained offering. On leg-aware re-exam forms the
+        // admin's explicit choice wins; an empty map keeps the legacy behaviour
+        // of falling back to stored tokens / both available papers.
+        Dictionary<int, ReExamLegs> desiredLegs = [];
+        if (isReExam && subjectLegs is { Count: > 0 })
+        {
+            foreach (var offeringId in finalIds)
+            {
+                var offering = validOfferings[offeringId];
+                var requested = subjectLegs.GetValueOrDefault(offeringId);
+                var chosen = (requested.HasFlag(ReExamLegs.Theory) && offering.HasTheory ? ReExamLegs.Theory : ReExamLegs.None)
+                           | (requested.HasFlag(ReExamLegs.Practical) && offering.HasPractical ? ReExamLegs.Practical : ReExamLegs.None);
+                if (chosen == ReExamLegs.None)
+                {
+                    var label = offering.SubjectCatalog?.SubjectName
+                                ?? offering.SubjectCatalog?.SubjectCode
+                                ?? $"offering {offeringId}";
+                    return (false, $"Select at least one available exam paper for \"{label}\".");
+                }
+                desiredLegs[offeringId] = chosen;
+            }
+        }
+
         foreach (var result in activeByOffering.Values.Where(r => !finalIds.Contains(r.SubjectOfferingId)))
         {
             result.IsActive = false;
+        }
+
+        // Changing the papers of an already-registered subject retires its row
+        // so it is recreated below through the same carry-forward path used for
+        // brand-new registrations.
+        if (desiredLegs.Count > 0)
+        {
+            foreach (var result in activeByOffering.Values.ToList())
+            {
+                if (!desiredLegs.TryGetValue(result.SubjectOfferingId, out var wanted)) continue;
+
+                var current = (result.IsTheoryRegistered == true ? ReExamLegs.Theory : ReExamLegs.None)
+                            | (result.IsPracticalRegistered == true ? ReExamLegs.Practical : ReExamLegs.None);
+                if (current == wanted) continue;
+
+                result.IsActive = false;
+                activeByOffering.Remove(result.SubjectOfferingId);
+            }
         }
 
         HashSet<int>? previousScheduleIds = null;
@@ -618,12 +664,14 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         {
             var offering = validOfferings[offeringId];
 
-            // Chosen legs for this subject; fall back to the offering's own
-            // papers when the payment log carries no explicit leg entry.
-            var chosenLegs = existingSelection.TryGetValue(offeringId, out var legs) && legs != ReExamLegs.None
-                ? legs
-                : (offering.HasTheory ? ReExamLegs.Theory : ReExamLegs.None)
-                | (offering.HasPractical ? ReExamLegs.Practical : ReExamLegs.None);
+            // Chosen legs for this subject: admin choice on leg-aware forms,
+            // else the stored token, else the offering's own papers.
+            var chosenLegs = desiredLegs.TryGetValue(offeringId, out var adminLegs)
+                ? adminLegs
+                : existingSelection.TryGetValue(offeringId, out var legs) && legs != ReExamLegs.None
+                    ? legs
+                    : (offering.HasTheory ? ReExamLegs.Theory : ReExamLegs.None)
+                    | (offering.HasPractical ? ReExamLegs.Practical : ReExamLegs.None);
             var theorySelected = chosenLegs.HasFlag(ReExamLegs.Theory);
             var practicalSelected = chosenLegs.HasFlag(ReExamLegs.Practical);
 
@@ -671,6 +719,13 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             });
 
             existingSelection[offeringId] = chosenLegs;
+        }
+
+        // Tokens mirror the final desired state, including retained subjects
+        // whose stored entry was legacy or stale.
+        foreach (var kvp in desiredLegs)
+        {
+            existingSelection[kvp.Key] = kvp.Value;
         }
 
         matchedLog.SelectedSubjectIds = ReExamSubjectSelection.Format(

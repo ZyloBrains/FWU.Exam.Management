@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
@@ -754,6 +755,130 @@ public class ExamRegistrationServiceTests
         // (offering 301 is theory-only).
         Assert.Equal("301:T", log.SelectedSubjectIds);
         Assert.Contains(db.Context.ExamSubjectResults!, r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 301 && r.IsActive);
+    }
+
+    [Fact]
+    public async Task UpdateRegistrationSubjectsAsync_ExplicitLegs_RegisterOnlyChosenPapers()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), ctx =>
+        {
+            SeedPartialForm(ctx);
+
+            var both = TestData.Offering(302, 1, TestData.ProgramId);
+            both.HasPractical = true;
+            ctx.SubjectOfferings.Add(both);
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.UpdateRegistrationSubjectsAsync(6,
+            [101, 302],
+            new Dictionary<int, ReExamLegs>
+            {
+                [101] = ReExamLegs.Theory,
+                [302] = ReExamLegs.Theory | ReExamLegs.Practical
+            });
+
+        Assert.True(success, message);
+
+        var log = db.Context.PaymentRequestLogs!.Single(l => l.InvoiceNumber == "INV-PARTIAL");
+        Assert.Equal("101:T,302:TP", log.SelectedSubjectIds);
+
+        var theoryRow = db.Context.ExamSubjectResults!.Single(r => r.ExamRegistrationId == 6 && r.SubjectOfferingId == 101);
+        Assert.True(theoryRow.IsTheoryRegistered);
+        Assert.False(theoryRow.IsPracticalRegistered);
+
+        var bothRow = db.Context.ExamSubjectResults!.Single(r => r.ExamRegistrationId == 6 && r.SubjectOfferingId == 302);
+        Assert.True(bothRow.IsTheoryRegistered);
+        Assert.True(bothRow.IsPracticalRegistered);
+    }
+
+    [Fact]
+    public async Task UpdateRegistrationSubjectsAsync_LegChangeOnRegisteredSubject_RetiresAndRecreatesRow()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), ctx =>
+        {
+            SeedPartialForm(ctx);
+
+            var both = TestData.Offering(302, 1, TestData.ProgramId);
+            both.HasPractical = true;
+            ctx.SubjectOfferings.Add(both);
+
+            // Previous regular attempt sat both papers of 302.
+            var previousBoth = TestData.Result(11, 7, 302, TestData.Regular, "C", 25);
+            previousBoth.IsTheoryRegistered = true;
+            previousBoth.IsPracticalRegistered = true;
+            previousBoth.ObtainedMarksPractical = 55;
+            previousBoth.ObtainedMarksTheoryInternal = 12;
+            previousBoth.ObtainedMarksPracticalInternal = 14;
+            ctx.ExamSubjectResults!.Add(previousBoth);
+
+            // Currently registered on the partial form for both papers.
+            var currentRow = TestData.Result(20, 6, 302, TestData.Partial, null, 24);
+            currentRow.IsTheoryRegistered = true;
+            currentRow.IsPracticalRegistered = true;
+            currentRow.ObtainedMarksPractical = 55;
+            currentRow.ObtainedMarksTheoryInternal = 12;
+            currentRow.ObtainedMarksPracticalInternal = 14;
+            ctx.ExamSubjectResults!.Add(currentRow);
+        });
+        db.Context.PaymentRequestLogs!.Single(l => l.InvoiceNumber == "INV-PARTIAL").SelectedSubjectIds = "302";
+        db.Context.SaveChanges();
+        var service = CreateService(db);
+
+        var (success, message) = await service.UpdateRegistrationSubjectsAsync(6,
+            [302], new Dictionary<int, ReExamLegs> { [302] = ReExamLegs.Practical });
+
+        Assert.True(success, message);
+
+        var retired = db.Context.ExamSubjectResults!.Single(r => r.Id == 20);
+        Assert.False(retired.IsActive);
+
+        var recreated = db.Context.ExamSubjectResults!.Single(r => r.ExamRegistrationId == 6 && r.IsActive);
+        Assert.False(recreated.IsTheoryRegistered);
+        Assert.True(recreated.IsPracticalRegistered);
+        // The re-sat practical's external is cleared for fresh entry; internals carry forward.
+        Assert.Null(recreated.ObtainedMarksPractical);
+        Assert.Equal(12f, recreated.ObtainedMarksTheoryInternal);
+        Assert.Equal(14f, recreated.ObtainedMarksPracticalInternal);
+
+        var log = db.Context.PaymentRequestLogs!.Single(l => l.InvoiceNumber == "INV-PARTIAL");
+        Assert.Equal("302:P", log.SelectedSubjectIds);
+    }
+
+    [Fact]
+    public async Task UpdateRegistrationSubjectsAsync_UnavailableLeg_IsRejected()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedPartialForm);
+        var service = CreateService(db);
+
+        // Offering 301 is theory-only.
+        var (success, message) = await service.UpdateRegistrationSubjectsAsync(6,
+            [301], new Dictionary<int, ReExamLegs> { [301] = ReExamLegs.Practical });
+
+        Assert.False(success);
+        Assert.Contains("Select at least one available exam paper", message);
+        Assert.DoesNotContain(db.Context.ExamSubjectResults!, r => r.ExamRegistrationId == 6);
+        Assert.Equal("101", db.Context.PaymentRequestLogs!.Single(l => l.InvoiceNumber == "INV-PARTIAL").SelectedSubjectIds);
+    }
+
+    [Fact]
+    public async Task UpdateRegistrationSubjectsAsync_RegularForm_IgnoresSubmittedLegs()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedFormsWithExistingResult);
+        var service = CreateService(db);
+
+        var (success, message) = await service.UpdateRegistrationSubjectsAsync(1,
+            [301], new Dictionary<int, ReExamLegs> { [301] = ReExamLegs.Theory | ReExamLegs.Practical });
+
+        Assert.True(success, message);
+
+        // Regular forms register whole subjects: the fallback papers only ("T" here).
+        var log = db.Context.PaymentRequestLogs!.Single(l => l.ExamScheduleId == 21 && l.StudentRegistrationId == 1 && l.PaymentRequestLogStatus == 1);
+        Assert.Equal("301:T", log.SelectedSubjectIds);
+
+        var row = db.Context.ExamSubjectResults!.Single(r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 301);
+        Assert.True(row.IsTheoryRegistered);
+        Assert.False(row.IsPracticalRegistered);
     }
 
     private static void SeedFormsWithExistingResult(AppDbContext ctx)

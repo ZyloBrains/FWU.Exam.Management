@@ -475,7 +475,24 @@
             $(document).on('click', '.subject-row', function (e) {
                 if ($(e.target).is('input')) return;
                 var $cb = $(this).find('.subject-checkbox');
-                $cb.prop('checked', !$cb.prop('checked'));
+                $cb.prop('checked', !$cb.prop('checked')).trigger('change');
+            });
+
+            // Keep the row checkbox and its theory/practical paper checkboxes
+            // in sync on leg-aware (re-exam) edit forms.
+            $(document).on('change', '.leg-checkbox', function () {
+                var $row = $(this).closest('.subject-row');
+                if (this.checked) {
+                    $row.find('.subject-checkbox').prop('checked', true);
+                } else if ($row.find('.leg-checkbox:checked').length === 0) {
+                    $row.find('.subject-checkbox').prop('checked', false);
+                }
+            });
+
+            $(document).on('change', '.subject-checkbox', function () {
+                if (!this.checked) {
+                    $(this).closest('.subject-row').find('.leg-checkbox').prop('checked', false);
+                }
             });
 
             function showToast(message, isSuccess) {

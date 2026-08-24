@@ -70,6 +70,13 @@ public class ReapplyExamViewModel
     // True when an earlier top-up attempt was left unpaid and will be
     // superseded by the next submission.
     public bool HasUnpaidTopUp { get; set; }
+
+    // Partial (re-exam) schedules allow free per-leg choice; regular
+    // schedules lock every tick to the previously paid selection.
+    public bool IsPartialForm { get; set; }
+
+    // Gateways the reapply top-up flow can settle (eSewa / Khalti).
+    public List<PaymentTypeDetail> PaymentTypes { get; set; } = new();
 }
 
 public class SubjectFeeDetail

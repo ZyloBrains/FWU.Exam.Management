@@ -661,12 +661,29 @@ public class StudentDashboardController(
             .FirstOrDefaultAsync();
 
         var preSelection = ReExamSubjectSelection.Parse(paidLog?.SelectedSubjectIds);
+        if (preSelection.Count == 0)
+        {
+            // Legacy logs may predate leg-token storage; the rejected form's
+            // registered rows are the ground truth of what was selected before.
+            foreach (var row in await dashboardService.GetExamSubjectResultsForStudentAsync(user.Id, examScheduleId))
+            {
+                preSelection[row.SubjectOfferingId] =
+                    (row.IsTheoryRegistered == true ? ReExamLegs.Theory : ReExamLegs.None)
+                    | (row.IsPracticalRegistered == true ? ReExamLegs.Practical : ReExamLegs.None);
+            }
+        }
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var practicalFee = await dashboardService.GetPracticalSubjectFeeForScheduleAsync(examScheduleId);
 
-        // Re-exam forms list every offering of the student's own batch curriculum
-        // and offer per-leg (theory/practical) selection.
+        // Reapply supports only gateways the POST flow can actually settle
+        // (eSewa / Khalti); anything else configured stays hidden here.
+        var supportedPaymentTypes = (await dashboardService.GetActivePaymentTypesAsync())
+            .Where(pt => pt.PaymentTypeName != null &&
+                         (pt.PaymentTypeName.Contains("esewa", StringComparison.OrdinalIgnoreCase) ||
+                          pt.PaymentTypeName.Contains("khalti", StringComparison.OrdinalIgnoreCase)))
+            .Select(pt => new PaymentTypeDetail { Id = pt.Id, Name = pt.PaymentTypeName, LogoUrl = pt.LogoUrl })
+            .ToList();
         var isReExamForm = dashboardService.IsReExamType(schedule.ExamType?.Name);
         Dictionary<int, ReExamLegs> failedLegsById = new();
         if (isReExamForm)
@@ -687,9 +704,7 @@ public class StudentDashboardController(
         {
             var hasExplicitChoice = preSelection.TryGetValue(s.Id, out var preLegs) && preLegs != ReExamLegs.None;
             var failedLegs = failedLegsById.GetValueOrDefault(s.Id);
-            var isSelected = preSelection.Count > 0
-                ? preSelection.ContainsKey(s.Id)
-                : s.IsCompulsory;
+            var isSelected = preSelection.ContainsKey(s.Id);
 
             bool selTheory;
             bool selPractical;
@@ -706,10 +721,9 @@ public class StudentDashboardController(
             }
             else
             {
-                // Free-select convenience default: compulsory subjects arrive
-                // pre-ticked with their available legs (student can untick).
-                selTheory = s.IsCompulsory && s.HasTheory;
-                selPractical = s.IsCompulsory && s.HasPractical;
+                // Not previously selected: start clean — no compulsory defaulting.
+                selTheory = false;
+                selPractical = false;
             }
 
             return new SubjectFeeDetail
@@ -719,7 +733,7 @@ public class StudentDashboardController(
                 SubjectCode = s.SubjectCatalog?.SubjectCode,
                 HasTheory = s.HasTheory,
                 HasPractical = s.HasPractical,
-                PracticalFee = !isReExamForm && s.HasPractical ? practicalFee : 0,
+                PracticalFee = s.HasPractical ? practicalFee : 0,
                 IsSelected = isSelected,
                 IsFailed = failedLegs != ReExamLegs.None,
                 FailedTheory = failedLegs.HasFlag(ReExamLegs.Theory),
@@ -745,7 +759,9 @@ public class StudentDashboardController(
             PreSelectedSubjectIds = new HashSet<int>(preSelection.Keys),
             ExamFee = await dashboardService.GetExamFeeForScheduleAsync(examScheduleId),
             PracticalFee = practicalFee,
-            HasUnpaidTopUp = await dashboardService.HasOpenApplyAgainPaymentAsync(examScheduleId, registration.Id)
+            HasUnpaidTopUp = await dashboardService.HasOpenApplyAgainPaymentAsync(examScheduleId, registration.Id),
+            IsPartialForm = isReExamForm,
+            PaymentTypes = supportedPaymentTypes
         };
 
         return View(vm);
@@ -776,6 +792,40 @@ public class StudentDashboardController(
             return RedirectToAction(nameof(ExamForms));
         }
 
+        var paidLog = await context.PaymentRequestLogs!.AsNoTracking()
+            .Where(prl => prl.ExamScheduleId == examScheduleId
+                       && prl.StudentRegistrationId == registration.Id
+                       && prl.PaymentRequestLogStatus == 1)
+            .OrderByDescending(pl => pl.Id)
+            .FirstOrDefaultAsync();
+
+        // Regular-schedule reapply is a locked resubmission: ignore any
+        // client-posted selection and restore exactly what the confirmed
+        // payment covered. Partial (re-exam) schedules keep per-leg choice.
+        if (!dashboardService.IsReExamType(schedule.ExamType?.Name))
+        {
+            if (paidLog == null || string.IsNullOrWhiteSpace(paidLog.SelectedSubjectIds))
+            {
+                // Legacy log without subject tokens: default to the schedule's
+                // compulsory offerings with their available legs (mirrors the
+                // GET view's pre-tick fallback).
+                var lockedSelection = new Dictionary<int, ReExamLegs>();
+                foreach (var offering in await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId))
+                {
+                    if (!offering.IsCompulsory) continue;
+                    var legs = ReExamLegs.None;
+                    if (offering.HasTheory) legs |= ReExamLegs.Theory;
+                    if (offering.HasPractical) legs |= ReExamLegs.Practical;
+                    lockedSelection[offering.Id] = legs;
+                }
+                selectedSubjectIds = ReExamSubjectSelection.Format(lockedSelection);
+            }
+            else
+            {
+                selectedSubjectIds = paidLog.SelectedSubjectIds;
+            }
+        }
+
         var selection = ReExamSubjectSelection.Parse(selectedSubjectIds);
         var subjectIds = selection.Keys.ToList();
         if (subjectIds.Count == 0)
@@ -784,19 +834,16 @@ public class StudentDashboardController(
             return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
         }
 
+        // Upgrade legacy plain-id tokens to explicit legs so validation, the
+        // charge-delta math and every stored log carry unambiguous data.
+        selection = await NormalizeLegacySelectionLegsAsync(examScheduleId, selection);
+
         var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection);
         if (!selectionValidation.Ok)
         {
             TempData["ErrorMessage"] = selectionValidation.Error;
             return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
         }
-
-        var paidLog = await context.PaymentRequestLogs!.AsNoTracking()
-            .Where(prl => prl.ExamScheduleId == examScheduleId
-                       && prl.StudentRegistrationId == registration.Id
-                       && prl.PaymentRequestLogStatus == 1)
-            .OrderByDescending(pl => pl.Id)
-            .FirstOrDefaultAsync();
 
         // Charge-delta provision: the original payment stays with the college.
         // Selecting extra papers (e.g. a practical leg that was skipped the
@@ -1474,16 +1521,78 @@ public class StudentDashboardController(
             if (!offeringLookup.TryGetValue(offeringId, out var offering))
                 return (false, "Selected subject is not part of this exam schedule.");
 
-            if (legs == ReExamLegs.None || (!legs.HasFlag(ReExamLegs.Theory) && !legs.HasFlag(ReExamLegs.Practical)))
+            // Legacy plain-id tokens carry ReExamLegs.None meaning "both
+            // available papers" (see ReExamSubjectSelection.Parse) — resolve
+            // them instead of rejecting.
+            var effectiveLegs = legs == ReExamLegs.None
+                ? (offering.HasTheory ? ReExamLegs.Theory : ReExamLegs.None)
+                  | (offering.HasPractical ? ReExamLegs.Practical : ReExamLegs.None)
+                : legs;
+
+            if (effectiveLegs == ReExamLegs.None || (!effectiveLegs.HasFlag(ReExamLegs.Theory) && !effectiveLegs.HasFlag(ReExamLegs.Practical)))
                 return (false, $"Please select at least one exam paper (theory or practical) for every chosen subject.");
 
-            if (legs.HasFlag(ReExamLegs.Theory) && !offering.HasTheory)
+            if (effectiveLegs.HasFlag(ReExamLegs.Theory) && !offering.HasTheory)
                 return (false, "One of the selected subjects does not offer a theory paper.");
-            if (legs.HasFlag(ReExamLegs.Practical) && !offering.HasPractical)
+            if (effectiveLegs.HasFlag(ReExamLegs.Practical) && !offering.HasPractical)
                 return (false, "One of the selected subjects does not offer a practical paper.");
         }
 
         return (true, null);
+    }
+
+    // Legacy plain-id tokens ("301") parse to ReExamLegs.None meaning "both
+    // available papers". Upgrade them to explicit legs so validation, the
+    // charge-delta math and every stored log carry unambiguous data.
+    private async Task<Dictionary<int, ReExamLegs>> NormalizeLegacySelectionLegsAsync(
+        int examScheduleId, Dictionary<int, ReExamLegs> selection)
+    {
+        var legacyIds = selection.Where(kvp => kvp.Value == ReExamLegs.None)
+            .Select(kvp => kvp.Key)
+            .ToList();
+        if (legacyIds.Count == 0)
+            return selection;
+
+        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
+        if (schedule == null)
+            return selection;
+
+        Dictionary<int, (bool HasTheory, bool HasPractical)> availability;
+        if (dashboardService.IsReExamType(schedule.ExamType?.Name))
+        {
+            // Same membership pool the re-exam validator uses: every offering
+            // of the program + semester number regardless of curriculum version.
+            var info = await context.ExamSchedules.AsNoTracking()
+                .Where(es => es.Id == examScheduleId)
+                .Select(es => new { es.ProgramId, SemesterNumber = es.SemesterInstance!.Semester!.Number })
+                .FirstOrDefaultAsync();
+            if (info == null)
+                return selection;
+
+            availability = await context.SubjectOfferings.AsNoTracking()
+                .Where(so => so.ProgramId == info.ProgramId
+                          && so.Semester != null && so.Semester.Number == info.SemesterNumber)
+                .Select(so => new { so.Id, so.HasTheory, so.HasPractical })
+                .ToDictionaryAsync(x => x.Id, x => (x.HasTheory, x.HasPractical));
+        }
+        else
+        {
+            availability = (await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId))
+                .ToDictionary(o => o.Id, o => (o.HasTheory, o.HasPractical));
+        }
+
+        foreach (var offeringId in legacyIds)
+        {
+            if (!availability.TryGetValue(offeringId, out var flags))
+                continue;
+
+            var legs = ReExamLegs.None;
+            if (flags.HasTheory) legs |= ReExamLegs.Theory;
+            if (flags.HasPractical) legs |= ReExamLegs.Practical;
+            selection[offeringId] = legs;
+        }
+
+        return selection;
     }
 
     private async Task HandlePostPaymentRegistration(int logId)

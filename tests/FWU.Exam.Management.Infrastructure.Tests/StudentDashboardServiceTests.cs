@@ -693,7 +693,7 @@ public class StudentDashboardServiceTests
             Assert.NotNull(o.SubjectCatalog);
             Assert.NotNull(o.SubjectCatalog!.SubjectType);
         });
-        var electiveRow = Assert.Single(offerings.Where(o => !o.IsCompulsory));
+        var electiveRow = Assert.Single(offerings, o => !o.IsCompulsory);
         Assert.Equal("Elective Group A", electiveRow.SubjectCatalog!.SubjectType!.Name);
     }
 
@@ -1272,6 +1272,89 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task ReapplyExamRegistrationAsync_PartialForm_SubjectFromOlderCurriculumVersion_IsAccepted()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+            ctx.ExamSchedules.Local.Single(s => s.Id == 21).ExamTypeId = TestData.Partial;
+
+            // The schedule's academic year resolves to version 2…
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 1,
+                TenantId = TestData.TenantId,
+                Name = "Curriculum v1",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 1,
+                IsActive = true
+            });
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 2,
+                TenantId = TestData.TenantId,
+                Name = "Curriculum v2",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = TestData.AcademicYearId,
+                IsActive = true
+            });
+
+            // …but the student's subject belongs to the older version 1.
+            var oldOffering = TestData.Offering(302, 1, TestData.ProgramId);
+            oldOffering.CurriculumVersionId = 1;
+            ctx.SubjectOfferings.Add(oldOffering);
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 302 });
+
+        Assert.True(success, message);
+        Assert.True(db.Context.ExamSubjectResults!
+            .Single(r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 302).IsActive);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_RegularForm_SubjectOutsideResolvedVersion_IsRejected()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 1,
+                TenantId = TestData.TenantId,
+                Name = "Curriculum v1",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 1,
+                IsActive = true
+            });
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 2,
+                TenantId = TestData.TenantId,
+                Name = "Curriculum v2",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = TestData.AcademicYearId,
+                IsActive = true
+            });
+
+            // Regular forms stay pinned to the schedule's resolved version.
+            var oldOffering = TestData.Offering(302, 1, TestData.ProgramId);
+            oldOffering.CurriculumVersionId = 1;
+            ctx.SubjectOfferings.Add(oldOffering);
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 302 });
+
+        Assert.False(success);
+        Assert.Equal("One or more selected subjects are not offered for this exam schedule.", message);
+    }
+
+    [Fact]
     public async Task ReapplyExamRegistrationAsync_ReplacesRemarks_NeverAppends()
     {
         var longReason = new string('x', 200);
@@ -1524,6 +1607,50 @@ public class StudentDashboardServiceTests
         var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>());
 
         Assert.Equal(1000m, total);
+    }
+
+    [Fact]
+    public async Task ComputeSelectionFeeAsync_LegacyPlainIdToken_ChargesAvailablePracticalLeg()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.ExamSchedules.Add(FeeSchedule());
+            var offering = TestData.Offering(401, 1, TestData.ProgramId);
+            offering.HasPractical = true;
+            ctx.SubjectOfferings.Add(offering);
+        });
+        var service = CreateService(db);
+
+        // "401" without a leg suffix is a legacy token meaning both available
+        // papers were registered, so its practical leg is charged too.
+        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>
+        {
+            [401] = ReExamLegs.None
+        });
+
+        Assert.Equal(1000m + 1500m, total);
+    }
+
+    [Fact]
+    public async Task ComputeSelectionFeeAsync_MixedExplicitAndLegacyTokens_OnlyAvailablePracticalsCharged()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.ExamSchedules.Add(FeeSchedule());
+            // Theory-only subject: its legacy token contributes no practical fee.
+            ctx.SubjectOfferings.Add(TestData.Offering(402, 1, TestData.ProgramId));
+        });
+        var service = CreateService(db);
+
+        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>
+        {
+            [302] = ReExamLegs.Theory | ReExamLegs.Practical,
+            [402] = ReExamLegs.None
+        });
+
+        Assert.Equal(1000m + 1500m, total);
     }
 
     [Fact]

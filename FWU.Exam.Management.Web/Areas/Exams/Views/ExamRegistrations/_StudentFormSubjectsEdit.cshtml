@@ -41,6 +41,10 @@
                         @(string.Equals(Model.ExamTypeName, "Partial", StringComparison.OrdinalIgnoreCase) || string.Equals(Model.ExamTypeName, "Supplementary", StringComparison.OrdinalIgnoreCase)
                             ? "Newly added subjects for this re-exam will carry forward previous practical/internal marks where available."
                             : null)
+                        @if (Model.IsReExamForm)
+                        {
+                            <text>You can also choose which papers (theory/practical) each subject registers for.</text>
+                        }
                     </p>
                     <div class="overflow-x-auto rounded-lg border border-gray-200">
                         <table class="w-full text-sm text-left">
@@ -66,7 +70,13 @@
                                             <td class="px-4 py-2.5 text-gray-700">@(subject.Code ?? "-")</td>
                                             <td class="px-4 py-2.5 text-gray-800">@(subject.Name ?? "-")</td>
                                             <td class="px-4 py-2.5 text-center">
-                                                @if (subject.SelectedTheory)
+                                                @if (Model.IsReExamForm)
+                                                {
+                                                    <input type="checkbox" name="legTheory" value="@subject.SubjectOfferingId"
+                                                           class="w-4 h-4 accent-emerald-600 leg-checkbox"
+                                                           checked="@subject.SelectedTheory" disabled="@(!subject.Theory)" />
+                                                }
+                                                else if (subject.SelectedTheory)
                                                 {
                                                     <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-blue-600"><i class="fas fa-check text-[10px]"></i></span>
                                                 }
@@ -76,7 +86,13 @@
                                                 }
                                             </td>
                                             <td class="px-4 py-2.5 text-center">
-                                                @if (subject.SelectedPractical)
+                                                @if (Model.IsReExamForm)
+                                                {
+                                                    <input type="checkbox" name="legPractical" value="@subject.SubjectOfferingId"
+                                                           class="w-4 h-4 accent-amber-600 leg-checkbox"
+                                                           checked="@subject.SelectedPractical" disabled="@(!subject.Practical)" />
+                                                }
+                                                else if (subject.SelectedPractical)
                                                 {
                                                     <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-600"><i class="fas fa-check text-[10px]"></i></span>
                                                 }

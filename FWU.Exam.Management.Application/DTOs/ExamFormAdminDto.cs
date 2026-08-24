@@ -56,6 +56,11 @@ public class ExamFormEditableSubjectsDto
     public string? ExamScheduleName { get; set; }
     public string? AcademicYearName { get; set; }
     public string? ExamTypeName { get; set; }
+
+    // Re-exam/partial forms let the admin pick individual theory/practical
+    // papers instead of whole subjects only.
+    public bool IsReExamForm { get; set; }
+
     public bool CanEdit { get; set; }
     public string? NotEditableReason { get; set; }
     public List<ExamFormSelectableSubjectDto> AvailableSubjects { get; set; } = [];
