@@ -837,7 +837,14 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
             var file = files.FirstOrDefault(f => f.Name == $"Qualifications.DocumentFile_{i}");
             if (file != null && file.Length > 0)
             {
-                q.DocumentPath = await fileUploadHelper.UploadAsync(file, "documents");
+                try
+                {
+                    q.DocumentPath = await fileUploadHelper.UploadAsync(file, "documents", Helpers.FileUploadHelper.MaxDocumentSizeBytes, Helpers.FileUploadHelper.DocumentAllowedExtensions);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    TempData["ErrorMessage"] = $"Qualification document was not saved: {ex.Message}";
+                }
             }
 
             qualifications.Add(q);

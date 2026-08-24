@@ -221,7 +221,7 @@ public class ProfileController(
         {
             try
             {
-                var path = await fileUploadHelper.UploadAsync(photo, "uploads/photos");
+                var path = await fileUploadHelper.UploadAsync(photo, "uploads/photos", Helpers.FileUploadHelper.MaxPhotoSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
                 if (path != null)
                     user.ProfilePath = path;
             }
@@ -238,7 +238,7 @@ public class ProfileController(
         {
             try
             {
-                var path = await fileUploadHelper.UploadAsync(signature, "uploads/signatures");
+                var path = await fileUploadHelper.UploadAsync(signature, "uploads/signatures", Helpers.FileUploadHelper.MaxSignatureSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
                 if (path != null)
                     user.SignaturePath = path;
             }
@@ -367,7 +367,7 @@ public class ProfileController(
     private IActionResult BadRequestResponse(List<string> errors)
     {
         TempData["ErrorMessage"] = string.Join(" ", errors);
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Edit));
     }
 
     private async Task<ProfileBaseViewModel> BuildBaseViewModelAsync(AppUser user, List<string> roles, string primaryRole)
