@@ -283,9 +283,17 @@ public class CollegeAdminMarksService(
                 && esr.ExamScheduleId == examScheduleId)
             .ToListAsync();
 
-        var rows = examRegistrations.Select(er =>
+        var rows = examRegistrations
+            .Select(er => new { er, existing = existingResults.FirstOrDefault(esr => esr.ExamRegistrationId == er.Id) })
+            // Leg-aware re-exam forms may register a student for a single paper;
+            // keep the row when either leg is registered (null flags = legacy).
+            .Where(x => x.existing == null
+                     || x.existing.IsTheoryRegistered != false
+                     || x.existing.IsPracticalRegistered != false)
+            .Select(x =>
         {
-            var existing = existingResults.FirstOrDefault(esr => esr.ExamRegistrationId == er.Id);
+            var existing = x.existing;
+            var er = x.er;
             registrationNumbers.TryGetValue(er.Id, out var regNum);
 
             return new StudentInternalMarksRowDto
