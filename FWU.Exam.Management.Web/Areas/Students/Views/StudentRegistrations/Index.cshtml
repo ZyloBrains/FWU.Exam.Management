@@ -114,6 +114,19 @@
                     </select>
                 </div>
                 <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Program</label>
+                    <select id="filterProgram" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="">All Programs</option>
+                        @if (ViewBag.Programs is SelectList pList)
+                        {
+                            foreach (var item in pList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
                     <select id="filterStatus" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
                         <option value="">All Statuses</option>
@@ -225,8 +238,9 @@
             const filterFaculty = document.getElementById('filterFaculty');
             const filterCollege = document.getElementById('filterCollege');
             const filterLevel = document.getElementById('filterLevel');
+            const filterProgram = document.getElementById('filterProgram');
             const filterStatus = document.getElementById('filterStatus');
-            const filterSelects = [filterAcademicYear, filterFaculty, filterCollege, filterLevel, filterStatus];
+            const filterSelects = [filterAcademicYear, filterFaculty, filterCollege, filterLevel, filterProgram, filterStatus];
 
             let page = 1;
             let pageSize = parseInt(pageSizeSelect.value, 10);
@@ -252,6 +266,7 @@
                 if (filterFaculty.value) params.append('facultyId', filterFaculty.value);
                 if (filterCollege.value) params.append('collegeId', filterCollege.value);
                 if (filterLevel.value) params.append('levelId', filterLevel.value);
+                if (filterProgram.value) params.append('programId', filterProgram.value);
                 if (filterStatus.value) params.append('status', filterStatus.value);
                 return params.toString();
             };

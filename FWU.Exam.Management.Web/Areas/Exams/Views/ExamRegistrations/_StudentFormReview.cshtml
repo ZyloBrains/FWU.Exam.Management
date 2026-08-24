@@ -155,7 +155,7 @@
                                         <td class="px-4 py-2.5 text-gray-700">@(subject.Code ?? "-")</td>
                                         <td class="px-4 py-2.5 text-gray-800">@(subject.Name ?? "-")</td>
                                         <td class="px-4 py-2.5 text-center">
-                                            @if (subject.Theory)
+                                            @if (subject.RegisteredTheory)
                                             {
                                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-blue-600"><i class="fas fa-check text-[10px]"></i></span>
                                             }
@@ -165,7 +165,7 @@
                                             }
                                         </td>
                                         <td class="px-4 py-2.5 text-center">
-                                            @if (subject.Practical)
+                                            @if (subject.RegisteredPractical)
                                             {
                                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-600"><i class="fas fa-check text-[10px]"></i></span>
                                             }

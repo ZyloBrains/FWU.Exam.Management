@@ -115,10 +115,11 @@ public static class AppMenu
                     [R("Exams", "Entrance", "ManageSchedule"), R("Exams", "Entrance", "CreateSchedule"), R("Exams", "Entrance", "EditSchedule"), R("Exams", "Entrance", "ScheduleDetails")]),
                 M("Exam Registrations", "fa-clipboard-list", ["examregistration.view"], R("Exams", "ExamRegistrations", "Index"), ["exam registration", "form"]),
                 M("Student Exam Forms", "fa-user-check", ["examregistration.view"], R("Exams", "ExamRegistrations", "StudentForms"), ["student form", "exam form"]),
+                M("Payment Verification", "fa-money-check-dollar", ["paymentverification.view"], R("Exams", "PaymentVerifications", "Index"), ["payment", "verification", "voucher", "transaction"]),
                 M("Admit Cards", "fa-ticket-alt", ["admitcards.view"], R("Exams", "AdmitCards", "Index"), ["admit", "card", "hall ticket"]),
             ],
             Landing: R(null, "Section", "Examination"),
-            SectionActiveOns: [R("Exams", "Entrance", null), R("Exams", "ExamSchedules", null), R("Exams", "ExamTypes", null), R("Exams", "ExamRegistrations", null), R("Exams", "AdmitCards", null)],
+            SectionActiveOns: [R("Exams", "Entrance", null), R("Exams", "ExamSchedules", null), R("Exams", "ExamTypes", null), R("Exams", "ExamRegistrations", null), R("Exams", "PaymentVerifications", null), R("Exams", "AdmitCards", null)],
             HideFromStudents: true),
 
         new("Exam Centers", "Exam Centers", "fa-map-marker-alt",

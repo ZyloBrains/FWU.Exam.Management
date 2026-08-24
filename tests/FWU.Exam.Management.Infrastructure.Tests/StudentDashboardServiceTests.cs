@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -692,7 +693,7 @@ public class StudentDashboardServiceTests
             Assert.NotNull(o.SubjectCatalog);
             Assert.NotNull(o.SubjectCatalog!.SubjectType);
         });
-        var electiveRow = Assert.Single(offerings.Where(o => !o.IsCompulsory));
+        var electiveRow = Assert.Single(offerings, o => !o.IsCompulsory);
         Assert.Equal("Elective Group A", electiveRow.SubjectCatalog!.SubjectType!.Name);
     }
 
@@ -1271,6 +1272,89 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task ReapplyExamRegistrationAsync_PartialForm_SubjectFromOlderCurriculumVersion_IsAccepted()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+            ctx.ExamSchedules.Local.Single(s => s.Id == 21).ExamTypeId = TestData.Partial;
+
+            // The schedule's academic year resolves to version 2…
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 1,
+                TenantId = TestData.TenantId,
+                Name = "Curriculum v1",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 1,
+                IsActive = true
+            });
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 2,
+                TenantId = TestData.TenantId,
+                Name = "Curriculum v2",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = TestData.AcademicYearId,
+                IsActive = true
+            });
+
+            // …but the student's subject belongs to the older version 1.
+            var oldOffering = TestData.Offering(302, 1, TestData.ProgramId);
+            oldOffering.CurriculumVersionId = 1;
+            ctx.SubjectOfferings.Add(oldOffering);
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 302 });
+
+        Assert.True(success, message);
+        Assert.True(db.Context.ExamSubjectResults!
+            .Single(r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 302).IsActive);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_RegularForm_SubjectOutsideResolvedVersion_IsRejected()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 1,
+                TenantId = TestData.TenantId,
+                Name = "Curriculum v1",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 1,
+                IsActive = true
+            });
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 2,
+                TenantId = TestData.TenantId,
+                Name = "Curriculum v2",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = TestData.AcademicYearId,
+                IsActive = true
+            });
+
+            // Regular forms stay pinned to the schedule's resolved version.
+            var oldOffering = TestData.Offering(302, 1, TestData.ProgramId);
+            oldOffering.CurriculumVersionId = 1;
+            ctx.SubjectOfferings.Add(oldOffering);
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 302 });
+
+        Assert.False(success);
+        Assert.Equal("One or more selected subjects are not offered for this exam schedule.", message);
+    }
+
+    [Fact]
     public async Task ReapplyExamRegistrationAsync_ReplacesRemarks_NeverAppends()
     {
         var longReason = new string('x', 200);
@@ -1337,5 +1421,447 @@ public class StudentDashboardServiceTests
 
         Assert.False(success);
         Assert.Contains("not offered for this exam schedule", message);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_WithLegSelection_StampsRowFlagsAndTokenLog()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+            var offering = TestData.Offering(302, 1, TestData.ProgramId);
+            offering.HasPractical = true;
+            ctx.SubjectOfferings.Add(offering);
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 302 },
+            new Dictionary<int, ReExamLegs> { [302] = ReExamLegs.Practical });
+
+        Assert.True(success, message);
+
+        var row = db.Context.ExamSubjectResults!
+            .Single(r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 302 && r.IsActive);
+        Assert.False(row.IsTheoryRegistered);
+        Assert.True(row.IsPracticalRegistered);
+
+        var log = db.Context.PaymentRequestLogs!
+            .Single(l => l.ExamScheduleId == 21 && l.StudentRegistrationId == 1 && l.PaymentRequestLogStatus == 1);
+        Assert.Equal("302:P", log.SelectedSubjectIds);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_BothLegsOnPartial_CarriesTheoryInternalButClearsPracticalExternal()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+            // Previous regular attempt in the same semester with marks to carry.
+            ctx.ExamSchedules.Add(TestData.Schedule(25, 1, TestData.Regular, Past, null));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(9, 1, 25));
+            var previousReg = TestData.ExamRegistration(7, 25, 9);
+            previousReg.CollegeId = TestData.CollegeId;
+            ctx.ExamRegistrations.Add(previousReg);
+
+            var previousResult = TestData.Result(10, 7, 302, TestData.Regular, "C", 25);
+            previousResult.ObtainedMarksPractical = 50f;
+            previousResult.ObtainedMarksPracticalInternal = 45f;
+            previousResult.ObtainedMarksTheoryInternal = 40f;
+            ctx.ExamSubjectResults!.Add(previousResult);
+
+            var offering = TestData.Offering(302, 1, TestData.ProgramId);
+            offering.HasPractical = true;
+            ctx.SubjectOfferings.Add(offering);
+
+            // Make the rejected form supplementary so carry-forward kicks in.
+            ctx.ExamRegistrations.Local.Single(e => e.Id == 1).IsSupplementary = true;
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 302 },
+            new Dictionary<int, ReExamLegs> { [302] = ReExamLegs.Theory | ReExamLegs.Practical });
+
+        Assert.True(success, message);
+
+        var row = db.Context.ExamSubjectResults!
+            .Single(r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 302 && r.IsActive);
+        Assert.True(row.IsTheoryRegistered);
+        Assert.True(row.IsPracticalRegistered);
+        // Practical external is re-sat → cleared; internals carry forward.
+        Assert.Null(row.ObtainedMarksPractical);
+        Assert.Equal(45f, row.ObtainedMarksPracticalInternal);
+        Assert.Equal(40f, row.ObtainedMarksTheoryInternal);
+    }
+
+    [Fact]
+    public async Task CreatePaymentRequestLogWithSubjectsAsync_WritesTokensAndCountsOnlyPracticalLegs()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Future, null));
+            ctx.Set<PaymentType>().Add(new PaymentType { Id = 1, PaymentTypeName = "Online", IsActive = true });
+        });
+        var service = CreateService(db);
+
+        var logId = await service.CreatePaymentRequestLogWithSubjectsAsync(
+            21, 1, 1500, "Online", "INV-LEGS",
+            new Dictionary<int, ReExamLegs>
+            {
+                [301] = ReExamLegs.Theory,
+                [302] = ReExamLegs.Theory | ReExamLegs.Practical
+            });
+
+        var log = await db.Context.PaymentRequestLogs!.SingleAsync(l => l.Id == logId);
+        Assert.Equal("301:T,302:TP", log.SelectedSubjectIds);
+
+        var practicalCount = await db.Context.Set<PaymentPracticalSubjects>()
+            .Where(pps => pps.PaymentRequestLogId == logId)
+            .Select(pps => (int?)pps.PracticalSubjectsCount)
+            .SingleOrDefaultAsync();
+        Assert.Equal(1, practicalCount);
+    }
+
+    [Fact]
+    public async Task GetFailedSubjectOptionsForStudentAsync_PerPartGrades_ResolvesFailedLegsOnly()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
+
+            // Passed theory, failed practical on the previous attempt.
+            var offering = TestData.Offering(301, 1, TestData.ProgramId);
+            offering.HasPractical = true;
+            ctx.SubjectOfferings.Add(offering);
+
+            ctx.ExamSchedules.Add(TestData.Schedule(25, 1, TestData.Regular, Past, null));
+            ctx.ExamSchedules.Add(TestData.Schedule(24, 1, TestData.Partial, Future, null));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(5, 1, 25));
+            var previousReg = TestData.ExamRegistration(7, 25, 5);
+            ctx.ExamRegistrations.Add(previousReg);
+
+            var result = TestData.Result(10, 7, 301, TestData.Regular, null, 25);
+            result.GradeLetterTheory = "A";
+            result.GradeLetterPractical = "F";
+            ctx.ExamSubjectResults!.Add(result);
+        });
+        var service = CreateService(db);
+
+        // Schedule 24 is the same program/semester partial exam.
+        var options = await service.GetFailedSubjectOptionsForStudentAsync(24, UserId);
+
+        var option = Assert.Single(options);
+        Assert.Equal(301, option.SubjectOfferingId);
+        Assert.Equal(ReExamLegs.Practical, option.FailedLegs);
+    }
+
+    private static ExamSchedule FeeSchedule(int id = 21)
+    {
+        var schedule = TestData.Schedule(id, 1, TestData.Regular, Future, null);
+        schedule.ExamFee = 1000;
+        schedule.PracticalSubjectFee = 1500;
+        return schedule;
+    }
+
+    [Fact]
+    public async Task ComputeSelectionFeeAsync_FlatExamFeePlusPerPracticalLeg()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.ExamSchedules.Add(FeeSchedule());
+        });
+        var service = CreateService(db);
+
+        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>
+        {
+            [301] = ReExamLegs.Theory,
+            [302] = ReExamLegs.Theory | ReExamLegs.Practical,
+            [303] = ReExamLegs.Practical
+        });
+
+        // Flat exam fee + one practical charge per ticked practical leg.
+        Assert.Equal(1000m + 2 * 1500m, total);
+    }
+
+    [Fact]
+    public async Task ComputeSelectionFeeAsync_EmptySelection_ReturnsFlatExamFee()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.ExamSchedules.Add(FeeSchedule());
+        });
+        var service = CreateService(db);
+
+        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>());
+
+        Assert.Equal(1000m, total);
+    }
+
+    [Fact]
+    public async Task ComputeSelectionFeeAsync_LegacyPlainIdToken_ChargesAvailablePracticalLeg()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.ExamSchedules.Add(FeeSchedule());
+            var offering = TestData.Offering(401, 1, TestData.ProgramId);
+            offering.HasPractical = true;
+            ctx.SubjectOfferings.Add(offering);
+        });
+        var service = CreateService(db);
+
+        // "401" without a leg suffix is a legacy token meaning both available
+        // papers were registered, so its practical leg is charged too.
+        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>
+        {
+            [401] = ReExamLegs.None
+        });
+
+        Assert.Equal(1000m + 1500m, total);
+    }
+
+    [Fact]
+    public async Task ComputeSelectionFeeAsync_MixedExplicitAndLegacyTokens_OnlyAvailablePracticalsCharged()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.ExamSchedules.Add(FeeSchedule());
+            // Theory-only subject: its legacy token contributes no practical fee.
+            ctx.SubjectOfferings.Add(TestData.Offering(402, 1, TestData.ProgramId));
+        });
+        var service = CreateService(db);
+
+        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>
+        {
+            [302] = ReExamLegs.Theory | ReExamLegs.Practical,
+            [402] = ReExamLegs.None
+        });
+
+        Assert.Equal(1000m + 1500m, total);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_LegChangeOnExistingRow_PatchesFlagsAndClearsNewPracticalExternal()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+
+            // The kept subject gains a practical paper and the row originally
+            // registered theory only with a carried external practical.
+            ctx.SubjectOfferings.Local.Single(o => o.Id == 101).HasPractical = true;
+            var existingRow = ctx.ExamSubjectResults!.Local.Single(r => r.SubjectOfferingId == 101);
+            existingRow.IsTheoryRegistered = true;
+            existingRow.IsPracticalRegistered = false;
+            existingRow.ObtainedMarksPractical = 55f;
+            existingRow.ObtainedMarksTheoryInternal = 40f;
+            existingRow.ObtainedMarksPracticalInternal = 45f;
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 101 },
+            new Dictionary<int, ReExamLegs> { [101] = ReExamLegs.Theory | ReExamLegs.Practical });
+
+        Assert.True(success, message);
+
+        var row = db.Context.ExamSubjectResults!
+            .Single(r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 101 && r.IsActive);
+        Assert.True(row.IsTheoryRegistered);
+        Assert.True(row.IsPracticalRegistered);
+        // Newly re-sat practical external is cleared; internals carry forward.
+        Assert.Null(row.ObtainedMarksPractical);
+        Assert.Equal(40f, row.ObtainedMarksTheoryInternal);
+        Assert.Equal(45f, row.ObtainedMarksPracticalInternal);
+
+        var log = db.Context.PaymentRequestLogs!
+            .Single(l => l.ExamScheduleId == 21 && l.StudentRegistrationId == 1 && l.PaymentRequestLogStatus == 1);
+        Assert.Equal("101:TP", log.SelectedSubjectIds);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_RefreshesPracticalCountOnOriginalLog()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+            ctx.SaveChanges();
+            var paidLogId = ctx.PaymentRequestLogs!.Local.Single().Id;
+            ctx.Set<PaymentPracticalSubjects>().Add(new PaymentPracticalSubjects
+            {
+                PaymentRequestLogId = paidLogId,
+                PracticalSubjectsCount = 0,
+                TotalAmount = 1000
+            });
+
+            var offering = TestData.Offering(302, 1, TestData.ProgramId);
+            offering.HasPractical = true;
+            ctx.SubjectOfferings.Add(offering);
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 101, 302 },
+            new Dictionary<int, ReExamLegs>
+            {
+                [101] = ReExamLegs.Theory,
+                [302] = ReExamLegs.Practical
+            });
+
+        Assert.True(success, message);
+
+        var paidLogId = db.Context.PaymentRequestLogs!
+            .Single(l => l.ExamScheduleId == 21 && l.StudentRegistrationId == 1 && l.PaymentRequestLogStatus == 1).Id;
+        Assert.Equal("101:T,302:P",
+            db.Context.PaymentRequestLogs!.Single(l => l.Id == paidLogId).SelectedSubjectIds);
+
+        var count = db.Context.Set<PaymentPracticalSubjects>()
+            .Where(pps => pps.PaymentRequestLogId == paidLogId)
+            .Select(pps => (int?)pps.PracticalSubjectsCount)
+            .SingleOrDefault();
+        Assert.Equal(1, count);
+    }
+
+    [Fact]
+    public async Task TryCompleteApplyAgainTopUpAsync_SecondConfirmedLog_ReappliesWithItsTokens()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+
+            ctx.Set<PaymentType>().Add(new PaymentType { Id = 2, PaymentTypeName = "Online Extra", IsActive = true });
+            ctx.PaymentRequestLogs.Add(new PaymentRequestLog
+            {
+                TenantId = TestData.TenantId,
+                PaymentRequestLogStatus = 1,
+                InvoiceNumber = "INV-2",
+                ForwardedTimestamp = DateTime.UtcNow,
+                FullName = "Test Student",
+                Amount = 500,
+                FullRequestContent = "{}",
+                PaymentTypeId = 2,
+                StudentRegistrationId = 1,
+                ExamScheduleId = 21,
+                SelectedSubjectIds = "302:P"
+            });
+
+            var offering = TestData.Offering(302, 1, TestData.ProgramId);
+            offering.HasPractical = true;
+            ctx.SubjectOfferings.Add(offering);
+        });
+        var topUpLogId = db.Context.PaymentRequestLogs!.Single(l => l.InvoiceNumber == "INV-2").Id;
+        var service = CreateService(db);
+
+        var handled = await service.TryCompleteApplyAgainTopUpAsync(topUpLogId, UserId);
+
+        Assert.True(handled);
+        Assert.Equal(RegistrationStatus.Pending,
+            db.Context.ExamRegistrations!.Single(e => e.Id == 1).Status);
+
+        var row = Assert.Single(db.Context.ExamSubjectResults!.Where(r => r.ExamRegistrationId == 1 && r.IsActive));
+        Assert.Equal(302, row.SubjectOfferingId);
+        Assert.False(row.IsTheoryRegistered);
+        Assert.True(row.IsPracticalRegistered);
+    }
+
+    [Fact]
+    public async Task TryCompleteApplyAgainTopUpAsync_NoPriorConfirmedPayment_ReturnsFalse()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx, withPayment: false);
+            ctx.Set<PaymentType>().Add(new PaymentType { Id = 1, PaymentTypeName = "Online", IsActive = true });
+            ctx.PaymentRequestLogs.Add(new PaymentRequestLog
+            {
+                TenantId = TestData.TenantId,
+                PaymentRequestLogStatus = 1,
+                InvoiceNumber = "INV-ONLY",
+                ForwardedTimestamp = DateTime.UtcNow,
+                FullName = "Test Student",
+                Amount = 1000,
+                FullRequestContent = "{}",
+                PaymentTypeId = 1,
+                StudentRegistrationId = 1,
+                ExamScheduleId = 21,
+                SelectedSubjectIds = "101"
+            });
+        });
+        var service = CreateService(db);
+
+        var logId = db.Context.PaymentRequestLogs!.Single(l => l.InvoiceNumber == "INV-ONLY").Id;
+        var handled = await service.TryCompleteApplyAgainTopUpAsync(logId, UserId);
+
+        Assert.False(handled);
+        Assert.Equal(RegistrationStatus.Rejected,
+            db.Context.ExamRegistrations!.Single(e => e.Id == 1).Status);
+        Assert.False(await service.HasOpenApplyAgainPaymentAsync(21, 1));
+    }
+
+    [Fact]
+    public async Task SupersedeOpenApplyAgainPaymentsAsync_MarksOlderOpenLogsButKeepsConfirmedOnes()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+
+            ctx.PaymentRequestLogs.Add(new PaymentRequestLog
+            {
+                TenantId = TestData.TenantId,
+                InvoiceNumber = "INV-STALE",
+                ForwardedTimestamp = DateTime.UtcNow,
+                FullName = "Test Student",
+                Amount = 500,
+                FullRequestContent = "{}",
+                PaymentTypeId = 1,
+                StudentRegistrationId = 1,
+                ExamScheduleId = 21,
+                SelectedSubjectIds = "301:P"
+            });
+
+            ctx.PaymentRequestLogs.Add(new PaymentRequestLog
+            {
+                TenantId = TestData.TenantId,
+                InvoiceNumber = "INV-CURRENT",
+                ForwardedTimestamp = DateTime.UtcNow,
+                FullName = "Test Student",
+                Amount = 500,
+                FullRequestContent = "{}",
+                PaymentTypeId = 1,
+                StudentRegistrationId = 1,
+                ExamScheduleId = 21,
+                SelectedSubjectIds = "302:P"
+            });
+        });
+        var paidLogId = db.Context.PaymentRequestLogs!.Single(l => l.InvoiceNumber == "INV-1").Id;
+        var staleLogId = db.Context.PaymentRequestLogs.Single(l => l.InvoiceNumber == "INV-STALE").Id;
+        var currentLogId = db.Context.PaymentRequestLogs.Single(l => l.InvoiceNumber == "INV-CURRENT").Id;
+        var service = CreateService(db);
+
+        Assert.True(await service.HasOpenApplyAgainPaymentAsync(21, 1));
+
+        await service.SupersedeOpenApplyAgainPaymentsAsync(21, 1, exceptLogId: currentLogId);
+
+        Assert.Equal(2, db.Context.PaymentRequestLogs!.Single(l => l.Id == staleLogId).PaymentRequestLogStatus);
+        Assert.Equal(1, db.Context.PaymentRequestLogs.Single(l => l.Id == paidLogId).PaymentRequestLogStatus);
+        Assert.NotEqual(2, db.Context.PaymentRequestLogs.Single(l => l.Id == currentLogId).PaymentRequestLogStatus);
+        Assert.True(await service.HasOpenApplyAgainPaymentAsync(21, 1));
+
+        // Passing an unmatched id supersedes every remaining open log.
+        await service.SupersedeOpenApplyAgainPaymentsAsync(21, 1, exceptLogId: 0);
+
+        Assert.False(await service.HasOpenApplyAgainPaymentAsync(21, 1));
     }
 }

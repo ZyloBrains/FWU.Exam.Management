@@ -307,7 +307,7 @@ public static class TestData
     };
 
     public static ExamSubjectResult Result(int id, int examRegistrationId, int subjectOfferingId,
-        int examTypeId, string grade, int? examScheduleId = null) => new()
+        int examTypeId, string? grade, int? examScheduleId = null) => new()
     {
         Id = id,
         TenantId = TenantId,

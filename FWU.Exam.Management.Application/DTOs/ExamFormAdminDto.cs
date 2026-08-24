@@ -41,6 +41,11 @@ public class ExamFormSubjectDto
     public string? Name { get; set; }
     public bool Theory { get; set; }
     public bool Practical { get; set; }
+
+    // Papers actually registered (may be a subset of the offering's papers on
+    // leg-aware re-exam forms).
+    public bool RegisteredTheory { get; set; }
+    public bool RegisteredPractical { get; set; }
 }
 
 public class ExamFormEditableSubjectsDto
@@ -51,6 +56,11 @@ public class ExamFormEditableSubjectsDto
     public string? ExamScheduleName { get; set; }
     public string? AcademicYearName { get; set; }
     public string? ExamTypeName { get; set; }
+
+    // Re-exam/partial forms let the admin pick individual theory/practical
+    // papers instead of whole subjects only.
+    public bool IsReExamForm { get; set; }
+
     public bool CanEdit { get; set; }
     public string? NotEditableReason { get; set; }
     public List<ExamFormSelectableSubjectDto> AvailableSubjects { get; set; } = [];
@@ -64,6 +74,10 @@ public class ExamFormSelectableSubjectDto
     public bool Theory { get; set; }
     public bool Practical { get; set; }
     public bool IsSelected { get; set; }
+
+    // Papers pre-ticked when editing a leg-aware re-exam form.
+    public bool SelectedTheory { get; set; }
+    public bool SelectedPractical { get; set; }
 }
 
 public class ExamFormsAdminResult
