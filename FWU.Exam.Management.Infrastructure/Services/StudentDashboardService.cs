@@ -573,6 +573,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
             float? carriedPractical = null;
             float? carriedPracticalInternal = null;
+            float? carriedTheory = null;
             float? carriedTheoryInternal = null;
 
             var legs = ResolveRegistrationLegs(subjectLegs, offeringId, offering);
@@ -594,7 +595,9 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                     // Marks carry forward; only the external marks of a re-sat
                     // leg are cleared for fresh entry.
                     var retakesPractical = legs.HasFlag(ReExamLegs.Practical);
+                    var retakesTheory = legs.HasFlag(ReExamLegs.Theory);
                     carriedPractical = retakesPractical ? null : previousResult.ObtainedMarksPractical;
+                    carriedTheory = retakesTheory ? null : previousResult.ObtainedMarksTheory;
                     carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
                     carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
                 }
@@ -612,6 +615,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                 IsActive = true,
                 IsSubmitted = false,
                 IsSupplementary = target.IsSupplementary,
+                ObtainedMarksTheory = carriedTheory,
                 ObtainedMarksPractical = carriedPractical,
                 ObtainedMarksPracticalInternal = carriedPracticalInternal,
                 ObtainedMarksTheoryInternal = carriedTheoryInternal
@@ -1065,6 +1069,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
             float? carriedPractical = null;
             float? carriedPracticalInternal = null;
+            float? carriedTheory = null;
             float? carriedTheoryInternal = null;
 
             var legs = ResolveRegistrationLegs(subjectLegs, subjectOfferingId, subjectOffering);
@@ -1086,7 +1091,9 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                     // Marks carry forward; only the external marks of a re-sat
                     // leg are cleared for fresh entry.
                     var retakesPractical = legs.HasFlag(ReExamLegs.Practical);
+                    var retakesTheory = legs.HasFlag(ReExamLegs.Theory);
                     carriedPractical = retakesPractical ? null : previousResult.ObtainedMarksPractical;
+                    carriedTheory = retakesTheory ? null : previousResult.ObtainedMarksTheory;
                     carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
                     carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
                 }
@@ -1103,6 +1110,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                 IsActive = true,
                 IsSubmitted = false,
                 IsSupplementary = registration.IsSupplementary,
+                ObtainedMarksTheory = carriedTheory,
                 ObtainedMarksPractical = carriedPractical,
                 ObtainedMarksPracticalInternal = carriedPracticalInternal,
                 ObtainedMarksTheoryInternal = carriedTheoryInternal

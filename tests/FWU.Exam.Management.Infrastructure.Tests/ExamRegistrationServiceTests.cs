@@ -807,6 +807,7 @@ public class ExamRegistrationServiceTests
             var previousBoth = TestData.Result(11, 7, 302, TestData.Regular, "C", 25);
             previousBoth.IsTheoryRegistered = true;
             previousBoth.IsPracticalRegistered = true;
+            previousBoth.ObtainedMarksTheory = 48;
             previousBoth.ObtainedMarksPractical = 55;
             previousBoth.ObtainedMarksTheoryInternal = 12;
             previousBoth.ObtainedMarksPracticalInternal = 14;
@@ -836,8 +837,10 @@ public class ExamRegistrationServiceTests
         var recreated = db.Context.ExamSubjectResults!.Single(r => r.ExamRegistrationId == 6 && r.IsActive);
         Assert.False(recreated.IsTheoryRegistered);
         Assert.True(recreated.IsPracticalRegistered);
-        // The re-sat practical's external is cleared for fresh entry; internals carry forward.
+        // The re-sat practical's external is cleared for fresh entry; the passed
+        // theory external and both internals carry forward.
         Assert.Null(recreated.ObtainedMarksPractical);
+        Assert.Equal(48f, recreated.ObtainedMarksTheory);
         Assert.Equal(12f, recreated.ObtainedMarksTheoryInternal);
         Assert.Equal(14f, recreated.ObtainedMarksPracticalInternal);
 

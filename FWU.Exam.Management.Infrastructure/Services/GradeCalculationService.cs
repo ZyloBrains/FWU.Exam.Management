@@ -198,12 +198,9 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
             && theoryMarks.Value < offering.TheoryPassMarks.Value)
             return false;
 
-        if (!isSupplementary)
-        {
-            if (offering.HasPractical && practicalMarks.HasValue && offering.PracticalPassMarks.HasValue
-                && practicalMarks.Value < offering.PracticalPassMarks.Value)
-                return false;
-        }
+        if (offering.HasPractical && practicalMarks.HasValue && offering.PracticalPassMarks.HasValue
+            && practicalMarks.Value < offering.PracticalPassMarks.Value)
+            return false;
 
         return true;
     }

@@ -676,6 +676,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             var practicalSelected = chosenLegs.HasFlag(ReExamLegs.Practical);
 
             float? carriedPractical = null;
+            float? carriedTheory = null;
             float? carriedPracticalInternal = null;
             float? carriedTheoryInternal = null;
 
@@ -696,6 +697,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                     // Marks carry forward; only the external marks of a re-sat
                     // leg are cleared for fresh entry.
                     carriedPractical = practicalSelected ? null : previousResult.ObtainedMarksPractical;
+                    carriedTheory = theorySelected ? null : previousResult.ObtainedMarksTheory;
                     carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
                     carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
                 }
@@ -713,6 +715,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 IsActive = true,
                 IsSubmitted = false,
                 IsSupplementary = er.IsSupplementary,
+                ObtainedMarksTheory = carriedTheory,
                 ObtainedMarksPractical = carriedPractical,
                 ObtainedMarksPracticalInternal = carriedPracticalInternal,
                 ObtainedMarksTheoryInternal = carriedTheoryInternal
