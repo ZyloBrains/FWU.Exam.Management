@@ -60,16 +60,32 @@ public class StudentDashboardController(
 
         if (photo != null && photo.Length > 0)
         {
-            var photoPath = await fileUploadHelper.UploadAsync(photo, "uploads/photos");
-            if (photoPath != null)
-                user.ProfilePath = photoPath;
+            try
+            {
+                var photoPath = await fileUploadHelper.UploadAsync(photo, "uploads/photos", Helpers.FileUploadHelper.MaxPhotoSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
+                if (photoPath != null)
+                    user.ProfilePath = photoPath;
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Edit", "Profile", new { area = "" });
+            }
         }
 
         if (signature != null && signature.Length > 0)
         {
-            var signaturePath = await fileUploadHelper.UploadAsync(signature, "uploads/signatures");
-            if (signaturePath != null)
-                user.SignaturePath = signaturePath;
+            try
+            {
+                var signaturePath = await fileUploadHelper.UploadAsync(signature, "uploads/signatures", Helpers.FileUploadHelper.MaxSignatureSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
+                if (signaturePath != null)
+                    user.SignaturePath = signaturePath;
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Edit", "Profile", new { area = "" });
+            }
         }
 
         await userManager.UpdateAsync(user);

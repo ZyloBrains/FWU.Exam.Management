@@ -68,16 +68,32 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
 
             if (bannerImage != null && bannerImage.Length > 0)
             {
-                var bannerPath = await _fileUploadHelper.UploadAsync(bannerImage, "uploads/banners");
-                if (bannerPath != null)
-                    tenant.BannerImagePath = bannerPath;
+                try
+                {
+                    var bannerPath = await _fileUploadHelper.UploadAsync(bannerImage, "uploads/banners", Helpers.FileUploadHelper.MaxDocumentSizeBytes);
+                    if (bannerPath != null)
+                        tenant.BannerImagePath = bannerPath;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                    return View(viewModel);
+                }
             }
 
             if (logoImage != null && logoImage.Length > 0)
             {
-                var logoPath = await _fileUploadHelper.UploadAsync(logoImage, "uploads/logos");
-                if (logoPath != null)
-                    tenant.LogoPath = logoPath;
+                try
+                {
+                    var logoPath = await _fileUploadHelper.UploadAsync(logoImage, "uploads/logos", Helpers.FileUploadHelper.MaxDocumentSizeBytes);
+                    if (logoPath != null)
+                        tenant.LogoPath = logoPath;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                    return View(viewModel);
+                }
             }
 
             _context.Add(tenant);
@@ -152,14 +168,14 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
             {
                 if (bannerImage != null && bannerImage.Length > 0)
                 {
-                    var bannerPath = await _fileUploadHelper.UploadAsync(bannerImage, "uploads/banners");
+                    var bannerPath = await _fileUploadHelper.UploadAsync(bannerImage, "uploads/banners", Helpers.FileUploadHelper.MaxDocumentSizeBytes);
                     if (bannerPath != null)
                         tenant.BannerImagePath = bannerPath;
                 }
 
                 if (logoImage != null && logoImage.Length > 0)
                 {
-                    var logoPath = await _fileUploadHelper.UploadAsync(logoImage, "uploads/logos");
+                    var logoPath = await _fileUploadHelper.UploadAsync(logoImage, "uploads/logos", Helpers.FileUploadHelper.MaxDocumentSizeBytes);
                     if (logoPath != null)
                         tenant.LogoPath = logoPath;
                 }
@@ -174,6 +190,11 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
                 if (!await _context.Tenants.AnyAsync(t => t.Id == id))
                     return NotFound();
                 throw;
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View(tenant);
             }
         }
         return View(tenant);
@@ -259,12 +280,19 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
 
         if (signature != null && signature.Length > 0)
         {
-            var signaturePath = await _fileUploadHelper.UploadAsync(signature, "uploads/controller-signatures");
-            if (signaturePath != null)
-                tenant.ControllerSignaturePath = signaturePath;
+            try
+            {
+                var signaturePath = await _fileUploadHelper.UploadAsync(signature, "uploads/controller-signatures", Helpers.FileUploadHelper.MaxDocumentSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
+                if (signaturePath != null)
+                    tenant.ControllerSignaturePath = signaturePath;
 
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Controller signature updated successfully.";
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Controller signature updated successfully.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
         }
         else
         {

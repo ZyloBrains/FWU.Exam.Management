@@ -199,11 +199,11 @@
                                 <img src="" id="photoPreviewImg" class="w-full h-full object-cover hidden" alt="Preview" />
                             </div>
                             <p class="text-xs sm:text-sm font-medium text-gray-700">Profile Photo</p>
-                            <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">PNG, JPG. Max 2 MB</p>
+                            <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">PNG or JPG. Max 500 KB</p>
                             <label class="mt-3 inline-flex items-center gap-2 px-4 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 cursor-pointer transition-colors shadow-sm active:scale-[0.98]">
                                 <i class="fas fa-upload"></i>
                                 Choose File
-                                <input type="file" name="photo" accept="image/*" class="hidden" onchange="previewFile(this, 'photoPreviewImg', 'photoPreviewPlaceholder')" />
+                                <input type="file" name="photo" accept=".jpg,.jpeg,.png" class="hidden" onchange="previewFile(this, 'photoPreviewImg', 'photoPreviewPlaceholder')" />
                             </label>
                         </div>
                     </div>
@@ -225,11 +225,11 @@
                                 <img src="" id="signaturePreviewImg" class="w-full h-full object-contain hidden" alt="Preview" />
                             </div>
                             <p class="text-xs sm:text-sm font-medium text-gray-700">Signature</p>
-                            <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">PNG, JPG. Max 2 MB</p>
+                            <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">PNG or JPG. Max 100 KB</p>
                             <label class="mt-3 inline-flex items-center gap-2 px-4 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 cursor-pointer transition-colors shadow-sm active:scale-[0.98]">
                                 <i class="fas fa-upload"></i>
                                 Choose File
-                                <input type="file" name="signature" accept="image/*" class="hidden" onchange="previewFile(this, 'signaturePreviewImg', 'signaturePreviewPlaceholder')" />
+                                <input type="file" name="signature" accept=".jpg,.jpeg,.png" class="hidden" onchange="previewFile(this, 'signaturePreviewImg', 'signaturePreviewPlaceholder')" />
                             </label>
                         </div>
                     </div>

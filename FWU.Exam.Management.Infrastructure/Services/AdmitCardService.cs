@@ -9,8 +9,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class AdmitCardService(AppDbContext context, IUserContext userContext, ITenantContext tenantContext) : IAdmitCardService
+public class AdmitCardService(AppDbContext context, IUserContext userContext) : IAdmitCardService
 {
+    private readonly Dictionary<int, string?> _tenantSignatureCache = [];
+
+    private async Task<string?> GetTenantControllerSignatureAsync(int tenantId)
+    {
+        if (_tenantSignatureCache.TryGetValue(tenantId, out var cached))
+            return cached;
+
+        var tenant = await context.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId);
+
+        var signature = tenant?.ControllerSignaturePath;
+        _tenantSignatureCache[tenantId] = signature;
+        return signature;
+    }
     public async Task<(List<AdmitCard> Items, int TotalCount)> GetAdmitCardsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null)
     {
         var query = BuildQuery(search, sort, sortDir, examScheduleId).ApplyScope(userContext);
@@ -303,12 +318,9 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             admitCard.ExamRollNo = admitCard.ExamRegistration?.ExamRollNumber
                 ?? admitCard.ExamRegistration?.SymbolNumber;
 
-        if (string.IsNullOrEmpty(admitCard.ControllerSignaturePath) && admitCard.ExamRegistration?.CollegeId != null)
-        {
-            var tenant = await context.Tenants.FindAsync(tenantContext.TenantId);
-            if (!string.IsNullOrEmpty(tenant?.ControllerSignaturePath))
-                admitCard.ControllerSignaturePath = tenant.ControllerSignaturePath;
-        }
+        var tenantSignature = await GetTenantControllerSignatureAsync(admitCard.TenantId);
+        if (!string.IsNullOrEmpty(tenantSignature))
+            admitCard.ControllerSignaturePath = tenantSignature;
     }
 
     public async Task CreateAdmitCardAsync(AdmitCard admitCard)
@@ -366,7 +378,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
         }
 
         var studentUser = await ResolveStudentUserAsync(registration);
-        var controllerSignaturePath = await ResolveControllerSignatureAsync();
+        var controllerSignaturePath = await GetTenantControllerSignatureAsync(registration.TenantId);
 
         int? resolvedSrId = null;
         string? resolvedStudentRegNumber = null;
@@ -383,6 +395,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
 
         var admitCard = new AdmitCard
         {
+            TenantId = registration.TenantId,
             ExamRegistrationId = examRegistrationId,
             ExamScheduleId = registration.ExamScheduleId,
             StudentRegistrationId = resolvedSrId,
@@ -435,16 +448,13 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             : [];
         var srLookup = studentRegistrations.ToDictionary(sr => sr.Id);
 
-        var currentTenant = await context.Tenants.FindAsync(tenantContext.TenantId);
-        var currentTenantSignature = currentTenant?.ControllerSignaturePath;
-
         var admitCards = new List<AdmitCard>();
         foreach (var registration in registrations)
         {
             if (existingRegistrationIds.Contains(registration.Id))
                 continue;
 
-            string? controllerSignaturePath = currentTenantSignature;
+            string? controllerSignaturePath = await GetTenantControllerSignatureAsync(registration.TenantId);
 
             string? photoPath = null;
             string? signaturePath = null;
@@ -471,6 +481,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
 
             var admitCard = new AdmitCard
             {
+                TenantId = registration.TenantId,
                 ExamRegistrationId = registration.Id,
                 ExamScheduleId = examScheduleId,
                 StudentRegistrationId = resolvedSrId,
@@ -508,12 +519,6 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
         return await context.Users.FirstOrDefaultAsync(u =>
             u.NormalizedUserName == sr.RegistrationNumber.ToUpperInvariant()
             || (u.Email != null && u.Email == sr.RegistrationNumber));
-    }
-
-    private async Task<string?> ResolveControllerSignatureAsync()
-    {
-        var tenant = await context.Tenants.FindAsync(tenantContext.TenantId);
-        return tenant?.ControllerSignaturePath;
     }
 
     public async Task<AdmitCardSelectListsDto> GetSelectListDataAsync(AdmitCard? admitCard = null)
