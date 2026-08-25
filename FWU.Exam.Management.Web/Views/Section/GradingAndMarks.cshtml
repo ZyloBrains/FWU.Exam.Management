@@ -48,8 +48,38 @@
                     <i class="fas fa-table text-cyan-600 text-xl"></i>
                 </div>
                 <div>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Marks Entry</h3>
-                    <p class="text-xs sm:text-sm text-gray-500">Enter and manage exam marks</p>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Internal TH Marks Entry</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Enter and manage internal theory marks</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("theorymarks.view"))
+        {
+        <a asp-area="Exams" asp-controller="TheoryMarks" asp-action="Dashboard" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+                    <i class="fas fa-calculator text-emerald-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Theory Marks Entry</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Enter and manage theory exam marks</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("practicalmarks.view"))
+        {
+        <a asp-area="Exams" asp-controller="PracticalMarks" asp-action="Dashboard" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors">
+                    <i class="fas fa-flask text-rose-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Practical Marks Entry</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Enter and manage practical exam marks</p>
                 </div>
             </div>
         </a>

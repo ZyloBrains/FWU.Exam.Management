@@ -134,7 +134,7 @@ public class SectionController(IPermissionService permissionService, UserManager
     public async Task<IActionResult> StudentPortal()
     {
         if (!await HasAnyAsync("student.portal.profile", "student.portal.examforms", "student.portal.marksheet",
-            "student.portal.payment", "retotaling.view"))
+            "student.portal.payment", "admitcards.view", "retotaling.view"))
             return Forbid();
         return View();
     }
