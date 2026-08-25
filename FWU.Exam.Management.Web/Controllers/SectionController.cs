@@ -159,4 +159,11 @@ public class SectionController(IPermissionService permissionService, UserManager
             return Forbid();
         return View();
     }
+
+    public async Task<IActionResult> CoreArea()
+    {
+        if (!await HasAnyAsync("levels.view", "genders.view", "ethnicities.view", "boards.view", "countries.view"))
+            return Forbid();
+        return View();
+    }
 }

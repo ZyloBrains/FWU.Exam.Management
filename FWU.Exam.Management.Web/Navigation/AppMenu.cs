@@ -235,8 +235,8 @@ public static class AppMenu
             SectionActiveOns: [R("Core", "ESewaConfigurations", null), R("Core", "KhaltiConfigurations", null), R("Core", "ConnectIPSConfigurations", null)]),
 
         new("Core Area", "Core Area", "fa-cubes",
-            "",
-            "", "", "",
+            "Manage reference data: levels, genders, ethnicities, boards and countries",
+            "text-indigo-600", "bg-indigo-100", "group-hover:bg-indigo-200",
             [
                 M("Level", "fa-layer-group", ["levels.view"], R("Core", "Levels", "Index"), ["level"]),
                 M("Gender", "fa-venus-mars", ["genders.view"], R("Core", "Genders", "Index"), ["gender"]),
@@ -244,6 +244,7 @@ public static class AppMenu
                 M("Board", "fa-landmark", ["boards.view"], R("Core", "Boards", "Index"), ["board"]),
                 M("Country", "fa-globe", ["countries.view"], R("Core", "Countries", "Index"), ["country", "nation"]),
             ],
+            Landing: R(null, "Section", "CoreArea"),
             SuperAdminOnly: true,
             ShowOnDashboard: false,
             SectionActiveOns: [R("Core", "Levels", null), R("Core", "Genders", null), R("Core", "Ethnicities", null), R("Core", "Boards", null), R("Core", "Countries", null)]),
