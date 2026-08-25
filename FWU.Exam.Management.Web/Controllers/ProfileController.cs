@@ -3,6 +3,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
@@ -641,6 +642,10 @@ public class ProfileController(
         {
             vm.RegistrationId = registration.Id;
             vm.RegistrationNumber = registration.RegistrationNumber;
+            vm.FirstName = registration.FirstName;
+            vm.MiddleName = registration.MiddleName;
+            vm.LastName = registration.LastName;
+            vm.FullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
             vm.NepaliName = registration.NepaliName;
             vm.Gender = registration.Gender?.GenderName;
             vm.DateOfBirthBS = registration.DateOfBirthBS;

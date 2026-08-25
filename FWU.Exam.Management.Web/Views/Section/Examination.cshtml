@@ -101,6 +101,21 @@
         </a>
         }
 
+        @if (HasPerm("paymentverification.view"))
+        {
+        <a asp-area="Exams" asp-controller="PaymentVerifications" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+                    <i class="fas fa-money-check-dollar text-yellow-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Payment Verification</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage payment verification records</p>
+                </div>
+            </div>
+        </a>
+        }
+
         @if (HasPerm("admitcards.view"))
         {
         <a asp-area="Exams" asp-controller="AdmitCards" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
