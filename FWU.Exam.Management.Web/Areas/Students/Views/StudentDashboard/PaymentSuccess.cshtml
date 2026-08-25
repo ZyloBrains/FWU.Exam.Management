@@ -4,39 +4,39 @@
 
 @await Html.PartialAsync("_AlertMessages")
 
-<div class="min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-10 max-w-md w-full text-center">
-        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5 sm:mb-6">
-            <i class="fas fa-check-circle text-3xl sm:text-4xl text-emerald-600"></i>
+<div class="relative overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 w-full max-w-2xl mx-auto px-4 py-8 sm:p-10">
+        <div class="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-check-circle text-3xl text-emerald-600"></i>
         </div>
-        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Exam Form Submitted!</h2>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Exam Form Submitted!</h2>
         @if (TempData["ExamScheduleName"] is string scheduleName)
         {
-            <p class="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">Your exam form for "@scheduleName" has been submitted successfully.</p>
+            <p class="text-base text-gray-500 mb-6">Your exam form for "@scheduleName" has been submitted successfully.</p>
         }
         else
         {
-            <p class="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">Your exam form has been submitted successfully.</p>
+            <p class="text-base text-gray-500 mb-6">Your exam form has been submitted successfully.</p>
         }
 
         @if (TempData["TransactionCode"] is string txnCode)
         {
-            <div class="bg-emerald-50 rounded-xl p-4 sm:p-5 mb-4 sm:mb-5 text-left border border-emerald-100">
+            <div class="bg-emerald-50 rounded-xl p-4 mb-4 text-left border border-emerald-100">
                 <p class="text-xs text-emerald-600 font-medium uppercase tracking-wider">Transaction Code</p>
-                <p class="text-sm sm:text-base font-bold text-emerald-800 mt-1 break-all">@txnCode</p>
+                <p class="text-base font-bold text-emerald-800 mt-1 break-all">@txnCode</p>
             </div>
         }
 
         @if (TempData["TransactionUuid"] is string txnUuid)
         {
-            <div class="bg-gray-50 rounded-xl p-4 sm:p-5 mb-6 sm:mb-8 text-left border border-gray-100">
+            <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left border border-gray-100">
                 <p class="text-xs text-gray-600 font-medium uppercase tracking-wider">Transaction UUID</p>
-                <p class="text-sm sm:text-base font-bold text-gray-800 mt-1 break-all">@txnUuid</p>
+                <p class="text-base font-bold text-gray-800 mt-1 break-all">@txnUuid</p>
             </div>
         }
 
         <a asp-action="ExamForms"
-           class="inline-flex items-center justify-center gap-2 w-full px-6 py-3 sm:py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 active:scale-[0.97] transition-all font-semibold shadow-lg shadow-blue-600/20 text-sm sm:text-base">
+           class="block w-full px-6 py-3 sm:py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 active:scale-[0.97] transition-all font-semibold shadow-lg shadow-blue-600/20 text-base sm:text-lg">
             <i class="fas fa-arrow-left"></i>
             Back to Exam Forms
         </a>
