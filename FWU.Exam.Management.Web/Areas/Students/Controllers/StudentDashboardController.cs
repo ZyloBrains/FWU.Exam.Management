@@ -921,7 +921,7 @@ public class StudentDashboardController(
                 new { invoiceNumber, amount = delta, method = paymentMethod, examScheduleId, registrationId = registration.Id },
                 entityName: "PaymentRequestLog", entityId: cashLogId.ToString());
 
-            TempData["SuccessMessage"] = $"Additional payment of Rs {delta:N0} recorded. Your exam form has been re-applied successfully.";
+            await CompleteExamFormSubmissionAsync(cashLogId, invoiceNumber);
             return RedirectToAction(nameof(PaymentSuccess));
         }
 
@@ -998,7 +998,7 @@ public class StudentDashboardController(
             new { invoiceNumber, amount, method = paymentMethod, examScheduleId, registrationId = registration.Id },
             entityName: "PaymentRequestLog", entityId: logId.ToString());
 
-        TempData["SuccessMessage"] = $"Payment of Rs {amount:N0} via {paymentMethod} completed successfully. Invoice: {invoiceNumber}";
+        await CompleteExamFormSubmissionAsync(logId, invoiceNumber);
         return RedirectToAction(nameof(PaymentSuccess));
     }
 
@@ -1111,7 +1111,7 @@ public class StudentDashboardController(
                                 new { gateway = "esewa", transactionCode = status.TransactionCode, transactionUuid = uuid, amount = status.TotalAmount },
                                 entityName: "PaymentRequestLog", entityId: sessionLogId.Value.ToString());
 
-                            TempData["SuccessMessage"] = "Payment successful!";
+                            await CompleteExamFormSubmissionAsync(sessionLogId.Value, status.TransactionCode ?? uuid);
                             TempData["TransactionCode"] = status.TransactionCode;
                             TempData["TransactionUuid"] = uuid;
                             return RedirectToAction(nameof(PaymentSuccess));
@@ -1248,7 +1248,14 @@ public class StudentDashboardController(
                     entityName: "PaymentRequestLog", entityId: resolvedLogId.Value.ToString());
             }
 
-            TempData["SuccessMessage"] = "Payment successful!";
+            if (resolvedLogId.HasValue)
+            {
+                await CompleteExamFormSubmissionAsync(resolvedLogId.Value, response.TransactionCode);
+            }
+            else
+            {
+                TempData["SuccessMessage"] = "Payment successful!";
+            }
             TempData["TransactionCode"] = response.TransactionCode;
             TempData["TransactionUuid"] = response.TransactionUuid;
 
@@ -1441,7 +1448,14 @@ public class StudentDashboardController(
                     entityName: "PaymentRequestLog", entityId: khaltiResolvedLogId.Value.ToString());
             }
 
-            TempData["SuccessMessage"] = "Payment successful!";
+            if (khaltiResolvedLogId.HasValue)
+            {
+                await CompleteExamFormSubmissionAsync(khaltiResolvedLogId.Value, lookup.TransactionId ?? transaction_id);
+            }
+            else
+            {
+                TempData["SuccessMessage"] = "Payment successful!";
+            }
             TempData["TransactionCode"] = lookup.TransactionId ?? transaction_id;
             TempData["TransactionUuid"] = pidx;
 
@@ -1663,6 +1677,41 @@ public class StudentDashboardController(
         logger.LogInformation("HandlePostPaymentRegistration: Creating ExamRegistration for logId={LogId}, scheduleId={ScheduleId}, userId={UserId}, subjects={SubjectCount}",
             logId, paymentLog.ExamScheduleId, user.Id, selection.Count);
         await dashboardService.CreateExamRegistrationAsync(paymentLog.ExamScheduleId, user.Id, paymentLog.Amount, selection.Keys.ToList(), paymentLog.StudentRegistrationId.Value, selection);
+    }
+
+    private async Task CompleteExamFormSubmissionAsync(int logId, string? reference)
+    {
+        var log = await dashboardService.GetPaymentLogByIdAsync(logId);
+        if (log == null)
+        {
+            logger.LogWarning("CompleteExamFormSubmission: PaymentRequestLog not found for logId={LogId}", logId);
+            return;
+        }
+
+        var schedule = await dashboardService.GetExamScheduleByIdAsync(log.ExamScheduleId);
+        var scheduleName = schedule?.ExamScheduleName ?? $"Exam Schedule #{log.ExamScheduleId}";
+
+        try
+        {
+            await notificationService.SendAsync(
+                log.Email,
+                log.MobileNumber,
+                "exam_form_submitted",
+                new Dictionary<string, string>
+                {
+                    ["StudentName"] = log.FullName,
+                    ["ExamScheduleName"] = scheduleName,
+                    ["Amount"] = log.Amount.ToString("N0"),
+                    ["Reference"] = reference ?? string.Empty
+                });
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to send exam form submitted notification for logId={LogId}", log.Id);
+        }
+
+        TempData["ExamScheduleName"] = scheduleName;
+        TempData["SuccessMessage"] = $"Your exam form for \"{scheduleName}\" has been submitted successfully.";
     }
 
     [RequirePermission(Permissions.StudentPortalMarksheet)]
