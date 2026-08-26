@@ -599,6 +599,14 @@ public class UserController(
             var user = await LoadScopedUserAsync(id);
             if (user != null && await CanManageTargetAsync(user))
             {
+                var linkedAdmissions = await context.StudentAdmissions
+                    .Where(sa => sa.AppUserId == user.Id)
+                    .ToListAsync();
+                foreach (var admission in linkedAdmissions)
+                    admission.AppUserId = null;
+                if (linkedAdmissions.Count > 0)
+                    await context.SaveChangesAsync();
+
                 await userManager.DeleteAsync(user);
                 await auditLogWriter.LogAsync(ActivityTypes.UserDeleted,
                     $"Deleted user {(user.FullName ?? user.Email)}",
@@ -988,7 +996,17 @@ public class UserController(
         {
             var user = await LoadScopedUserAsync(id);
             if (user != null && await CanManageTargetAsync(user))
+            {
+                var linkedAdmissions = await context.StudentAdmissions
+                    .Where(sa => sa.AppUserId == user.Id)
+                    .ToListAsync();
+                foreach (var admission in linkedAdmissions)
+                    admission.AppUserId = null;
+                if (linkedAdmissions.Count > 0)
+                    await context.SaveChangesAsync();
+
                 await userManager.DeleteAsync(user);
+            }
             return Json(new { success = true, message = "User deleted successfully!" });
         }
         catch (Exception ex)
