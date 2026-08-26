@@ -70,6 +70,9 @@ public class StudentProfileDetailViewModel : ProfileBaseViewModel
 {
     public int RegistrationId { get; set; }
     public string? RegistrationNumber { get; set; }
+    public string? FirstName { get; set; }
+    public string? MiddleName { get; set; }
+    public string? LastName { get; set; }
     public string? NepaliName { get; set; }
     public string? Gender { get; set; }
     public string? DateOfBirthBS { get; set; }
