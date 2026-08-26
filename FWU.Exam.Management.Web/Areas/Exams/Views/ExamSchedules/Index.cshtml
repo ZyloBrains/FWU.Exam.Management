@@ -106,7 +106,11 @@
                             <div>@(item.EndDateBs ?? "-")</div>
                         </td>
                         <td class="px-4 py-3">
-                            @if (item.IsActive && item.EndDate.HasValue && item.EndDate.Value < today)
+                            @{
+                                var isExpired = item.IsActive && item.EndDate.HasValue && item.EndDate.Value < today
+                                    && (!item.ExtendedDate.HasValue || DateOnly.FromDateTime(item.ExtendedDate.Value) < today);
+                            }
+                            @if (isExpired)
                             {
                                 <span class="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">Expired</span>
                             }
@@ -191,7 +195,11 @@
                             </div>
                         </div>
                         <div>
-                            @if (item.IsActive && item.EndDate.HasValue && item.EndDate.Value < today)
+                            @{
+                                var isExpiredMobile = item.IsActive && item.EndDate.HasValue && item.EndDate.Value < today
+                                    && (!item.ExtendedDate.HasValue || DateOnly.FromDateTime(item.ExtendedDate.Value) < today);
+                            }
+                            @if (isExpiredMobile)
                             {
                                 <span class="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">Expired</span>
                             }
