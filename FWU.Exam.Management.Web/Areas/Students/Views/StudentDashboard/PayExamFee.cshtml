@@ -372,6 +372,13 @@
                 <span class="text-sm text-gray-600">Practical Fee@(Model.IsRegular ? "" : " (Per Paper)"):</span>
                 <span class="text-sm font-semibold text-gray-800" id="totalPracticalFee">Rs @Model.TotalPracticalFee.ToString("N0")</span>
             </div>
+            @if (Model.ExtendedDateCharge > 0)
+            {
+                <div class="flex items-center justify-between px-4 sm:px-6 py-3">
+                    <span class="text-sm text-gray-600">Extension Fee:</span>
+                    <span class="text-sm font-semibold text-amber-600" id="extendedDateCharge">Rs @Model.ExtendedDateCharge.ToString("N0")</span>
+                </div>
+            }
             <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-blue-50">
                 <span class="text-sm font-bold text-gray-800">Grand Total:</span>
                 <span class="text-base font-bold text-blue-700" id="grandTotal">Rs @Model.GrandTotal.ToString("N0")</span>
@@ -380,7 +387,7 @@
     </div>
 
     <!-- Fee Breakup -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 @(Model.ExtendedDateCharge > 0 ? "md:grid-cols-4" : "md:grid-cols-3") gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <p class="text-xs text-gray-500 uppercase tracking-wider">Exam Fee</p>
             <p class="text-xl font-bold text-gray-800 mt-1" id="breakupExamFee">Rs @Model.TotalExamFee.ToString("N0")</p>
@@ -389,6 +396,13 @@
             <p class="text-xs text-gray-500 uppercase tracking-wider">Practical Fee</p>
             <p class="text-xl font-bold text-gray-800 mt-1" id="breakupPracticalFee">Rs @Model.TotalPracticalFee.ToString("N0")</p>
         </div>
+        @if (Model.ExtendedDateCharge > 0)
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-amber-200 p-5">
+                <p class="text-xs text-amber-500 uppercase tracking-wider">Extension Fee</p>
+                <p class="text-xl font-bold text-amber-600 mt-1" id="breakupExtendedFee">Rs @Model.ExtendedDateCharge.ToString("N0")</p>
+            </div>
+        }
         <div class="bg-blue-600 rounded-xl shadow-sm p-5 text-white">
             <p class="text-xs text-blue-200 uppercase tracking-wider">Total Amount</p>
             <p class="text-xl font-bold mt-1" id="breakupGrandTotal">Rs @Model.GrandTotal.ToString("N0")</p>
@@ -558,6 +572,7 @@
 @section Scripts {
     <script>
         var flatExamFee = @Model.TotalExamFee;
+        var extendedCharge = @Model.ExtendedDateCharge;
 
         var errorToastTimer = null;
 
@@ -674,7 +689,7 @@
             var totalPractical = selection.totalPractical;
             var selectedIds = selection.ids;
             var selectedCount = selectedIds.length;
-            var grandTotal = flatExamFee + totalPractical;
+            var grandTotal = flatExamFee + totalPractical + extendedCharge;
             document.getElementById('totalExamFee').innerText = 'Rs ' + flatExamFee.toLocaleString();
             document.getElementById('totalPracticalFee').innerText = 'Rs ' + totalPractical.toLocaleString();
             document.getElementById('grandTotal').innerText = 'Rs ' + grandTotal.toLocaleString();

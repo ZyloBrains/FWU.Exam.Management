@@ -604,7 +604,17 @@ public class StudentDashboardController(
             vm.TotalPracticalFee = subjectList.Where(s => vm.SelectedSubjectIds.Contains(s.SubjectOfferingId)).Sum(s => s.PracticalFee);
         }
 
-        vm.GrandTotal = vm.TotalExamFee + vm.TotalPracticalFee;
+        if (schedule.ExtendedDate.HasValue && schedule.EndDate.HasValue)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var effectiveEnd = DateOnly.FromDateTime(schedule.ExtendedDate.Value);
+            if (today > schedule.EndDate.Value && today <= effectiveEnd)
+            {
+                vm.ExtendedDateCharge = schedule.ExtendedDateCharge ?? 0;
+            }
+        }
+
+        vm.GrandTotal = vm.TotalExamFee + vm.TotalPracticalFee + vm.ExtendedDateCharge;
 
         return View(vm);
     }
