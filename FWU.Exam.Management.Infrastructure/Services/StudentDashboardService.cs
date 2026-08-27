@@ -806,8 +806,12 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     // ResolveRegistrationLegs stamps the registration rows.
     public async Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection)
     {
-        var examFee = await GetExamFeeForScheduleAsync(examScheduleId);
-        var practicalFee = await GetPracticalSubjectFeeForScheduleAsync(examScheduleId);
+        var schedule = await context.ExamSchedules!
+            .AsNoTracking().IgnoreQueryFilters()
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+
+        var examFee = schedule?.ExamFee ?? 0;
+        var practicalFee = schedule?.PracticalSubjectFee ?? 0;
 
         var sel = selection ?? new Dictionary<int, ReExamLegs>();
         if (sel.Count == 0)
@@ -825,7 +829,18 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                 .CountAsync();
         }
 
-        return examFee + practicalLegs * practicalFee;
+        var extendedCharge = 0m;
+        if (schedule?.ExtendedDate.HasValue == true && schedule.EndDate.HasValue)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var effectiveEnd = DateOnly.FromDateTime(schedule.ExtendedDate.Value);
+            if (today > schedule.EndDate.Value && today <= effectiveEnd)
+            {
+                extendedCharge = schedule.ExtendedDateCharge ?? 0;
+            }
+        }
+
+        return examFee + practicalLegs * practicalFee + extendedCharge;
     }
 
     // A confirmed payment on a rejected form is a reapply top-up when an older

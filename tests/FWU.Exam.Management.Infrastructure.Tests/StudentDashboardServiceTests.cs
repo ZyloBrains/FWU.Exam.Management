@@ -1715,6 +1715,31 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task ComputeSelectionFeeAsync_AddsExtendedDateCharge_WhenAppliedAfterEndDate()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            var schedule = FeeSchedule();
+            schedule.EndDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-2));
+            schedule.ExtendedDate = DateTime.Today.AddDays(3);
+            schedule.ExtendedDateCharge = 1000;
+            ctx.ExamSchedules.Add(schedule);
+        });
+        var service = CreateService(db);
+
+        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>
+        {
+            [301] = ReExamLegs.Theory,
+            [302] = ReExamLegs.Theory | ReExamLegs.Practical,
+            [303] = ReExamLegs.Practical
+        });
+
+        // Flat fee + practical legs + extended date charge (today > EndDate, today <= ExtendedDate).
+        Assert.Equal(1000m + 2 * 1500m + 1000m, total);
+    }
+
+    [Fact]
     public async Task ReapplyExamRegistrationAsync_LegChangeOnExistingRow_PatchesFlagsAndClearsNewPracticalExternal()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>

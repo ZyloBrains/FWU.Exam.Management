@@ -123,6 +123,7 @@ public class ExamPaymentViewModel
     public string? ExamTypeName { get; set; }
     public decimal TotalExamFee { get; set; }
     public decimal TotalPracticalFee { get; set; }
+    public decimal ExtendedDateCharge { get; set; }
     public decimal GrandTotal { get; set; }
     public List<SubjectFeeDetail> Subjects { get; set; } = new();
     public bool HasESewa { get; set; }
