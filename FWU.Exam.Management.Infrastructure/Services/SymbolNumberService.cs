@@ -80,12 +80,17 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
 
         foreach (var r in registrations)
         {
+            var admission = r.SemesterEnrollment?.StudentAdmission;
+            if (admission == null)
+                admission = await GetAdmissionFallbackAsync(r);
+
             dto.Students.Add(new StudentSymbolInfo
             {
                 RegistrationId = r.Id,
                 SymbolNumber = r.SymbolNumber,
-                StudentName = ComposeName(r.SemesterEnrollment?.StudentAdmission),
-                RegistrationNumber = r.SemesterEnrollment?.StudentAdmission?.StudentRegistration?.RegistrationNumber,
+                StudentName = ComposeName(admission),
+                RegistrationNumber = admission?.StudentRegistration?.RegistrationNumber
+                    ?? await GetRegistrationNumberFallbackAsync(r),
                 ProgramName = r.Program?.ProgramName ?? r.Program?.ShortName,
                 CollegeName = r.College?.Name,
                 IsSupplementary = r.IsSupplementary,
@@ -229,13 +234,19 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
             .OrderBy(er => er.ProgramsId)
             .ThenBy(er => er.CollegeId)
             .ThenBy(er => er.IsSupplementary)
-            .ThenBy(er => er.SemesterEnrollment!.StudentAdmission!.LastName)
-            .ThenBy(er => er.SemesterEnrollment!.StudentAdmission!.FirstName)
-            .ThenBy(er => er.SemesterEnrollment!.StudentAdmission!.MiddleName)
             .AsQueryable();
 
         if (asNoTracking) query = query.AsNoTracking();
-        return await query.ToListAsync();
+        var list = await query.ToListAsync();
+
+        list.Sort((a, b) =>
+        {
+            var nameA = ComposeName(a.SemesterEnrollment?.StudentAdmission) ?? "";
+            var nameB = ComposeName(b.SemesterEnrollment?.StudentAdmission) ?? "";
+            return string.Compare(nameA, nameB, StringComparison.OrdinalIgnoreCase);
+        });
+
+        return list;
     }
 
     private static void SimulateAssignment(
@@ -286,6 +297,31 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
         var parts = new[] { admission.FirstName, admission.MiddleName, admission.LastName }
             .Where(p => !string.IsNullOrWhiteSpace(p));
         return string.Join(" ", parts);
+    }
+
+    private async Task<Domain.Entities.Students.StudentAdmission?> GetAdmissionFallbackAsync(Domain.Entities.Exams.ExamRegistration reg)
+    {
+        if (reg.ProgramsId == null) return null;
+
+        return await context.StudentAdmissions
+            .AsNoTracking()
+            .Include(sa => sa.StudentRegistration)
+            .FirstOrDefaultAsync(sa =>
+                sa.CollegeId == reg.CollegeId &&
+                sa.ProgramsId == reg.ProgramsId &&
+                sa.AcademicYearId == reg.AcademicYearId);
+    }
+
+    private async Task<string?> GetRegistrationNumberFallbackAsync(Domain.Entities.Exams.ExamRegistration reg)
+    {
+        var fallbackAdmission = await GetAdmissionFallbackAsync(reg);
+        if (fallbackAdmission == null) return null;
+
+        return await context.StudentRegistrations
+            .AsNoTracking()
+            .Where(sr => sr.StudentAdmissionId == fallbackAdmission.Id)
+            .Select(sr => sr.RegistrationNumber)
+            .FirstOrDefaultAsync();
     }
 
     private class BlockAccumulator

@@ -749,15 +749,10 @@ public class ProfileController(
                 vm.ProgramCode = program.ProgramCode;
             }
 
-            var enrollment = await context.SemesterEnrollments
-                .AsNoTracking()
-                .Where(se => se.StudentAdmissionId == admission.Id && se.EnrollmentStatus == StudentEnrollmentStatus.Active)
-                .Include(se => se.SemesterInstance).ThenInclude(si => si!.Semester)
-                .OrderByDescending(se => se.SemesterInstance!.Semester!.Number)
-                .FirstOrDefaultAsync();
-            if (enrollment?.SemesterInstance?.Semester != null)
+            var semester = await studentDashboardService.GetCurrentSemesterForStudentAsync(user.Id);
+            if (semester != null)
             {
-                vm.CurrentSemester = SemesterDisplayHelper.Format(enrollment.SemesterInstance.Semester);
+                vm.CurrentSemester = SemesterDisplayHelper.Format(semester);
             }
         }
         else if (registration?.Program != null)

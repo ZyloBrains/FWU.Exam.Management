@@ -1136,6 +1136,26 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .FirstOrDefaultAsync();
     }
 
+    public async Task<Semester?> GetCurrentSemesterForStudentAsync(string userId)
+    {
+        var admission = await ResolveStudentAdmissionAsync(userId);
+        if (admission == null) return null;
+
+        return await context.SemesterEnrollments!
+            .AsNoTracking()
+            .Where(se => se.StudentAdmissionId == admission.Id
+                      && se.EnrollmentStatus == StudentEnrollmentStatus.Active)
+            .Include(se => se.SemesterInstance)
+                .ThenInclude(si => si!.Semester)
+            .Include(se => se.SemesterInstance)
+                .ThenInclude(si => si!.AcademicYear)
+            .OrderByDescending(se => se.SemesterInstance!.AcademicYearId)
+            .ThenByDescending(se => se.SemesterInstance!.Semester!.Number)
+            .ThenByDescending(se => se.EnrolledDate)
+            .Select(se => se.SemesterInstance!.Semester)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<bool> HasFailedSubjectsInSemesterAsync(string userId, int semesterId, int programId)
     {
 

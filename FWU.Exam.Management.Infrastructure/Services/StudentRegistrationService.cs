@@ -745,4 +745,28 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
         return results;
     }
+
+    public async Task<StudentRegistration?> SearchStudentsForTransferAsync(string searchTerm)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+            return null;
+
+        var term = searchTerm.Trim().ToLower();
+        return await context.StudentRegistrations
+            .Include(s => s.AcademicYear)
+            .Include(s => s.Level)
+            .Include(s => s.Faculty)
+            .Include(s => s.Program)
+            .Include(s => s.College)
+            .Include(s => s.StudentAdmission)
+                .ThenInclude(sa => sa!.College)
+            .Include(s => s.StudentAdmission)
+                .ThenInclude(sa => sa!.Program)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s =>
+                (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(term)) ||
+                (s.FirstName != null && s.FirstName.ToLower().Contains(term)) ||
+                (s.LastName != null && s.LastName.ToLower().Contains(term)) ||
+                ((s.FirstName + " " + s.LastName).ToLower().Contains(term)));
+    }
 }

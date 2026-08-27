@@ -142,7 +142,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-500">Current Semester</p>
-                        <p class="text-sm sm:text-base font-bold text-gray-800 mt-1 leading-tight">@(string.IsNullOrEmpty(Model.CurrentSemester) ? "—" : Model.CurrentSemester)</p>
+                        <p class="text-sm sm:text-base font-bold text-gray-800 mt-1 leading-tight">@(string.IsNullOrEmpty(Model.CurrentSemester) ? "Not Enrolled" : Model.CurrentSemester)</p>
                     </div>
                     <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center">
                         <i class="fas fa-layer-group text-purple-600 text-xl"></i>

@@ -1,0 +1,735 @@
+@model StudentRegistration
+@{
+    ViewData["Title"] = "Transfer Student";
+
+    var currentLevel = Model.Level?.LevelName ?? "—";
+    var currentCollege = Model.College?.Name ?? "—";
+    var currentFaculty = Model.Faculty?.Name ?? "—";
+    var currentProgram = Model.Program?.ProgramName ?? "—";
+    var currentAcademicYear = Model.AcademicYear?.AcademicYearName ?? "—";
+
+    var enrollments = ViewBag.Enrollments as List<FWU.Exam.Management.Domain.Entities.Semesters.SemesterEnrollment> ?? new();
+    var affectedExamCount = (int)(ViewBag.AffectedExamCount ?? 0);
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 hover:bg-gray-200 transition-colors">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </a>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Transfer Student</h1>
+                <p class="text-sm text-gray-500 mt-0.5">
+                    <span class="font-medium text-gray-700">@(Model.FirstName) @(Model.LastName)</span>
+                    &mdash; Reg No: <span class="font-mono text-indigo-600">@(Model.RegistrationNumber ?? "—")</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_AlertMessages")
+
+    <!-- Side by Side Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- LEFT: Current Details -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gray-50 border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                        <i class="fas fa-id-card text-gray-500 text-sm"></i>
+                    </div>
+                    <h2 class="text-base font-bold text-gray-700">Current Enrollment</h2>
+                </div>
+            </div>
+            <div class="px-6 py-5 space-y-4">
+                <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">Registration No</span>
+                    <span class="text-sm font-semibold text-gray-800 font-mono">@(Model.RegistrationNumber ?? "—")</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">Student Name</span>
+                    <span class="text-sm font-semibold text-gray-800">@(Model.FirstName) @(Model.MiddleName) @(Model.LastName)</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">Level</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">@currentLevel</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">College</span>
+                    <span class="text-sm font-medium text-gray-800 text-right max-w-[60%]">@currentCollege</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">Faculty</span>
+                    <span class="text-sm font-medium text-gray-800 text-right max-w-[60%]">@currentFaculty</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">Program</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">@currentProgram</span>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-sm text-gray-500">Academic Year</span>
+                    <span class="text-sm font-medium text-gray-800">@currentAcademicYear</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: New Details + Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-indigo-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-exchange-alt text-white text-sm"></i>
+                    </div>
+                    <h2 class="text-base font-bold text-white">New Enrollment</h2>
+                </div>
+            </div>
+            <div class="px-6 py-5">
+                <form asp-action="Transfer" asp-route-id="@Model.Id" method="post" id="transferForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <!-- Level -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Level</label>
+                            <select name="levelId" id="LevelId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="">Select Level</option>
+                                @if (ViewBag.Levels is SelectList levelList)
+                                {
+                                    foreach (var item in levelList)
+                                    {
+                                        if (item.Value == Model.LevelId.ToString())
+                                        {
+                                            <option value="@item.Value" selected>@item.Text</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <!-- College -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">College</label>
+                            <select name="collegeId" id="CollegeId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="">Select College</option>
+                            </select>
+                        </div>
+
+                        <!-- Program -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Program</label>
+                            <select name="programId" id="ProgramId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="">Select Program</option>
+                            </select>
+                        </div>
+
+                        <!-- Target Semester -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Target Semester</label>
+                            <select name="semesterId" id="SemesterId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">First Semester (default)</option>
+                            </select>
+                        </div>
+
+                        <!-- Academic Year -->
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Academic Year</label>
+                            <select name="academicYearId" id="AcademicYearId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="">Select Academic Year</option>
+                                @if (ViewBag.AcademicYears is SelectList ayList)
+                                {
+                                    foreach (var item in ayList)
+                                    {
+                                        if (item.Value == Model.AcademicYearId.ToString())
+                                        {
+                                            <option value="@item.Value" selected>@item.Text</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Confirmation -->
+                    <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <div class="w-5 h-5 mt-0.5 shrink-0">
+                                <input type="checkbox" id="confirmTransfer" required
+                                       class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            </div>
+                            <div>
+                                <label for="confirmTransfer" class="text-sm font-medium text-amber-800 cursor-pointer">
+                                    I confirm this transfer
+                                </label>
+                                <p id="confirmText" class="text-xs text-amber-600 mt-1">
+                                    This will update the student's program, college, and faculty. Existing semester enrollments will be removed and the student will be re-enrolled in the first semester of the new program.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-6 flex items-center justify-between">
+                        <a asp-action="Index" class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                            <i class="fas fa-times text-xs"></i> Cancel
+                        </a>
+                        <button type="submit" id="btnTransfer" disabled
+                                class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-exchange-alt text-xs"></i> Execute Transfer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Impact Diagram -->
+    <div id="diagramSection" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gray-50 border-b border-gray-200 px-6 py-4">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exchange-alt text-indigo-600 text-sm"></i>
+                </div>
+                <h2 class="text-base font-bold text-gray-700">Transfer Impact</h2>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr,auto,1fr] gap-6 items-start">
+                <!-- BEFORE -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                            <i class="fas fa-id-card text-gray-500 text-xs"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wide">Current</h3>
+                    </div>
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100">
+                            <span class="text-sm text-gray-500">Level</span>
+                            <span class="text-sm font-semibold text-gray-800" id="dCurrentLevel">@currentLevel</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100">
+                            <span class="text-sm text-gray-500">College</span>
+                            <span class="text-sm font-semibold text-gray-800 text-right max-w-[60%]" id="dCurrentCollege">@currentCollege</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100">
+                            <span class="text-sm text-gray-500">Faculty</span>
+                            <span class="text-sm font-semibold text-gray-800 text-right max-w-[60%]" id="dCurrentFaculty">@currentFaculty</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100">
+                            <span class="text-sm text-gray-500">Program</span>
+                            <span class="text-sm font-semibold text-indigo-700" id="dCurrentProgram">@currentProgram</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100">
+                            <span class="text-sm text-gray-500">Academic Year</span>
+                            <span class="text-sm font-semibold text-gray-800" id="dCurrentYear">@currentAcademicYear</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ARROWS -->
+                <div class="hidden lg:flex flex-col items-center gap-2.5 pt-8" id="arrowsCol">
+                    <div class="h-[34px] flex items-center" id="arrowLevel"><i class="fas fa-minus text-gray-300 text-sm"></i></div>
+                    <div class="h-[34px] flex items-center" id="arrowCollege"><i class="fas fa-minus text-gray-300 text-sm"></i></div>
+                    <div class="h-[34px] flex items-center" id="arrowFaculty"><i class="fas fa-minus text-gray-300 text-sm"></i></div>
+                    <div class="h-[34px] flex items-center" id="arrowProgram"><i class="fas fa-minus text-gray-300 text-sm"></i></div>
+                    <div class="h-[34px] flex items-center" id="arrowYear"><i class="fas fa-minus text-gray-300 text-sm"></i></div>
+                </div>
+
+                <!-- AFTER -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-arrow-right text-white text-xs"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-indigo-600 uppercase tracking-wide">New</h3>
+                    </div>
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100" id="dRowLevel">
+                            <span class="text-sm text-gray-500">Level</span>
+                            <span class="text-sm font-semibold text-gray-800" id="dNewLevel">—</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100" id="dRowCollege">
+                            <span class="text-sm text-gray-500">College</span>
+                            <span class="text-sm font-semibold text-gray-800 text-right max-w-[60%]" id="dNewCollege">—</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100" id="dRowFaculty">
+                            <span class="text-sm text-gray-500">Faculty</span>
+                            <span class="text-sm font-semibold text-gray-800 text-right max-w-[60%]" id="dNewFaculty">—</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100" id="dRowProgram">
+                            <span class="text-sm text-gray-500">Program</span>
+                            <span class="text-sm font-semibold text-indigo-700" id="dNewProgram">—</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100" id="dRowYear">
+                            <span class="text-sm text-gray-500">Academic Year</span>
+                            <span class="text-sm font-semibold text-gray-800" id="dNewYear">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enrollment Impact (only shown when program changes) -->
+            <div id="enrollmentImpact" class="hidden mt-8 pt-6 border-t border-gray-200">
+                <div class="grid grid-cols-1 lg:grid-cols-[1fr,auto,1fr] gap-6 items-start">
+                    <!-- WILL BE REMOVED -->
+                    <div>
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-trash-alt text-red-500 text-xs"></i>
+                            </div>
+                            <h3 class="text-sm font-bold text-red-600 uppercase tracking-wide">Will Be Removed</h3>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">@enrollments.Count</span>
+                        </div>
+
+                        @if (enrollments.Count == 0)
+                        {
+                            <div class="py-6 text-center bg-gray-50 rounded-lg border border-gray-100">
+                                <i class="fas fa-inbox text-gray-300 text-2xl mb-2"></i>
+                                <p class="text-sm text-gray-400">No existing semester enrollments</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var enrollment in enrollments)
+                            {
+                                var statusClass = enrollment.EnrollmentStatus switch
+                                {
+                                    FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Active => "bg-green-100 text-green-700",
+                                    FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Inactive => "bg-yellow-100 text-yellow-700",
+                                    FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Dropped => "bg-red-100 text-red-700",
+                                    _ => "bg-gray-100 text-gray-600"
+                                };
+                                var resultClass = enrollment.ResultStatus switch
+                                {
+                                    FWU.Exam.Management.Domain.Enums.ResultStatus.Passed => "bg-green-100 text-green-700",
+                                    FWU.Exam.Management.Domain.Enums.ResultStatus.Failed => "bg-red-100 text-red-700",
+                                    FWU.Exam.Management.Domain.Enums.ResultStatus.Incomplete => "bg-yellow-100 text-yellow-700",
+                                    _ => "bg-gray-100 text-gray-600"
+                                };
+                                <div class="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2 mb-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-bold text-gray-800">@(enrollment.SemesterInstance?.Semester?.Name ?? "Semester")</span>
+                                        <span class="text-xs text-gray-500">@(enrollment.SemesterInstance?.AcademicYear?.AcademicYearName ?? "")</span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium @statusClass">@enrollment.EnrollmentStatus</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium @resultClass">@enrollment.ResultStatus</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs text-gray-600">
+                                        <span>Credits: @enrollment.TotalCredits | GPA: @enrollment.GradePoints</span>
+                                        <span>@enrollment.PaymentStatus — $@enrollment.PaidAmount / $@enrollment.TotalFee</span>
+                                    </div>
+                                    @if (enrollment.ExamRegistrations?.Any() == true)
+                                    {
+                                        <div class="mt-2 pt-2 border-t border-red-200">
+                                            <button type="button" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('fa-chevron-down'); this.querySelector('i').classList.toggle('fa-chevron-right')"
+                                                    class="flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:text-amber-800">
+                                                <i class="fas fa-chevron-right text-[10px]"></i>
+                                                <i class="fas fa-link-slash text-[10px]"></i>
+                                                <span>@enrollment.ExamRegistrations.Count exam registration(s) — will be unlinked</span>
+                                            </button>
+                                            <div class="hidden mt-2 space-y-1.5">
+                                                @foreach (var examReg in enrollment.ExamRegistrations)
+                                                {
+                                                    <div class="flex items-center justify-between text-xs bg-white rounded px-2.5 py-1.5 border border-amber-200">
+                                                        <span class="text-gray-700">@(examReg.ExamSchedule?.ExamScheduleName ?? "Exam")</span>
+                                                        <span class="text-gray-500 font-mono">@(examReg.ExamRollNumber ?? "—")</span>
+                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium
+                                                            @(examReg.Status == FWU.Exam.Management.Domain.Enums.RegistrationStatus.Registered ? "bg-green-100 text-green-700" :
+                                                              examReg.Status == FWU.Exam.Management.Domain.Enums.RegistrationStatus.Rejected ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600")">
+                                                            @examReg.Status
+                                                        </span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- ARROW -->
+                    <div class="hidden lg:flex flex-col items-center justify-center pt-8 gap-2">
+                        <i class="fas fa-arrow-right text-amber-500 text-xl"></i>
+                        <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wide">Removed</span>
+                    </div>
+
+                    <!-- WILL BE CREATED -->
+                    <div>
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-plus-circle text-green-500 text-xs"></i>
+                            </div>
+                            <h3 class="text-sm font-bold text-green-600 uppercase tracking-wide">Will Be Created</h3>
+                        </div>
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-bold text-gray-800" id="dNewEnrollSemester">Semester 1</span>
+                                <span class="text-xs text-gray-500" id="dNewEnrollYear">@currentAcademicYear</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Active</span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">FullTime</span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700">Incomplete</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-600">
+                                <span>Credits: 0 | GPA: 0</span>
+                                <span class="text-amber-600">Pending — $0 / $0</span>
+                            </div>
+                            <div class="mt-2 pt-2 border-t border-green-200">
+                                <p class="text-xs text-green-600">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Enrolled in first semester of <span class="font-semibold" id="dNewEnrollProgram">@currentProgram</span> upon transfer completion.
+                                </p>
+                            </div>
+                        </div>
+
+                        @if (affectedExamCount > 0)
+                        {
+                            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
+                                <div class="flex items-start gap-2">
+                                    <i class="fas fa-exclamation-triangle text-amber-500 text-sm mt-0.5"></i>
+                                    <div>
+                                        <p class="text-xs font-medium text-amber-800">@affectedExamCount exam registration(s) will be unlinked</p>
+                                        <p class="text-xs text-amber-600 mt-1">Their enrollment link will be removed. Exam data (grades, hall tickets) is preserved.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- No Change Message -->
+            <div id="noChangeMsg" class="hidden mt-6 text-center py-6">
+                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-minus-circle text-gray-400 text-xl"></i>
+                </div>
+                <p class="text-sm text-gray-400">No changes detected — all values are the same as current.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single {
+            height: 48px;
+            padding: 8px 12px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 46px;
+        }
+    </style>
+
+    <script>
+        var _current = {
+            level: @Model.LevelId,
+            college: @Model.CollegeId,
+            program: @(Model.ProgramId?.ToString() ?? "0"),
+            year: @Model.AcademicYearId,
+            levelName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentLevel)),
+            collegeName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentCollege)),
+            facultyName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentFaculty)),
+            programName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentProgram)),
+            yearName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentAcademicYear))
+        };
+
+        function setArrow(id, changed) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.innerHTML = changed
+                ? '<div class="flex items-center gap-1"><i class="fas fa-arrow-right text-green-500 text-sm"></i><span class="text-[10px] font-bold text-green-600 uppercase">Changed</span></div>'
+                : '<i class="fas fa-minus text-gray-300 text-sm"></div>';
+        }
+
+        function setRowColor(rowId, changed) {
+            var el = document.getElementById(rowId);
+            if (!el) return;
+            if (changed) {
+                el.className = el.className.replace('bg-gray-50 border-gray-100', 'bg-green-50 border-green-200');
+            } else {
+                el.className = el.className.replace('bg-green-50 border-green-200', 'bg-gray-50 border-gray-100');
+            }
+        }
+
+        function setNameColor(textId, changed, isProgram) {
+            var el = document.getElementById(textId);
+            if (!el) return;
+            el.className = el.className.replace(/text-(green|gray|indigo)-\d+/g, '');
+            if (changed) {
+                el.classList.add('text-green-700');
+            } else if (isProgram) {
+                el.classList.add('text-indigo-700');
+            } else {
+                el.classList.add('text-gray-800');
+            }
+        }
+
+        function updateDiagram() {
+            var newLevelId = parseInt($("#LevelId").val()) || 0;
+            var newCollegeId = parseInt($("#CollegeId").val()) || 0;
+            var newProgramId = parseInt($("#ProgramId").val()) || 0;
+            var newYearId = parseInt($("#AcademicYearId").val()) || 0;
+
+            var levelChanged = newLevelId > 0 && newLevelId !== _current.level;
+            var collegeChanged = newCollegeId > 0 && newCollegeId !== _current.college;
+            var programChanged = newProgramId > 0 && newProgramId !== _current.program;
+            var yearChanged = newYearId > 0 && newYearId !== _current.year;
+            var facultyChanged = programChanged;
+            var anyChange = levelChanged || collegeChanged || programChanged || yearChanged;
+
+            var newLevelName = getSelectedText("LevelId");
+            var newCollegeName = getSelectedText("CollegeId");
+            var newProgramName = getSelectedText("ProgramId");
+            var newYearName = getSelectedText("AcademicYearId");
+
+            document.getElementById("dNewLevel").textContent = newLevelName || "—";
+            document.getElementById("dNewCollege").textContent = newCollegeName || "—";
+            document.getElementById("dNewProgram").textContent = newProgramName || "—";
+            document.getElementById("dNewYear").textContent = newYearName || "—";
+            document.getElementById("dNewEnrollYear").textContent = newYearName || "—";
+            document.getElementById("dNewEnrollProgram").textContent = newProgramName || "—";
+
+            var semesterName = $("#SemesterId").val() ? getSelectedText("SemesterId") : "";
+            document.getElementById("dNewEnrollSemester").textContent = semesterName || "Semester 1";
+
+            setArrow("arrowLevel", levelChanged);
+            setArrow("arrowCollege", collegeChanged);
+            setArrow("arrowFaculty", facultyChanged);
+            setArrow("arrowProgram", programChanged);
+            setArrow("arrowYear", yearChanged);
+
+            setRowColor("dRowLevel", levelChanged);
+            setRowColor("dRowCollege", collegeChanged);
+            setRowColor("dRowFaculty", facultyChanged);
+            setRowColor("dRowProgram", programChanged);
+            setRowColor("dRowYear", yearChanged);
+
+            setNameColor("dNewLevel", levelChanged, false);
+            setNameColor("dNewCollege", collegeChanged, false);
+            setNameColor("dNewFaculty", facultyChanged, false);
+            setNameColor("dNewProgram", programChanged, true);
+            setNameColor("dNewYear", yearChanged, false);
+
+            var impact = document.getElementById("enrollmentImpact");
+            var noChange = document.getElementById("noChangeMsg");
+            if (programChanged) {
+                impact.classList.remove("hidden");
+                noChange.classList.add("hidden");
+            } else {
+                impact.classList.add("hidden");
+                noChange.classList.toggle("hidden", anyChange);
+            }
+
+            var confirmText = document.getElementById("confirmText");
+            if (programChanged) {
+                confirmText.textContent = "This will change the student's program. All semester enrollments will be deleted and the student will be re-enrolled in the first semester of the new program.";
+            } else if (collegeChanged) {
+                confirmText.textContent = "This will update the student's college. Semester enrollments and exam registrations are preserved.";
+            } else {
+                confirmText.textContent = "This will update the student's details. Semester enrollments are not affected.";
+            }
+
+            if (newProgramId > 0) {
+                $.get(tenantUrl("/Students/StudentTransfers/GetFacultyByProgram"), { programId: newProgramId }, function (data) {
+                    document.getElementById("dNewFaculty").textContent = (data && data.facultyName) ? data.facultyName : _current.facultyName;
+                }).fail(function () {
+                    document.getElementById("dNewFaculty").textContent = _current.facultyName;
+                });
+            } else {
+                document.getElementById("dNewFaculty").textContent = "—";
+            }
+        }
+
+        function getSelectedText(selectId) {
+            var el = document.getElementById(selectId);
+            if (!el || el.selectedIndex < 0) return "";
+            return el.options[el.selectedIndex].text;
+        }
+
+        var _collegeSeq = 0, _programSeq = 0, _cascadeBusy = false;
+
+        function loadColleges(levelId, selectedCollegeId, callback) {
+            var seq = ++_collegeSeq;
+            if (!levelId) {
+                $("#CollegeId").empty().append('<option value="">Select College</option>');
+                if (callback) callback();
+                return;
+            }
+            $.get(tenantUrl("/Students/StudentTransfers/GetCollegesByLevel"),
+                { levelId: levelId },
+                function (data) {
+                    if (seq !== _collegeSeq) return;
+                    var dropdown = $("#CollegeId");
+                    dropdown.select2('destroy');
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select College</option>');
+                    $.each(data, function (index, item) {
+                        var sel = selectedCollegeId && item.id == selectedCollegeId ? ' selected' : '';
+                        dropdown.append(`<option value="${item.id}"${sel}>${item.name}</option>`);
+                    });
+                    dropdown.select2({ width: 'resolve' });
+                    if (callback) callback();
+                });
+        }
+
+        function loadPrograms(collegeId, selectedProgramId, callback) {
+            var seq = ++_programSeq;
+            var levelId = $("#LevelId").val();
+            if (!collegeId) {
+                $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                if (callback) callback();
+                return;
+            }
+            $.get(tenantUrl("/Students/StudentTransfers/GetProgramsByCollege"),
+                { collegeId: collegeId, levelId: levelId || null },
+                function (data) {
+                    if (seq !== _programSeq) return;
+                    var dropdown = $("#ProgramId");
+                    dropdown.select2('destroy');
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select Program</option>');
+                    $.each(data, function (i, item) {
+                        var sel = selectedProgramId && item.id == selectedProgramId ? ' selected' : '';
+                        dropdown.append(`<option value="${item.id}"${sel}>${item.name}</option>`);
+                    });
+                    dropdown.select2({ width: 'resolve' });
+                    if (callback) callback();
+                });
+        }
+
+        var _semesterSeq = 0;
+        function loadSemesters(programId, selectFirst, callback) {
+            var seq = ++_semesterSeq;
+            var dropdown = $("#SemesterId");
+            dropdown.select2('destroy');
+            dropdown.empty();
+            dropdown.append('<option value="">First Semester (default)</option>');
+            dropdown.select2({ width: 'resolve' });
+            if (!programId) { if (callback) callback(); return; }
+            $.get(tenantUrl("/Students/StudentTransfers/GetSemestersForProgram"),
+                { programId: programId },
+                function (data) {
+                    if (seq !== _semesterSeq) return;
+                    dropdown.select2('destroy');
+                    dropdown.empty();
+                    dropdown.append('<option value="">First Semester (default)</option>');
+                    $.each(data, function (i, item) {
+                        dropdown.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                    if (selectFirst && data.length > 0) {
+                        dropdown.val(data[0].id);
+                    }
+                    dropdown.select2({ width: 'resolve' });
+                    if (callback) callback();
+                });
+        }
+
+        $(function () {
+            $('.select2').select2({ width: 'resolve' });
+
+            var initLevelId = @Model.LevelId;
+            var initCollegeId = @Model.CollegeId;
+            var initProgramId = @(Model.ProgramId?.ToString() ?? "0");
+
+            _cascadeBusy = true;
+            loadColleges(initLevelId, initCollegeId, function () {
+                loadPrograms(initCollegeId, initProgramId, function () {
+                    loadSemesters(initProgramId, false, function () {
+                        _cascadeBusy = false;
+                        updateDiagram();
+                    });
+                });
+            });
+
+            $("#LevelId").change(function () {
+                if (_cascadeBusy) return;
+                var levelId = $(this).val();
+                $("#CollegeId").select2('destroy');
+                $("#CollegeId").empty().append('<option value="">Select College</option>');
+                $("#CollegeId").select2({ width: 'resolve' });
+                $("#ProgramId").select2('destroy');
+                $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                $("#ProgramId").select2({ width: 'resolve' });
+                $("#SemesterId").select2('destroy');
+                $("#SemesterId").empty().append('<option value="">First Semester (default)</option>');
+                $("#SemesterId").select2({ width: 'resolve' });
+                loadColleges(levelId, null);
+                updateDiagram();
+            });
+
+            $("#CollegeId").change(function () {
+                if (_cascadeBusy) return;
+                var collegeId = $(this).val();
+                $("#ProgramId").select2('destroy');
+                $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                $("#ProgramId").select2({ width: 'resolve' });
+                $("#SemesterId").select2('destroy');
+                $("#SemesterId").empty().append('<option value="">First Semester (default)</option>');
+                $("#SemesterId").select2({ width: 'resolve' });
+                loadPrograms(collegeId, null);
+                updateDiagram();
+            });
+
+            $("#ProgramId").change(function () {
+                if (_cascadeBusy) return;
+                var programId = $(this).val();
+                if (programId) {
+                    loadSemesters(programId, true, function () {
+                        updateDiagram();
+                    });
+                } else {
+                    $("#SemesterId").select2('destroy');
+                    $("#SemesterId").empty().append('<option value="">First Semester (default)</option>');
+                    $("#SemesterId").select2({ width: 'resolve' });
+                    updateDiagram();
+                }
+            });
+
+            $("#AcademicYearId").change(function () {
+                updateDiagram();
+            });
+
+            $("#confirmTransfer").change(function () {
+                $("#btnTransfer").prop("disabled", !this.checked);
+            });
+
+            $("#transferForm").on("submit", function (e) {
+                var level = $("#LevelId").val();
+                var college = $("#CollegeId").val();
+                var program = $("#ProgramId").val();
+                var ay = $("#AcademicYearId").val();
+                if (!level || !college || !program || !ay) {
+                    e.preventDefault();
+                    alert("Please fill in all transfer fields.");
+                    return false;
+                }
+                var newProgramId = parseInt(program);
+                var msg = newProgramId !== _current.program
+                    ? "This will transfer the student to a NEW PROGRAM. All semester enrollments will be deleted and the student will be re-enrolled in the first semester. This action cannot be undone."
+                    : "This will update the student's college. Semester enrollments will be preserved. Continue?";
+                if (!confirm(msg)) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+    </script>
+}

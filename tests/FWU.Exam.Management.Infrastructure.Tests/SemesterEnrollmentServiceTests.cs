@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Domain.Constants;
+using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
@@ -471,6 +472,139 @@ public class SemesterEnrollmentServiceTests
 
         Assert.False(created);
         Assert.Empty(db.Context.SemesterEnrollments!);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_ReplacesEnrollments_WhenTargetSemesterInstanceExists()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 90,
+                TenantId = TestData.TenantId,
+                SemesterId = 1,
+                AcademicYearId = TestData.AcademicYearId,
+                ProgramId = TestData.ProgramIdOther
+            });
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1);
+
+        Assert.True(transferred);
+        var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
+        Assert.Equal(90, enrollment.SemesterInstanceId);
+        Assert.Equal(StudentEnrollmentStatus.Active, enrollment.EnrollmentStatus);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_ReturnsFalse_WhenSemesterInstanceMissing_AndDeletesNothing()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            // Program 2 has ProgramSemesters (SeedBase) but no SemesterInstance, so the
+            // transfer must fail BEFORE the existing enrollment is removed.
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId);
+
+        Assert.False(transferred);
+        var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
+        Assert.Equal(2, enrollment.SemesterInstanceId);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_ReturnsFalse_WhenProgramHasNoSemesters_AndDeletesNothing()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(1, 99, TestData.AcademicYearId);
+
+        Assert.False(transferred);
+        var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
+        Assert.Equal(2, enrollment.SemesterInstanceId);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_ReturnsFalse_WhenAdmissionNotFound()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), TestData.SeedBase);
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(999, TestData.ProgramIdOther, TestData.AcademicYearId);
+
+        Assert.False(transferred);
+        Assert.Empty(db.Context.SemesterEnrollments!);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_DefaultsToLowestSemesterNumber_WhenDisplayOrderTied()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId, programId: 99));
+            ctx.Programs.Add(new Program { Id = 99, LevelId = TestData.LevelId, ProgramCode = "T99", ProgramName = "Test 99", ShortName = "T99", Duration = 4, IsActive = true });
+            ctx.ProgramSemesters.Add(new ProgramSemester { Id = 100, ProgramId = 99, SemesterId = 2, IsActive = true, DisplayOrder = 0 });
+            ctx.ProgramSemesters.Add(new ProgramSemester { Id = 101, ProgramId = 99, SemesterId = 1, IsActive = true, DisplayOrder = 0 });
+            ctx.ProgramSemesters.Add(new ProgramSemester { Id = 102, ProgramId = 99, SemesterId = 3, IsActive = true, DisplayOrder = 0 });
+            for (var semId = 1; semId <= 3; semId++)
+            {
+                ctx.SemesterInstances.Add(new SemesterInstance
+                {
+                    Id = 200 + semId,
+                    TenantId = TestData.TenantId,
+                    SemesterId = semId,
+                    AcademicYearId = TestData.AcademicYearId,
+                    ProgramId = 99
+                });
+            }
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(1, 99, TestData.AcademicYearId);
+
+        Assert.True(transferred);
+        var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
+        Assert.Equal(201, enrollment.SemesterInstanceId);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_RecreatesEnrollment_WhenProgramAndYearUnchanged()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramId, TestData.AcademicYearId);
+
+        Assert.True(transferred);
+        var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
+        // Default (no target semester) resolves to the first program semester — instance 1.
+        Assert.Equal(1, enrollment.SemesterInstanceId);
     }
 
     private static void SeedProgramSemesters(AppDbContext ctx)

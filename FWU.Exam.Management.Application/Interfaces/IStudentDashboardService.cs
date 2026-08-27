@@ -3,6 +3,7 @@ using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 
@@ -42,6 +43,7 @@ public interface IStudentDashboardService
     Task<List<ExamRegistration>> GetStudentExamRegistrationsAsync(string userId);
     Task<List<ExamSubjectResult>> GetExamSubjectResultsForStudentAsync(string userId, int examScheduleId);
     Task<int?> GetCurrentSemesterIdForStudentAsync(string userId);
+    Task<Semester?> GetCurrentSemesterForStudentAsync(string userId);
     Task<bool> HasFailedSubjectsInSemesterAsync(string userId, int semesterId, int programId);
     bool IsReExamType(string? examTypeName);
     Task<bool> HasAnyExamResultsInSemesterAsync(string userId, int semesterId, int programId);

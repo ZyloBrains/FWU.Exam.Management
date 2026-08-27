@@ -101,9 +101,10 @@ public static class AppMenu
                 M("Student Categories", "fa-layer-group", ["studentcategories.view"], R(null, "StudentCategories", "Index"), ["category"]),
                 M("Student Admissions", "fa-user-graduate", ["studentadmissions.view"], R("Students", "StudentAdmissions", "Index"), ["admission", "admit"]),
                 M("Semester Enrollments", "fa-user-check", ["studentadmissions.view"], R("Students", "SemesterEnrollments", "Index"), ["enrollment", "semester"]),
+                M("Transfer Student", "fa-exchange-alt", ["students.edit"], R("Students", "StudentTransfers", "Index"), ["transfer", "move", "reassign"]),
             ],
             Landing: R(null, "Section", "Registration"),
-            SectionActiveOns: [R("Students", "StudentRegistrations", null), R(null, "StudentCategories", null), R("Students", "StudentAdmissions", null), R("Students", "SemesterEnrollments", null)]),
+            SectionActiveOns: [R("Students", "StudentRegistrations", null), R(null, "StudentCategories", null), R("Students", "StudentAdmissions", null), R("Students", "SemesterEnrollments", null), R("Students", "StudentTransfers", null)]),
 
         new("Examination", "Examination", "fa-file-alt",
             "Manage exam schedules, types, registrations and more",

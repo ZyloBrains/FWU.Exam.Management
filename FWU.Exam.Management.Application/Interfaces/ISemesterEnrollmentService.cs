@@ -18,5 +18,6 @@ public interface ISemesterEnrollmentService
     Task<(int Created, int Skipped)> BulkCreateEnrollmentsAsync(List<int> admissionIds, int semesterInstanceId, EnrollmentType? enrollmentType = null);
     Task<(int Created, int Skipped)> BulkCreateAllEnrollmentsAsync(string? search, int? academicYearId, int? collegeId, int? programId, int semesterInstanceId, EnrollmentType? enrollmentType = null);
     Task<bool> EnrollInFirstSemesterAsync(int admissionId);
+    Task<bool> TransferEnrollmentsAsync(int admissionId, int newProgramId, int newAcademicYearId, int? targetSemesterId = null);
     Task<int> PromoteCompletedSemestersAsync();
 }

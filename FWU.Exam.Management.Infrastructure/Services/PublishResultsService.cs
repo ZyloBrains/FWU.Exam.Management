@@ -279,15 +279,9 @@ public class PublishResultsService(
         if (reg.ApplicationVoucher?.StudentName is { Length: > 0 } voucherName)
             return voucherName;
 
-        if (reg.SemesterEnrollment?.StudentAdmission?.AppUserId is { Length: > 0 } userId)
-        {
-            var user = await context.Users
-                .AsNoTracking()
-                .Where(u => u.Id == userId)
-                .Select(u => u.FullName)
-                .FirstOrDefaultAsync();
-            if (!string.IsNullOrEmpty(user)) return user;
-        }
+        var fallbackAdmission = await GetAdmissionFallbackAsync(reg);
+        if (fallbackAdmission != null)
+            return fallbackAdmission.FirstName.GetFullName(fallbackAdmission.LastName);
 
         return "";
     }
@@ -327,7 +321,30 @@ public class PublishResultsService(
                 .FirstOrDefaultAsync();
             if (!string.IsNullOrEmpty(regNum)) return regNum;
         }
+
+        var fallbackAdmission = await GetAdmissionFallbackAsync(reg);
+        if (fallbackAdmission != null)
+        {
+            return await context.StudentRegistrations
+                .AsNoTracking()
+                .Where(sr => sr.StudentAdmissionId == fallbackAdmission.Id)
+                .Select(sr => sr.RegistrationNumber)
+                .FirstOrDefaultAsync();
+        }
+
         return null;
+    }
+
+    private async Task<Domain.Entities.Students.StudentAdmission?> GetAdmissionFallbackAsync(Domain.Entities.Exams.ExamRegistration reg)
+    {
+        if (reg.ProgramsId == null) return null;
+
+        return await context.StudentAdmissions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa =>
+                sa.CollegeId == reg.CollegeId &&
+                sa.ProgramsId == reg.ProgramsId &&
+                sa.AcademicYearId == reg.AcademicYearId);
     }
 
     private static string FormatMarks(float? marks)

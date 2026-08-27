@@ -251,7 +251,9 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         var firstProgramSemester = await context.ProgramSemesters
             .AsNoTracking()
             .Where(ps => ps.ProgramId == admission.ProgramsId && ps.IsActive)
+            .Include(ps => ps.Semester)
             .OrderBy(ps => ps.DisplayOrder)
+            .ThenBy(ps => ps.Semester!.Number)
             .FirstOrDefaultAsync();
         if (firstProgramSemester == null) return false;
 
@@ -265,6 +267,86 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             .AsNoTracking()
             .FirstOrDefaultAsync(si => si.SemesterId == firstSemester.Id && si.AcademicYearId == currentAcademicYearId && si.ProgramId == admission.ProgramsId);
         if (semesterInstance == null) return false;
+
+        context.SemesterEnrollments.Add(new SemesterEnrollment
+        {
+            TenantId = admission.TenantId,
+            StudentAdmissionId = admission.Id,
+            SemesterInstanceId = semesterInstance.Id,
+            EnrollmentStatus = StudentEnrollmentStatus.Active,
+            EnrollmentType = EnrollmentType.FullTime,
+            PaymentStatus = PaymentStatus.Pending,
+            ResultStatus = ResultStatus.Incomplete,
+            EnrolledDate = DateTime.UtcNow,
+            TotalCredits = 0,
+            GradePoints = 0,
+            TotalFee = 0,
+            PaidAmount = 0,
+            Deficiency = false
+        });
+        await context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> TransferEnrollmentsAsync(int admissionId, int newProgramId, int newAcademicYearId, int? targetSemesterId = null)
+    {
+        var admission = await context.StudentAdmissions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa => sa.Id == admissionId);
+        if (admission == null) return false;
+
+        // Resolve the target ProgramSemester and SemesterInstance FIRST so the
+        // transfer can never leave the student without an enrollment.
+        ProgramSemester? programSemester;
+        if (targetSemesterId.HasValue)
+        {
+            programSemester = await context.ProgramSemesters
+                .AsNoTracking()
+                .FirstOrDefaultAsync(ps =>
+                    ps.ProgramId == newProgramId &&
+                    ps.SemesterId == targetSemesterId.Value &&
+                    ps.IsActive);
+        }
+        else
+        {
+            programSemester = await context.ProgramSemesters
+                .AsNoTracking()
+                .Where(ps => ps.ProgramId == newProgramId && ps.IsActive)
+                .Include(ps => ps.Semester)
+                .OrderBy(ps => ps.DisplayOrder)
+                .ThenBy(ps => ps.Semester!.Number)
+                .FirstOrDefaultAsync();
+        }
+        if (programSemester == null) return false;
+
+        var semesterInstance = await context.SemesterInstances
+            .AsNoTracking()
+            .FirstOrDefaultAsync(si =>
+                si.SemesterId == programSemester.SemesterId &&
+                si.AcademicYearId == newAcademicYearId &&
+                si.ProgramId == newProgramId);
+        if (semesterInstance == null) return false;
+
+        var existingEnrollments = await context.SemesterEnrollments
+            .Where(se => se.StudentAdmissionId == admissionId)
+            .ToListAsync();
+        if (existingEnrollments.Count > 0)
+        {
+            var enrollmentIds = existingEnrollments.Select(e => e.Id).ToList();
+
+            var linkedExamRegistrations = await context.ExamRegistrations
+                .Where(er => er.SemesterEnrollmentId != null && enrollmentIds.Contains(er.SemesterEnrollmentId!.Value))
+                .ToListAsync();
+            foreach (var er in linkedExamRegistrations)
+            {
+                er.SemesterEnrollmentId = null;
+            }
+            if (linkedExamRegistrations.Count > 0)
+                await context.SaveChangesAsync();
+
+            context.SemesterEnrollments.RemoveRange(existingEnrollments);
+            await context.SaveChangesAsync();
+        }
 
         context.SemesterEnrollments.Add(new SemesterEnrollment
         {

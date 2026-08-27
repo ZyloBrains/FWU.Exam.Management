@@ -449,6 +449,67 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetCurrentSemester_ReturnsSemesterFromLatestAcademicYear_WhenMultipleActiveEnrollments()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            // Same-year enrollment in a higher semester (instance 3, year 2081) vs a
+            // later academic year in a lower semester (instance 20, year 2082).
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 3));
+            ctx.AcademicYears.Add(TestData.AcademicYear(2, "2082"));
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 20,
+                TenantId = TestData.TenantId,
+                SemesterId = 2,
+                AcademicYearId = 2,
+                ProgramId = TestData.ProgramId
+            });
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(2, 1, 20));
+        });
+
+        var service = CreateService(db);
+
+        var semester = await service.GetCurrentSemesterForStudentAsync(UserId);
+
+        Assert.NotNull(semester);
+        Assert.Equal(2, semester!.Number);
+        Assert.Equal("Semester 2", semester.Name);
+    }
+
+    [Fact]
+    public async Task GetCurrentSemester_ReturnsNull_WhenStudentHasNoAdmission()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), TestData.SeedBase);
+        var service = CreateService(db);
+
+        var semester = await service.GetCurrentSemesterForStudentAsync(UserId);
+
+        Assert.Null(semester);
+    }
+
+    [Fact]
+    public async Task GetCurrentSemester_ReturnsNull_WhenNoActiveEnrollment()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2, StudentEnrollmentStatus.Inactive));
+        });
+
+        var service = CreateService(db);
+
+        var semester = await service.GetCurrentSemesterForStudentAsync(UserId);
+
+        Assert.Null(semester);
+    }
+
+    [Fact]
     public async Task GetSubjectOfferingsForScheduleAsync_FallsBackToAllOfferings_WhenNoCurriculumVersionMatches()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
