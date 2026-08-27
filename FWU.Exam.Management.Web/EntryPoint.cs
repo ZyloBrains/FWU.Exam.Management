@@ -17,10 +17,12 @@ using FWU.Exam.Management.Infrastructure.Interceptor;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Middleware;
 
+using System.IO.Compression;
 using Serilog;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.ResponseCompression;
 using QuestPDF.Infrastructure;
 
 public partial class EntryPoint
@@ -227,6 +229,16 @@ public partial class EntryPoint
         builder.Services.AddScoped<IPermissionService, PermissionService>();
         builder.Services.AddMemoryCache();
         builder.Services.AddDistributedMemoryCache();
+        builder.Services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
+        builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+            options.Level = CompressionLevel.Fastest);
+        builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+            options.Level = CompressionLevel.SmallestSize);
         builder.Services.AddSession(options =>
         {
             options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -309,6 +321,7 @@ public partial class EntryPoint
 
         app.UseMiddleware<TenantResolutionMiddleware>();
 
+        app.UseResponseCompression();
         app.UseStaticFiles();
 
         app.UseRouting();
