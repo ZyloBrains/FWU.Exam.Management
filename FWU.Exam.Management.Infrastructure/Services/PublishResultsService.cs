@@ -34,15 +34,9 @@ public class PublishResultsService(
 
         var registrations = await LoadRegistrationsWithResults(examScheduleId, collegeId);
 
-        var gradingScheme = await context.GradingSchemes
-            .AsNoTracking()
-            .Include(gs => gs.GradeDefinitions)
-            .Where(gs => gs.ProgramId == schedule.ProgramId && gs.IsActive)
-            .OrderByDescending(gs => gs.GradeGroupId.HasValue)
-            .ThenBy(gs => gs.Id)
-            .FirstOrDefaultAsync();
-
-        var gradeGroupId = gradingScheme?.GradeGroupId;
+        var gradingScheme = gradeCalculationService.ResolveSchemeForProgram(
+            schedule.ProgramId,
+            schedule.SemesterInstance?.AcademicYearId);
 
         var subjectOfferings = await context.SubjectOfferings
             .AsNoTracking()
@@ -87,9 +81,9 @@ public class PublishResultsService(
                 var overall = gradeCalculationService.CalculateGrade(totalMarks, offering, gradingScheme);
 
                 decimal? gradePoint = null;
-                if (gradeGroupId.HasValue && !string.IsNullOrEmpty(overall.GradeLetter))
+                if (gradingScheme != null && !string.IsNullOrEmpty(overall.GradeLetter))
                 {
-                    gradePoint = gradeCalculationService.GetGradePointValue(overall.GradeLetter, gradeGroupId);
+                    gradePoint = gradeCalculationService.GetGradePointValue(overall.GradeLetter, gradingScheme);
                 }
 
                 if (gradePoint.HasValue && creditHours > 0)

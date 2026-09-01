@@ -76,54 +76,74 @@ public static class GradingSeeder
                 ? academicYears.FirstOrDefault(ay => ay.AcademicYearName == fromYear)
                 : null;
 
-            foreach (var program in programs.Where(p => programCodes.Contains(p.ProgramCode ?? string.Empty)))
-            {
-                await SeedSchemeAsync(
-                    context,
-                    program,
-                    gradeGroup,
-                    gradePoints,
-                    academicYear,
-                    BuildSchemeName(gradeGroup, fromYear),
-                    isActive);
-            }
+            var matchingPrograms = programs.Where(p => programCodes.Contains(p.ProgramCode ?? string.Empty)).ToList();
+
+            await SeedSchemeAsync(
+                context,
+                matchingPrograms,
+                gradeGroup,
+                gradePoints,
+                academicYear,
+                BuildSchemeName(gradeGroup, fromYear),
+                isActive);
         }
     }
 
     private static async Task SeedSchemeAsync(
         AppDbContext context,
-        Program program,
+        List<Program> programs,
         GradeGroup gradeGroup,
         List<GradePoint> gradePoints,
         AcademicYear? academicYear,
         string schemeName,
         bool isActive)
     {
+        // Find existing scheme with the same name (across any program)
         var existingSchemes = await context.GradingSchemes
             .Include(s => s.GradeDefinitions)
-            .Where(s => s.ProgramId == program.Id)
+            .Include(s => s.ProgramAssignments)
+            .Where(s => s.Name == schemeName)
             .ToListAsync();
 
-        // Update the matching scheme (or a legacy "TU ..." scheme, for active schemes only)
-        // in place instead of creating duplicates.
-        var existing = existingSchemes.FirstOrDefault(s =>
-            s.Name == schemeName
-            || (isActive && s.Name.StartsWith("TU ", StringComparison.OrdinalIgnoreCase)));
+        var existing = existingSchemes.FirstOrDefault();
 
         var definitions = BuildDefinitions(gradeGroup.Id, gradePoints);
 
         if (existing != null)
         {
-            existing.Name = schemeName;
             existing.Description = BuildDescription(gradeGroup);
-            existing.GradeGroupId = gradeGroup.Id;
-            existing.AcademicYearId = academicYear?.Id;
             existing.IsActive = isActive;
 
             context.GradeDefinitions.RemoveRange(existing.GradeDefinitions);
             foreach (var gd in definitions)
                 gd.GradingSchemeId = existing.Id;
             await context.GradeDefinitions.AddRangeAsync(definitions);
+
+            // Update junction table assignments
+            foreach (var program in programs)
+            {
+                var alreadyAssigned = existing.ProgramAssignments.Any(ga => ga.ProgramId == program.Id);
+                if (!alreadyAssigned)
+                {
+                    context.GradingSchemePrograms.Add(new GradingSchemeProgram
+                    {
+                        GradingSchemeId = existing.Id,
+                        ProgramId = program.Id,
+                        AcademicYearId = academicYear?.Id,
+                        IsActive = isActive
+                    });
+                }
+                else
+                {
+                    // Update AcademicYearId if needed
+                    var assignment = existing.ProgramAssignments.First(ga => ga.ProgramId == program.Id);
+                    if (assignment.AcademicYearId != academicYear?.Id)
+                    {
+                        assignment.AcademicYearId = academicYear?.Id;
+                    }
+                }
+            }
+
             await context.SaveChangesAsync();
         }
         else
@@ -132,9 +152,6 @@ public static class GradingSeeder
             {
                 Name = schemeName,
                 Description = BuildDescription(gradeGroup),
-                ProgramId = program.Id,
-                AcademicYearId = academicYear?.Id,
-                GradeGroupId = gradeGroup.Id,
                 IsActive = isActive
             };
             await context.GradingSchemes.AddAsync(scheme);
@@ -143,16 +160,28 @@ public static class GradingSeeder
             foreach (var gd in definitions)
                 gd.GradingSchemeId = scheme.Id;
             await context.GradeDefinitions.AddRangeAsync(definitions);
+
+            // Create junction table entries
+            foreach (var program in programs)
+            {
+                context.GradingSchemePrograms.Add(new GradingSchemeProgram
+                {
+                    GradingSchemeId = scheme.Id,
+                    ProgramId = program.Id,
+                    AcademicYearId = academicYear?.Id,
+                    IsActive = isActive
+                });
+            }
+
             await context.SaveChangesAsync();
         }
 
         // Remove legacy seed schemes (e.g. "CBCS Standard (4.0)", "TU ...") so each program
         // keeps only its FWU scheme.
-        var legacySchemes = existingSchemes
-            .Where(s => s.Id != existing?.Id
-                && (s.Name == "CBCS Standard (4.0)"
-                    || s.Name.StartsWith("TU ", StringComparison.OrdinalIgnoreCase)))
-            .ToList();
+        var legacySchemes = await context.GradingSchemes
+            .Where(s => s.Name == "CBCS Standard (4.0)"
+                || s.Name.StartsWith("TU ", StringComparison.OrdinalIgnoreCase))
+            .ToListAsync();
 
         if (legacySchemes.Count > 0)
         {
