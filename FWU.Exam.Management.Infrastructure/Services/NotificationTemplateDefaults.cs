@@ -236,6 +236,35 @@ public static class NotificationTemplateDefaults
         PlaceholdersHelp: "ExamScheduleCode, ExamScheduleName, StartDate",
         Body: "Dear {{CollegeName}}, a new exam schedule ({{ExamScheduleCode}} - {{ExamScheduleName}}) has been created starting {{StartDate}}. Please login to approve. - FWU");
 
+    private static readonly TemplateDefinition ExamFormSubmittedEmail = new(
+        Code: "exam_form_submitted",
+        Name: "Exam Form Submitted",
+        Channel: NotificationChannel.Email,
+        Subject: "Exam Form Submitted: {{ExamScheduleName}}",
+        PlaceholdersHelp: "StudentName, ExamScheduleName, Amount, Reference",
+        Body: """
+            <h2 style="color:#2c3e50;margin:0 0 8px;font-size:20px;">Dear {{StudentName}},</h2>
+            <p style="color:#555;line-height:1.7;margin:0 0 20px;font-size:14px;">
+                Your exam form for <strong>{{ExamScheduleName}}</strong> has been submitted successfully.
+            </p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;border-radius:8px;padding:16px 20px;margin:20px 0;">
+                <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Exam Schedule:</strong> <span style="color:#555;font-size:13px;">{{ExamScheduleName}}</span></td></tr>
+                <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Amount Paid:</strong> <span style="color:#555;font-size:13px;">Rs {{Amount}}</span></td></tr>
+                <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Reference:</strong> <span style="color:#555;font-size:13px;">{{Reference}}</span></td></tr>
+            </table>
+            <p style="color:#555;line-height:1.7;margin:20px 0 0;font-size:14px;">
+                Your admit card will be available for download once it is released. Please keep the reference number for future correspondence.
+            </p>
+            """);
+
+    private static readonly TemplateDefinition ExamFormSubmittedSms = new(
+        Code: "exam_form_submitted",
+        Name: "Exam Form Submitted",
+        Channel: NotificationChannel.Sms,
+        Subject: null,
+        PlaceholdersHelp: "StudentName, ExamScheduleName",
+        Body: "Dear {{StudentName}}, your exam form for {{ExamScheduleName}} has been submitted successfully. - FWU Exam Alert");
+
     public static readonly IReadOnlyList<TemplateDefinition> All =
     [
         ResetPasswordEmail,
@@ -248,6 +277,8 @@ public static class NotificationTemplateDefaults
         TenantAccountCreated,
         ExamScheduleCreatedEmail,
         ExamScheduleCreatedSms,
+        ExamFormSubmittedEmail,
+        ExamFormSubmittedSms,
     ];
 
     public static TemplateDefinition? Get(string code, NotificationChannel channel)

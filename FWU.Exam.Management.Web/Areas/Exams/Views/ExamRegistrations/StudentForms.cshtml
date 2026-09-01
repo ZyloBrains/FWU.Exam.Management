@@ -348,8 +348,8 @@
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="~/lib/select2/css/select2.min.css" asp-append-version="true" rel="stylesheet" />
+    <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
     <style>
         .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
         .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
@@ -475,7 +475,24 @@
             $(document).on('click', '.subject-row', function (e) {
                 if ($(e.target).is('input')) return;
                 var $cb = $(this).find('.subject-checkbox');
-                $cb.prop('checked', !$cb.prop('checked'));
+                $cb.prop('checked', !$cb.prop('checked')).trigger('change');
+            });
+
+            // Keep the row checkbox and its theory/practical paper checkboxes
+            // in sync on leg-aware (re-exam) edit forms.
+            $(document).on('change', '.leg-checkbox', function () {
+                var $row = $(this).closest('.subject-row');
+                if (this.checked) {
+                    $row.find('.subject-checkbox').prop('checked', true);
+                } else if ($row.find('.leg-checkbox:checked').length === 0) {
+                    $row.find('.subject-checkbox').prop('checked', false);
+                }
+            });
+
+            $(document).on('change', '.subject-checkbox', function () {
+                if (!this.checked) {
+                    $(this).closest('.subject-row').find('.leg-checkbox').prop('checked', false);
+                }
             });
 
             function showToast(message, isSuccess) {

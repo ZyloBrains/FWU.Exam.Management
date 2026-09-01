@@ -18,11 +18,11 @@ public class SecurityHeadersMiddleware(RequestDelegate next, IWebHostEnvironment
             {
                 headers.Append("Content-Security-Policy",
                     "default-src 'self'; " +
-                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com; " +
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com https://js.monitor.azure.com; " +
                     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " +
                     "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " +
                     "img-src 'self' data: https:; " +
-                    "connect-src 'self'; " +
+                    "connect-src 'self' https://*.applicationinsights.azure.com https://*.livediagnostics.monitor.azure.com; " +
                     "frame-ancestors 'none'");
             }
         }

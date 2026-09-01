@@ -220,8 +220,16 @@
             <div class="p-4 sm:p-6">
                 <dl class="grid grid-cols-1 gap-x-8 gap-y-5">
                     <div>
-                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Full Name</dt>
-                        <dd class="text-sm font-semibold text-gray-800 mt-1">@Model.FullName</dd>
+                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">First Name</dt>
+                        <dd class="text-sm font-semibold text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.FirstName) ? "—" : Model.FirstName)</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Middle Name</dt>
+                        <dd class="text-sm font-semibold text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.MiddleName) ? "—" : Model.MiddleName)</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Last Name</dt>
+                        <dd class="text-sm font-semibold text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.LastName) ? "—" : Model.LastName)</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Name (Nepali)</dt>
@@ -348,7 +356,7 @@
             <div class="flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <span class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
-                        <i class="fas fa-people-roof text-white"></i>
+                        <i class="fas fa-users text-white"></i>
                     </span>
                     <div>
                         <h3 class="text-white font-semibold">Guardian Information</h3>
@@ -389,7 +397,7 @@
             {
                 <div class="text-center py-10">
                     <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-users text-3xl text-admin-blue"></i>
+                        <i class="fas fa-user-times text-3xl text-gray-300"></i>
                     </div>
                     <p class="text-gray-500 font-medium">No guardian information available</p>
                 </div>

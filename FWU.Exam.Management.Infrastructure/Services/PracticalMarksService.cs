@@ -283,9 +283,15 @@ public class PracticalMarksService(
                 && esr.ExamScheduleId == examScheduleId)
             .ToListAsync();
 
-        var rows = examRegistrations.Select(er =>
+        var rows = examRegistrations
+            .Select(er => new { er, existing = existingResults.FirstOrDefault(esr => esr.ExamRegistrationId == er.Id) })
+            // Leg-aware re-exam forms may register a student for the theory
+            // paper only; a null flag keeps legacy rows visible.
+            .Where(x => x.existing?.IsPracticalRegistered != false)
+            .Select(x =>
         {
-            var existing = existingResults.FirstOrDefault(esr => esr.ExamRegistrationId == er.Id);
+            var existing = x.existing;
+            var er = x.er;
             registrationNumbers.TryGetValue(er.Id, out var regNum);
 
             return new StudentPracticalMarksRowDto

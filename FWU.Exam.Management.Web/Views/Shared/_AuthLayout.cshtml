@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"] - FWU Examination System</title>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="~/lib/alpinejs/cdn.min.js" asp-append-version="true"></script>
     <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" asp-append-version="true">
+    <link href="~/lib/fonts/poppins.css" asp-append-version="true" rel="stylesheet" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="font-poppins antialiased">
     @RenderBody()
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

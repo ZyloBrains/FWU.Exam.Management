@@ -164,7 +164,16 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         {
             if (logoFile != null)
             {
-                faculty.LogoPath = await fileUploadHelper.UploadAsync(logoFile);
+                try
+                {
+                    faculty.LogoPath = await fileUploadHelper.UploadAsync(logoFile, maxFileSizeBytes: Helpers.FileUploadHelper.MaxDocumentSizeBytes);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                    ViewBag.TenantList = GetTenantList();
+                    return View(faculty);
+                }
             }
 
             var resultPassword = await facultyService.CreateFacultyAsync(faculty, adminPassword ?? string.Empty);
@@ -209,7 +218,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
             {
                 if (logoFile != null)
                 {
-                    faculty.LogoPath = await fileUploadHelper.UploadAsync(logoFile);
+                    faculty.LogoPath = await fileUploadHelper.UploadAsync(logoFile, maxFileSizeBytes: Helpers.FileUploadHelper.MaxDocumentSizeBytes);
                 }
 
                 await facultyService.UpdateFacultyAsync(faculty);
@@ -219,6 +228,12 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
                 if (!await facultyService.FacultyExistsAsync(faculty.Id))
                     return NotFound();
                 throw;
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                ViewBag.TenantList = GetTenantList();
+                return View(faculty);
             }
             TempData["SuccessMessage"] = "Faculty updated successfully!";
             return RedirectToAction(nameof(Index));

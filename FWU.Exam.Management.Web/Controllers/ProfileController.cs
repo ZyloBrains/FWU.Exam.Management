@@ -3,6 +3,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
@@ -221,7 +222,7 @@ public class ProfileController(
         {
             try
             {
-                var path = await fileUploadHelper.UploadAsync(photo, "uploads/photos");
+                var path = await fileUploadHelper.UploadAsync(photo, "uploads/photos", Helpers.FileUploadHelper.MaxPhotoSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
                 if (path != null)
                     user.ProfilePath = path;
             }
@@ -238,7 +239,7 @@ public class ProfileController(
         {
             try
             {
-                var path = await fileUploadHelper.UploadAsync(signature, "uploads/signatures");
+                var path = await fileUploadHelper.UploadAsync(signature, "uploads/signatures", Helpers.FileUploadHelper.MaxSignatureSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
                 if (path != null)
                     user.SignaturePath = path;
             }
@@ -367,7 +368,7 @@ public class ProfileController(
     private IActionResult BadRequestResponse(List<string> errors)
     {
         TempData["ErrorMessage"] = string.Join(" ", errors);
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Edit));
     }
 
     private async Task<ProfileBaseViewModel> BuildBaseViewModelAsync(AppUser user, List<string> roles, string primaryRole)
@@ -641,6 +642,10 @@ public class ProfileController(
         {
             vm.RegistrationId = registration.Id;
             vm.RegistrationNumber = registration.RegistrationNumber;
+            vm.FirstName = registration.FirstName;
+            vm.MiddleName = registration.MiddleName;
+            vm.LastName = registration.LastName;
+            vm.FullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
             vm.NepaliName = registration.NepaliName;
             vm.Gender = registration.Gender?.GenderName;
             vm.DateOfBirthBS = registration.DateOfBirthBS;

@@ -327,9 +327,19 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         if (ModelState.IsValid)
         {
             // Handle file uploads
-            application.PhotoPath = await fileUploadHelper.UploadAsync(PhotoFile, "entrance/photos");
-            application.DocumentsPath = await fileUploadHelper.UploadAsync(DocumentsFile, "entrance/documents");
-            application.VoucherPath = await fileUploadHelper.UploadAsync(VoucherFile, "entrance/vouchers");
+            try
+            {
+                application.PhotoPath = await fileUploadHelper.UploadAsync(PhotoFile, "entrance/photos", Helpers.FileUploadHelper.MaxPhotoSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
+                application.DocumentsPath = await fileUploadHelper.UploadAsync(DocumentsFile, "entrance/documents", Helpers.FileUploadHelper.MaxDocumentSizeBytes, Helpers.FileUploadHelper.DocumentAllowedExtensions);
+                application.VoucherPath = await fileUploadHelper.UploadAsync(VoucherFile, "entrance/vouchers", Helpers.FileUploadHelper.MaxDocumentSizeBytes, Helpers.FileUploadHelper.DocumentAllowedExtensions);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                await PopulateStepSelectListsAsync(selectLists);
+                ViewBag.VoucherId = voucherId;
+                return View(application);
+            }
 
             // Check if editing an existing application
             var existing = await service.GetApplicationByVoucherIdAsync(voucherId);
@@ -366,15 +376,14 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var errors = new List<string>();
         var allowedImageExts = new[] { ".jpg", ".jpeg", ".png" };
         var allowedDocExts = new[] { ".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx" };
-        var maxSize = 5 * 1024 * 1024; // 5MB
 
         if (photo != null && photo.Length > 0)
         {
             var ext = Path.GetExtension(photo.FileName).ToLowerInvariant();
             if (!allowedImageExts.Contains(ext))
                 errors.Add("Photo must be a JPG or PNG file.");
-            if (photo.Length > maxSize)
-                errors.Add("Photo must be less than 5MB.");
+            if (photo.Length > Helpers.FileUploadHelper.MaxPhotoSizeBytes)
+                errors.Add("Photo must be less than 500 KB.");
         }
 
         if (documents != null && documents.Length > 0)
@@ -382,8 +391,8 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             var ext = Path.GetExtension(documents.FileName).ToLowerInvariant();
             if (!allowedDocExts.Contains(ext))
                 errors.Add("Documents must be PDF, JPG, PNG, or DOC/DOCX file.");
-            if (documents.Length > maxSize)
-                errors.Add("Documents must be less than 5MB.");
+            if (documents.Length > Helpers.FileUploadHelper.MaxDocumentSizeBytes)
+                errors.Add("Documents must be less than 2MB.");
         }
 
         if (voucher != null && voucher.Length > 0)
@@ -391,8 +400,8 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             var ext = Path.GetExtension(voucher.FileName).ToLowerInvariant();
             if (!allowedDocExts.Contains(ext))
                 errors.Add("Voucher must be PDF, JPG, or DOC/DOCX file.");
-            if (voucher.Length > maxSize)
-                errors.Add("Voucher must be less than 5MB.");
+            if (voucher.Length > Helpers.FileUploadHelper.MaxDocumentSizeBytes)
+                errors.Add("Voucher must be less than 2MB.");
         }
 
         return errors;

@@ -71,15 +71,30 @@
                 <i class="fas fa-check-circle"></i>
             </div>
             <div class="min-w-0 text-xs sm:text-sm text-emerald-800">
-                <span class="font-semibold">Payment already confirmed &mdash; no additional payment required</span>
-                <p class="mt-0.5 leading-snug">Paid: <span class="font-bold">Rs. @Model.PaidAmount.ToString("N2")</span>. Just confirm your subjects below.</p>
+                <span class="font-semibold">Payment already confirmed</span>
+                <p class="mt-0.5 leading-snug">Paid: <span class="font-bold">Rs. @Model.PaidAmount.ToString("N2")</span>. Additional papers cost only the difference &mdash; reductions are not refunded.</p>
             </div>
         </div>
     </div>
 
+    @if (Model.HasUnpaidTopUp)
+    {
+        <div class="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-start gap-2.5">
+            <div class="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600 text-sm">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div class="min-w-0 text-xs sm:text-sm text-amber-800">
+                <span class="font-semibold">You have an unfinished additional payment</span>
+                <p class="mt-0.5 leading-snug">A previous attempt added extra papers but the difference was never paid. Submitting again will replace it automatically.</p>
+            </div>
+        </div>
+    }
+
     <!-- Subject selection -->
-    <form asp-action="ApplyAgain" asp-route-examScheduleId="@Model.ExamScheduleId" method="post" class="mt-3 sm:mt-4">
+    <form id="reapplyForm" asp-action="ApplyAgain" asp-route-examScheduleId="@Model.ExamScheduleId" method="post"
+          data-exam-fee="@Model.ExamFee" data-practical-fee="@Model.PracticalFee" data-paid="@Model.PaidAmount" class="mt-3 sm:mt-4">
         <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+        <input type="hidden" name="selectedSubjectIds" id="hfSelectedSubjectIds" />
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
             <div class="flex items-center gap-2.5 px-4 sm:px-5 py-3 border-b border-gray-100 shrink-0">
                 <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md shadow-blue-500/20">
@@ -87,52 +102,156 @@
                 </div>
                 <div class="min-w-0">
                     <h2 class="text-sm sm:text-base font-bold text-gray-900">Subject Selection</h2>
-                    <p class="text-[11px] sm:text-xs text-gray-500 truncate">@Model.SemesterName &mdash; previous selection is pre-ticked</p>
+                    <p class="text-[11px] sm:text-xs text-gray-500 truncate">
+                        @Model.SemesterName &mdash; @(Model.IsPartialForm ? "tick the papers you need to re-sit" : "your previous selection is locked")
+                    </p>
                 </div>
             </div>
 
-            <ul class="divide-y divide-gray-100 max-h-[19rem] sm:max-h-[22rem] overflow-y-auto overscroll-contain">
-                @for (var i = 0; i < Model.Subjects.Count; i++)
+            <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-50 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-3 sm:px-5 py-2.5 text-[11px] font-semibold text-gray-500 uppercase w-12">SN</th>
+                            <th class="px-3 sm:px-5 py-2.5 text-[11px] font-semibold text-gray-500 uppercase">Subject</th>
+                            <th class="px-3 sm:px-5 py-2.5 text-[11px] font-semibold text-gray-500 uppercase hidden sm:table-cell">Code</th>
+                            <th class="px-3 sm:px-5 py-2.5 text-[11px] font-semibold text-gray-500 uppercase text-center">Theory</th>
+                            <th class="px-3 sm:px-5 py-2.5 text-[11px] font-semibold text-gray-500 uppercase text-center">Practical</th>
+                            <th class="px-3 sm:px-5 py-2.5 text-[11px] font-semibold text-gray-500 uppercase text-right">Practical Fee</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 bg-white">
+                        @{
+                            var sn = 0;
+                        }
+                        @foreach (var s in Model.Subjects)
+                        {
+                            if (!s.HasTheory && !s.HasPractical)
+                            {
+                                continue;
+                            }
+                            sn++;
+                            var locked = !Model.IsPartialForm;
+                            <tr class="hover:bg-gray-50 transition-colors @(s.FailedTheory || s.FailedPractical ? "bg-red-50/40" : "")">
+                                <td class="px-3 sm:px-5 py-2 text-gray-500">@sn</td>
+                                <td class="px-3 sm:px-5 py-2 min-w-0">
+                                    <span class="block text-xs sm:text-sm font-medium text-gray-900 truncate">@s.SubjectName</span>
+                                    @if (s.IsCompulsory || !string.IsNullOrWhiteSpace(s.SubjectTypeName))
+                                    {
+                                        <span class="mt-0.5 flex items-center gap-1 flex-wrap">
+                                            @if (s.IsCompulsory)
+                                            {
+                                                <span class="inline-flex items-center px-1.5 py-px rounded text-[9px] font-semibold bg-blue-100 text-blue-700">Compulsory</span>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(s.SubjectTypeName))
+                                            {
+                                                <span class="inline-flex items-center px-1.5 py-px rounded text-[9px] font-medium bg-gray-100 text-gray-600">@s.SubjectTypeName</span>
+                                            }
+                                        </span>
+                                    }
+                                </td>
+                                <td class="px-3 sm:px-5 py-2 text-xs text-gray-500 hidden sm:table-cell">@s.SubjectCode</td>
+                                <td class="px-3 sm:px-5 py-2 text-center">
+                                    @if (s.HasTheory)
+                                    {
+                                        <label class="inline-flex items-center gap-1.5 select-none @(locked ? "cursor-not-allowed opacity-80" : "cursor-pointer") @(s.FailedTheory ? "text-red-600" : "text-gray-600")">
+                                            <input type="checkbox" class="leg-checkbox rounded border-gray-300 h-4 w-4"
+                                                   data-offering="@s.SubjectOfferingId" data-leg="T"
+                                                   onchange="updateTotals()"
+                                                   checked="@(s.SelectedTheory ? "checked" : null)"
+                                                   disabled="@(locked ? "disabled" : null)" />
+                                            @if (s.FailedTheory)
+                                            {
+                                                <span class="px-1 py-0.5 rounded bg-red-100 text-[10px] font-semibold text-red-600">Failed</span>
+                                            }
+                                        </label>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-gray-300">&mdash;</span>
+                                    }
+                                </td>
+                                <td class="px-3 sm:px-5 py-2 text-center">
+                                    @if (s.HasPractical)
+                                    {
+                                        <label class="inline-flex items-center gap-1.5 select-none @(locked ? "cursor-not-allowed opacity-80" : "cursor-pointer") @(s.FailedPractical ? "text-red-600" : "text-gray-600")">
+                                            <input type="checkbox" class="leg-checkbox rounded border-gray-300 h-4 w-4"
+                                                   data-offering="@s.SubjectOfferingId" data-leg="P"
+                                                   data-practical-fee="@s.PracticalFee"
+                                                   onchange="updateTotals()"
+                                                   checked="@(s.SelectedPractical ? "checked" : null)"
+                                                   disabled="@(locked ? "disabled" : null)" />
+                                            @if (s.FailedPractical)
+                                            {
+                                                <span class="px-1 py-0.5 rounded bg-red-100 text-[10px] font-semibold text-red-600">Failed</span>
+                                            }
+                                        </label>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-gray-300">&mdash;</span>
+                                    }
+                                </td>
+                                <td class="px-3 sm:px-5 py-2 text-right fee-cell" data-offering="@s.SubjectOfferingId">
+                                    <span class="text-gray-300">&mdash;</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+            <div class="border-t border-gray-100 px-3 sm:px-5 py-3">
+                <style>
+                    .payment-card[data-selected="true"] { outline: 3px solid #2563eb; outline-offset: 1px; }
+                </style>
+                <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Payment Method</p>
+                @if (Model.PaymentTypes.Count > 0)
                 {
-                    var s = Model.Subjects[i];
-                    <li class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-2 hover:bg-gray-50 transition-colors">
-                        <input type="checkbox"
-                               id="subject-@s.SubjectOfferingId"
-                               name="selectedSubjectIds"
-                               value="@s.SubjectOfferingId"
-                               checked="@s.IsSelected"
-                               class="h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
-                        <label for="subject-@s.SubjectOfferingId" class="flex-1 min-w-0 cursor-pointer leading-tight">
-                            <span class="block text-xs sm:text-sm font-medium text-gray-900 truncate">@s.SubjectName</span>
-                            <span class="block text-[10px] sm:text-xs text-gray-500">
-                                @s.SubjectCode
-                                @if (s.IsCompulsory)
-                                {
-                                    <span class="ml-1 inline-flex items-center px-1.5 py-px rounded text-[9px] font-semibold bg-blue-100 text-blue-700">Compulsory</span>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(s.SubjectTypeName))
-                                {
-                                    <span class="ml-1 inline-flex items-center px-1.5 py-px rounded text-[9px] font-medium bg-gray-100 text-gray-600">@s.SubjectTypeName</span>
-                                }
-                                @if (s.IsFailed)
-                                {
-                                    <span class="ml-1 inline-flex items-center px-1.5 py-px rounded text-[9px] font-semibold bg-red-100 text-red-700">Failed</span>
-                                }
-                            </span>
-                        </label>
-                        <div class="hidden md:flex shrink-0 items-center gap-2 text-[11px] text-gray-500">
-                            @if (s.HasTheory)
-                            {
-                                <span class="inline-flex items-center gap-1"><i class="fas fa-file-alt text-blue-400"></i> Theory</span>
-                            }
-                            @if (s.HasPractical)
-                            {
-                                <span class="inline-flex items-center gap-1"><i class="fas fa-flask text-purple-400"></i> Practical</span>
-                            }
-                        </div>
-                    </li>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        @foreach (var pt in Model.PaymentTypes)
+                        {
+                            var isEsewa = pt.Name?.Contains("esewa", StringComparison.OrdinalIgnoreCase) == true;
+                            var (bg, border, text, hoverBorder) = isEsewa
+                                ? ("bg-green-50", "border-green-200", "text-green-700", "hover:border-green-400")
+                                : ("bg-purple-50", "border-purple-200", "text-purple-700", "hover:border-purple-400");
+
+                            <button type="button"
+                                    class="payment-card group flex items-center sm:flex-col gap-4 sm:gap-3 p-4 sm:p-6 @bg border-2 @border rounded-xl @hoverBorder transition-all duration-200 active:scale-[0.98] text-left sm:text-center"
+                                    data-method="@(isEsewa ? "esewa" : "khalti")" data-selected="false"
+                                    onclick="choosePaymentMethod(this)">
+                                <div class="w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-xl flex items-center justify-center bg-white/70 border @border">
+                                    @if (!string.IsNullOrEmpty(pt.LogoUrl))
+                                    {
+                                        <img src="@pt.LogoUrl" alt="@pt.Name" class="w-8 h-8 sm:w-10 sm:h-10 object-contain" onerror="this.parentElement.innerHTML='<i class=\'fas fa-credit-card text-xl sm:text-2xl @text\'></i>'" />
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-credit-card text-xl sm:text-2xl @text"></i>
+                                    }
+                                </div>
+                                <div class="flex-1 min-w-0 sm:flex-none">
+                                    <p class="text-sm sm:text-base font-bold @text truncate">@pt.Name</p>
+                                    <p class="text-xs @(text.Replace("700", "500")) mt-0.5">Pay with @pt.Name</p>
+                                </div>
+                                <i class="fas fa-chevron-right @text text-sm sm:hidden"></i>
+                            </button>
+                        }
+                    </div>
                 }
-            </ul>
+                else
+                {
+                    <div class="text-center py-4 px-3 rounded-lg border border-dashed border-gray-200 text-gray-400">
+                        <i class="fas fa-credit-card text-2xl mb-1.5 block"></i>
+                        <p class="text-xs font-medium text-gray-500">No online payment gateways configured</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Please contact your administrator if an additional payment is required.</p>
+                    </div>
+                }
+                <input type="hidden" name="paymentMethod" id="hfPaymentMethod" />
+                <p class="mt-2 text-[10px] sm:text-xs text-gray-400 leading-snug">Only needed if your selection adds an extra charge below.</p>
+                <div id="topupWarning" class="hidden mt-2 flex items-center gap-2 text-xs sm:text-sm font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <i class="fas fa-circle-exclamation text-amber-500"></i>
+                    <span>Additional payment due: <span id="deltaAmount" class="text-amber-900">Rs 0</span> &mdash; choose a payment method above to complete the re-application.</span>
+                </div>
+            </div>
 
             <div class="sticky bottom-0 z-10 px-3 sm:px-5 py-2.5 bg-gray-50/95 backdrop-blur border-t border-gray-100 flex items-center justify-between gap-2">
                 <a asp-action="ExamForms"
@@ -148,3 +267,88 @@
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <script>
+        function collectSelection() {
+            var legsByOffering = {};
+            document.querySelectorAll('.leg-checkbox:checked').forEach(function(cb) {
+                var offeringId = cb.getAttribute('data-offering');
+                if (!legsByOffering[offeringId]) legsByOffering[offeringId] = [];
+                legsByOffering[offeringId].push(cb.getAttribute('data-leg'));
+            });
+            return Object.keys(legsByOffering).map(function(offeringId) {
+                return offeringId + ':' + legsByOffering[offeringId].join('');
+            });
+        }
+
+        function updateTotals() {
+            var form = document.getElementById('reapplyForm');
+            var examFee = parseFloat(form.getAttribute('data-exam-fee')) || 0;
+            var practicalFee = parseFloat(form.getAttribute('data-practical-fee')) || 0;
+            var paid = parseFloat(form.getAttribute('data-paid')) || 0;
+
+            var practicalCount = 0;
+            document.querySelectorAll('.leg-checkbox:checked').forEach(function(cb) {
+                if (cb.getAttribute('data-leg') === 'P') practicalCount++;
+            });
+
+            var newTotal = examFee + (practicalCount * practicalFee);
+            var delta = Math.max(0, newTotal - paid);
+
+            document.getElementById('hfSelectedSubjectIds').value = collectSelection().join(',');
+
+            var warning = document.getElementById('topupWarning');
+            if (delta > 0) {
+                warning.classList.remove('hidden');
+                document.getElementById('deltaAmount').innerText = 'Rs ' + delta.toLocaleString();
+            } else {
+                warning.classList.add('hidden');
+            }
+
+            // Per-row practical fee column: show the charge only while the
+            // practical leg of that row is ticked.
+            document.querySelectorAll('.fee-cell').forEach(function(cell) {
+                var offeringId = cell.getAttribute('data-offering');
+                var cb = document.querySelector('.leg-checkbox[data-offering="' + offeringId + '"][data-leg="P"]');
+                var fee = cb ? (parseFloat(cb.getAttribute('data-practical-fee')) || 0) : 0;
+                if (cb && cb.checked && fee > 0) {
+                    cell.innerHTML = '<span class="font-semibold text-gray-800">Rs ' + fee.toLocaleString() + '</span>';
+                } else {
+                    cell.innerHTML = '<span class="text-gray-300">&mdash;</span>';
+                }
+            });
+        }
+
+        function choosePaymentMethod(cardEl) {
+            document.querySelectorAll('.payment-card').forEach(function(c) {
+                c.setAttribute('data-selected', 'false');
+            });
+            cardEl.setAttribute('data-selected', 'true');
+            document.getElementById('hfPaymentMethod').value = cardEl.getAttribute('data-method');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTotals();
+
+            document.querySelectorAll('.leg-checkbox').forEach(function(cb) {
+                cb.addEventListener('change', updateTotals);
+            });
+
+            document.getElementById('reapplyForm').addEventListener('submit', function(e) {
+                updateTotals();
+                if (!document.getElementById('hfSelectedSubjectIds').value) {
+                    e.preventDefault();
+                    alert('Please select at least one exam paper (theory or practical).');
+                    return;
+                }
+
+                var topUpDue = !document.getElementById('topupWarning').classList.contains('hidden');
+                if (topUpDue && !document.getElementById('hfPaymentMethod').value) {
+                    e.preventDefault();
+                    alert('Your selection adds an extra charge. Please choose a payment method for the additional amount.');
+                }
+            });
+        });
+    </script>
+}

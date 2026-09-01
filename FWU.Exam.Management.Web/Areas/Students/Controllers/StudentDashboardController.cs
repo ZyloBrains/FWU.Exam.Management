@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
@@ -60,16 +61,32 @@ public class StudentDashboardController(
 
         if (photo != null && photo.Length > 0)
         {
-            var photoPath = await fileUploadHelper.UploadAsync(photo, "uploads/photos");
-            if (photoPath != null)
-                user.ProfilePath = photoPath;
+            try
+            {
+                var photoPath = await fileUploadHelper.UploadAsync(photo, "uploads/photos", Helpers.FileUploadHelper.MaxPhotoSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
+                if (photoPath != null)
+                    user.ProfilePath = photoPath;
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Edit", "Profile", new { area = "" });
+            }
         }
 
         if (signature != null && signature.Length > 0)
         {
-            var signaturePath = await fileUploadHelper.UploadAsync(signature, "uploads/signatures");
-            if (signaturePath != null)
-                user.SignaturePath = signaturePath;
+            try
+            {
+                var signaturePath = await fileUploadHelper.UploadAsync(signature, "uploads/signatures", Helpers.FileUploadHelper.MaxSignatureSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
+                if (signaturePath != null)
+                    user.SignaturePath = signaturePath;
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Edit", "Profile", new { area = "" });
+            }
         }
 
         await userManager.UpdateAsync(user);
@@ -458,25 +475,13 @@ public class StudentDashboardController(
             return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
         }
 
-        var reExamTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Supplementary", "Partial", "Chance", "Special Chance" };
-        var isSupplementary = !string.IsNullOrEmpty(schedule.ExamType?.Name) && reExamTypes.Contains(schedule.ExamType.Name);
-        if (isSupplementary)
+        // Direct-URL guard: enforce the same visibility rules as the Exam Forms
+        // listing (regular = own semester instance; re-exam = strictly below the
+        // student's highest enrolled semester, plus failure/history eligibility).
+        if (!await dashboardService.IsScheduleVisibleToStudentAsync(registration, user.Id, examScheduleId))
         {
-            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterInstance.SemesterId, programId);
-            if (!hasFailed)
-            {
-                TempData["ErrorMessage"] = "You are not eligible for this supplementary exam.";
-                return RedirectToAction(nameof(ExamForms));
-            }
-        }
-        else
-        {
-            //var currentSemesterId = await dashboardService.GetCurrentSemesterIdForStudentAsync(user.Id);
-            //if (!currentSemesterId.HasValue || schedule.SemesterId != currentSemesterId.Value)
-            //{
-            //    TempData["ErrorMessage"] = "You are not eligible for this exam schedule.";
-            //    return RedirectToAction(nameof(ExamForms));
-            //}
+            TempData["ErrorMessage"] = "You are not eligible for this exam form.";
+            return RedirectToAction(nameof(ExamForms));
         }
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
@@ -493,24 +498,75 @@ public class StudentDashboardController(
             hasESewa = await context.ESewaConfigurations.AnyAsync();
         }
 
-        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsForSemesterAsync(user.Id, schedule.SemesterInstance.SemesterId, programId);
-        var isRegular = failedSubjectIds.Count == 0;
+        var isReExam = dashboardService.IsReExamType(schedule.ExamType?.Name);
+        var isRegular = !isReExam;
 
-        var failedSet = new HashSet<int>(failedSubjectIds);
-        var subjectList = subjects.Select(s => new SubjectFeeDetail
+        List<SubjectFeeDetail> subjectList;
+        List<int> selectedSubjectIds;
+
+        if (isRegular)
         {
-            SubjectOfferingId = s.Id,
-            SubjectName = s.SubjectCatalog?.SubjectName,
-            SubjectCode = s.SubjectCatalog?.SubjectCode,
-            HasTheory = s.HasTheory,
-            HasPractical = s.HasPractical,
-            PracticalFee = s.HasPractical ? practicalFee : 0,
-            IsSelected = isRegular ? s.IsCompulsory : failedSet.Contains(s.Id),
-            IsFailed = failedSet.Contains(s.Id),
-            IsCompulsory = s.IsCompulsory,
-            SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
-            SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
-        }).ToList();
+            subjectList = subjects.Select(s => new SubjectFeeDetail
+            {
+                SubjectOfferingId = s.Id,
+                SubjectName = s.SubjectCatalog?.SubjectName,
+                SubjectCode = s.SubjectCatalog?.SubjectCode,
+                HasTheory = s.HasTheory,
+                HasPractical = s.HasPractical,
+                PracticalFee = s.HasPractical ? practicalFee : 0,
+                IsSelected = s.IsCompulsory,
+                IsFailed = false,
+                IsCompulsory = s.IsCompulsory,
+                SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
+                SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
+            }).ToList();
+            selectedSubjectIds = subjectList.Where(s => s.IsCompulsory).Select(s => s.SubjectOfferingId).ToList();
+        }
+        else
+        {
+            // Re-exam forms: students with recorded failures get exactly those
+            // subjects (their own curriculum version) with the failed exam legs
+            // pre-ticked. Students with no result history yet choose freely from
+            // THEIR batch curriculum. Each subject offers its available papers:
+            // theory and/or practical; a ticked practical leg adds the fee.
+            var failedOptions = await dashboardService.GetFailedSubjectOptionsForStudentAsync(examScheduleId, user.Id);
+            var knownFailures = failedOptions.Count > 0;
+            var failedLegsById = failedOptions.ToDictionary(o => o.SubjectOfferingId, o => o.FailedLegs);
+
+            var selectable = knownFailures
+                ? failedOptions.Select(o => o.Offering)
+                : await dashboardService.GetReExamSelectableOfferingsAsync(examScheduleId, user.Id);
+
+            subjectList = selectable.Select(s =>
+            {
+                var failedLegs = failedLegsById.GetValueOrDefault(s.Id);
+                return new SubjectFeeDetail
+                {
+                    SubjectOfferingId = s.Id,
+                    SubjectName = s.SubjectCatalog?.SubjectName,
+                    SubjectCode = s.SubjectCatalog?.SubjectCode,
+                    HasTheory = s.HasTheory,
+                    HasPractical = s.HasPractical,
+                    PracticalFee = s.HasPractical ? practicalFee : 0,
+                    // Free-select mode mirrors the regular form's starting point:
+                    // compulsory subjects arrive pre-ticked (both available legs).
+                    IsSelected = knownFailures || s.IsCompulsory,
+                    IsFailed = knownFailures,
+                    FailedTheory = failedLegs.HasFlag(ReExamLegs.Theory),
+                    FailedPractical = failedLegs.HasFlag(ReExamLegs.Practical),
+                    SelectedTheory = knownFailures
+                        ? failedLegs.HasFlag(ReExamLegs.Theory)
+                        : s.IsCompulsory && s.HasTheory,
+                    SelectedPractical = knownFailures
+                        ? failedLegs.HasFlag(ReExamLegs.Practical)
+                        : s.IsCompulsory && s.HasPractical,
+                    IsCompulsory = s.IsCompulsory,
+                    SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
+                    SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
+                };
+            }).ToList();
+            selectedSubjectIds = subjectList.Where(s => s.IsSelected).Select(s => s.SubjectOfferingId).ToList();
+        }
 
         var vm = new ExamPaymentViewModel
         {
@@ -529,7 +585,7 @@ public class StudentDashboardController(
             HasConnectIPS = hasConnectIPS,
             IsRegular = isRegular,
             Subjects = subjectList,
-            SelectedSubjectIds = isRegular ? subjectList.Where(s => s.IsCompulsory).Select(s => s.SubjectOfferingId).ToList() : failedSubjectIds,
+            SelectedSubjectIds = selectedSubjectIds,
             PaymentTypes = paymentTypes.Select(pt => new PaymentTypeDetail
             {
                 Id = pt.Id,
@@ -540,16 +596,26 @@ public class StudentDashboardController(
 
         if (!isRegular)
         {
-            foreach (var s in vm.Subjects)
-                s.PracticalFee = 0;
-            vm.TotalPracticalFee = 0;
+            vm.TotalPracticalFee = subjectList
+                .Where(s => vm.SelectedSubjectIds.Contains(s.SubjectOfferingId) && s.SelectedPractical)
+                .Sum(s => s.PracticalFee);
         }
         else
         {
             vm.TotalPracticalFee = subjectList.Where(s => vm.SelectedSubjectIds.Contains(s.SubjectOfferingId)).Sum(s => s.PracticalFee);
         }
 
-        vm.GrandTotal = vm.TotalExamFee + vm.TotalPracticalFee;
+        if (schedule.ExtendedDate.HasValue && schedule.EndDate.HasValue)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var effectiveEnd = DateOnly.FromDateTime(schedule.ExtendedDate.Value);
+            if (today > schedule.EndDate.Value && today <= effectiveEnd)
+            {
+                vm.ExtendedDateCharge = schedule.ExtendedDateCharge ?? 0;
+            }
+        }
+
+        vm.GrandTotal = vm.TotalExamFee + vm.TotalPracticalFee + vm.ExtendedDateCharge;
 
         return View(vm);
     }
@@ -621,31 +687,90 @@ public class StudentDashboardController(
             .OrderByDescending(pl => pl.Id)
             .FirstOrDefaultAsync();
 
-        var preSelected = (paidLog?.SelectedSubjectIds ?? "")
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(s => int.TryParse(s, out var id) ? id : 0)
-            .Where(id => id > 0)
-            .ToHashSet();
+        var preSelection = ReExamSubjectSelection.Parse(paidLog?.SelectedSubjectIds);
+        if (preSelection.Count == 0)
+        {
+            // Legacy logs may predate leg-token storage; the rejected form's
+            // registered rows are the ground truth of what was selected before.
+            foreach (var row in await dashboardService.GetExamSubjectResultsForStudentAsync(user.Id, examScheduleId))
+            {
+                preSelection[row.SubjectOfferingId] =
+                    (row.IsTheoryRegistered == true ? ReExamLegs.Theory : ReExamLegs.None)
+                    | (row.IsPracticalRegistered == true ? ReExamLegs.Practical : ReExamLegs.None);
+            }
+        }
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var practicalFee = await dashboardService.GetPracticalSubjectFeeForScheduleAsync(examScheduleId);
-        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsForSemesterAsync(
-            user.Id, schedule.SemesterInstance.SemesterId, programId);
-        var failedSet = new HashSet<int>(failedSubjectIds);
 
-        var subjectList = subjects.Select(s => new SubjectFeeDetail
+        // Reapply supports only gateways the POST flow can actually settle
+        // (eSewa / Khalti); anything else configured stays hidden here.
+        var supportedPaymentTypes = (await dashboardService.GetActivePaymentTypesAsync())
+            .Where(pt => pt.PaymentTypeName != null &&
+                         (pt.PaymentTypeName.Contains("esewa", StringComparison.OrdinalIgnoreCase) ||
+                          pt.PaymentTypeName.Contains("khalti", StringComparison.OrdinalIgnoreCase)))
+            .Select(pt => new PaymentTypeDetail { Id = pt.Id, Name = pt.PaymentTypeName, LogoUrl = pt.LogoUrl })
+            .ToList();
+        var isReExamForm = dashboardService.IsReExamType(schedule.ExamType?.Name);
+        Dictionary<int, ReExamLegs> failedLegsById = new();
+        if (isReExamForm)
         {
-            SubjectOfferingId = s.Id,
-            SubjectName = s.SubjectCatalog?.SubjectName,
-            SubjectCode = s.SubjectCatalog?.SubjectCode,
-            HasTheory = s.HasTheory,
-            HasPractical = s.HasPractical,
-            PracticalFee = s.HasPractical ? practicalFee : 0,
-            IsSelected = preSelected.Count > 0 ? preSelected.Contains(s.Id) : s.IsCompulsory,
-            IsFailed = failedSet.Contains(s.Id),
-            IsCompulsory = s.IsCompulsory,
-            SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
-            SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
+            subjects = await dashboardService.GetReExamSelectableOfferingsAsync(examScheduleId, user.Id);
+            failedLegsById = (await dashboardService.GetFailedSubjectOptionsForStudentAsync(examScheduleId, user.Id))
+                .ToDictionary(o => o.SubjectOfferingId, o => o.FailedLegs);
+        }
+        else
+        {
+            var failedIds = await dashboardService.GetFailedSubjectOfferingIdsForSemesterAsync(
+                user.Id, schedule.SemesterInstance.SemesterId, programId);
+            foreach (var id in failedIds)
+                failedLegsById[id] = ReExamLegs.Theory;
+        }
+
+        var subjectList = subjects.Select(s =>
+        {
+            var hasExplicitChoice = preSelection.TryGetValue(s.Id, out var preLegs) && preLegs != ReExamLegs.None;
+            var failedLegs = failedLegsById.GetValueOrDefault(s.Id);
+            var isSelected = preSelection.ContainsKey(s.Id);
+
+            bool selTheory;
+            bool selPractical;
+            if (hasExplicitChoice)
+            {
+                selTheory = preLegs.HasFlag(ReExamLegs.Theory);
+                selPractical = preLegs.HasFlag(ReExamLegs.Practical);
+            }
+            else if (preSelection.ContainsKey(s.Id))
+            {
+                // Legacy plain-id entry: both available papers were registered.
+                selTheory = s.HasTheory;
+                selPractical = s.HasPractical;
+            }
+            else
+            {
+                // Not previously selected: start clean — no compulsory defaulting.
+                selTheory = false;
+                selPractical = false;
+            }
+
+            return new SubjectFeeDetail
+            {
+                SubjectOfferingId = s.Id,
+                SubjectName = s.SubjectCatalog?.SubjectName,
+                SubjectCode = s.SubjectCatalog?.SubjectCode,
+                HasTheory = s.HasTheory,
+                HasPractical = s.HasPractical,
+                PracticalFee = s.HasPractical ? practicalFee : 0,
+                IsSelected = isSelected,
+                IsFailed = failedLegs != ReExamLegs.None,
+                FailedTheory = failedLegs.HasFlag(ReExamLegs.Theory),
+                FailedPractical = failedLegs.HasFlag(ReExamLegs.Practical),
+                SelectedTheory = selTheory,
+                SelectedPractical = selPractical,
+                IsCompulsory = s.IsCompulsory,
+                SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
+                SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
+            };
         }).ToList();
 
         var vm = new ReapplyExamViewModel
@@ -658,7 +783,12 @@ public class StudentDashboardController(
             PaidAmount = paidLog?.Amount ?? 0,
             RejectionReason = await dashboardService.GetLatestRejectionReasonAsync(examScheduleId, user.Id),
             Subjects = subjectList,
-            PreSelectedSubjectIds = preSelected
+            PreSelectedSubjectIds = new HashSet<int>(preSelection.Keys),
+            ExamFee = await dashboardService.GetExamFeeForScheduleAsync(examScheduleId),
+            PracticalFee = practicalFee,
+            HasUnpaidTopUp = await dashboardService.HasOpenApplyAgainPaymentAsync(examScheduleId, registration.Id),
+            IsPartialForm = isReExamForm,
+            PaymentTypes = supportedPaymentTypes
         };
 
         return View(vm);
@@ -666,7 +796,7 @@ public class StudentDashboardController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ApplyAgain(int examScheduleId, List<int>? selectedSubjectIds)
+    public async Task<IActionResult> ApplyAgain(int examScheduleId, string? selectedSubjectIds, string? paymentMethod)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -689,22 +819,125 @@ public class StudentDashboardController(
             return RedirectToAction(nameof(ExamForms));
         }
 
-        var subjectIds = (selectedSubjectIds ?? []).Where(id => id > 0).Distinct().ToList();
+        var paidLog = await context.PaymentRequestLogs!.AsNoTracking()
+            .Where(prl => prl.ExamScheduleId == examScheduleId
+                       && prl.StudentRegistrationId == registration.Id
+                       && prl.PaymentRequestLogStatus == 1)
+            .OrderByDescending(pl => pl.Id)
+            .FirstOrDefaultAsync();
+
+        // Regular-schedule reapply is a locked resubmission: ignore any
+        // client-posted selection and restore exactly what the confirmed
+        // payment covered. Partial (re-exam) schedules keep per-leg choice.
+        if (!dashboardService.IsReExamType(schedule.ExamType?.Name))
+        {
+            if (paidLog == null || string.IsNullOrWhiteSpace(paidLog.SelectedSubjectIds))
+            {
+                // Legacy log without subject tokens: default to the schedule's
+                // compulsory offerings with their available legs (mirrors the
+                // GET view's pre-tick fallback).
+                var lockedSelection = new Dictionary<int, ReExamLegs>();
+                foreach (var offering in await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId))
+                {
+                    if (!offering.IsCompulsory) continue;
+                    var legs = ReExamLegs.None;
+                    if (offering.HasTheory) legs |= ReExamLegs.Theory;
+                    if (offering.HasPractical) legs |= ReExamLegs.Practical;
+                    lockedSelection[offering.Id] = legs;
+                }
+                selectedSubjectIds = ReExamSubjectSelection.Format(lockedSelection);
+            }
+            else
+            {
+                selectedSubjectIds = paidLog.SelectedSubjectIds;
+            }
+        }
+
+        var selection = ReExamSubjectSelection.Parse(selectedSubjectIds);
+        var subjectIds = selection.Keys.ToList();
         if (subjectIds.Count == 0)
         {
             TempData["ErrorMessage"] = "At least one subject must be selected.";
             return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
         }
 
-        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, subjectIds);
+        // Upgrade legacy plain-id tokens to explicit legs so validation, the
+        // charge-delta math and every stored log carry unambiguous data.
+        selection = await NormalizeLegacySelectionLegsAsync(examScheduleId, selection);
+
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection);
         if (!selectionValidation.Ok)
         {
             TempData["ErrorMessage"] = selectionValidation.Error;
             return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
         }
 
+        // Charge-delta provision: the original payment stays with the college.
+        // Selecting extra papers (e.g. a practical leg that was skipped the
+        // first time) requires paying only the difference before the form can
+        // be revived. Reductions are absorbed by the college (no refunds).
+        var newTotal = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection);
+        var previouslyPaid = paidLog?.Amount ?? 0;
+        var delta = newTotal - previouslyPaid;
+
+        if (delta > 0)
+        {
+            if (string.IsNullOrWhiteSpace(paymentMethod))
+            {
+                TempData["ErrorMessage"] =
+                    $"Your updated selection adds Rs {delta:N0} to the Rs {previouslyPaid:N0} already paid. Please choose a payment method for the additional amount.";
+                return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
+            }
+
+            var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
+            var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
+
+            if (paymentMethod.Contains("esewa", StringComparison.OrdinalIgnoreCase))
+            {
+                var transactionUuid = esewaService.GenerateTransactionUuid();
+                var esewaLogId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
+                    examScheduleId, registration.Id, delta, "esewa", invoiceNumber, selection,
+                    fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, transactionUuid);
+                await dashboardService.SupersedeOpenApplyAgainPaymentsAsync(examScheduleId, registration.Id, esewaLogId);
+                logger.LogInformation("Student {UserId} initiated an eSewa reapply top-up of Rs {Delta} for scheduleId={ScheduleId}",
+                    user.Id, delta, examScheduleId);
+                return await InitiateESewaGatewayAsync(delta, esewaLogId, transactionUuid, invoiceNumber, registration.Id, examScheduleId);
+            }
+
+            if (paymentMethod.Contains("khalti", StringComparison.OrdinalIgnoreCase))
+            {
+                var khaltiLogId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
+                    examScheduleId, registration.Id, delta, "khalti", invoiceNumber, selection,
+                    fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+                await dashboardService.SupersedeOpenApplyAgainPaymentsAsync(examScheduleId, registration.Id, khaltiLogId);
+                logger.LogInformation("Student {UserId} initiated a Khalti reapply top-up of Rs {Delta} for scheduleId={ScheduleId}",
+                    user.Id, delta, examScheduleId);
+                return await InitiateKhaltiGatewayAsync(delta, khaltiLogId, invoiceNumber, examScheduleId,
+                    schedule.ExamScheduleName, fullName, registration.Email, registration.ContactNumber);
+            }
+
+            // Cash / on-counter style methods confirm immediately; the shared
+            // post-payment handler detects the top-up context and revives the
+            // rejected form instead of creating a duplicate registration.
+            var cashLogId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
+                examScheduleId, registration.Id, delta, paymentMethod, invoiceNumber, selection);
+            await dashboardService.SupersedeOpenApplyAgainPaymentsAsync(examScheduleId, registration.Id, cashLogId);
+
+            await HandlePostPaymentRegistration(cashLogId);
+            await dashboardService.UpdatePaymentRequestLogAsync(cashLogId, invoiceNumber, true,
+                $"{{\"method\":\"{paymentMethod}\",\"amount\":{delta}}}",
+                $"Additional payment recorded via {paymentMethod}.");
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentProcessed,
+                $"Additional payment of Rs {delta:N0} via {paymentMethod} recorded (Invoice {invoiceNumber})",
+                new { invoiceNumber, amount = delta, method = paymentMethod, examScheduleId, registrationId = registration.Id },
+                entityName: "PaymentRequestLog", entityId: cashLogId.ToString());
+
+            await CompleteExamFormSubmissionAsync(cashLogId, invoiceNumber);
+            return RedirectToAction(nameof(PaymentSuccess));
+        }
+
         var (success, message) = await dashboardService.ReapplyExamRegistrationAsync(
-            examScheduleId, user.Id, registration.Id, subjectIds);
+            examScheduleId, user.Id, registration.Id, subjectIds, selection);
 
         if (!success)
         {
@@ -744,19 +977,21 @@ public class StudentDashboardController(
         }
 
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
-        var subjectIds = string.IsNullOrEmpty(selectedSubjectIds)
-            ? new List<int>()
-            : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+        var selection = ReExamSubjectSelection.Parse(selectedSubjectIds);
 
-        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, subjectIds);
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection);
         if (!selectionValidation.Ok)
         {
             TempData["ErrorMessage"] = selectionValidation.Error;
             return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
         }
 
+        // Security: the posted amount is never trusted. The charge always comes
+        // from the schedule rates applied to the validated selection.
+        amount = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection);
+
         int logId;
-        if (subjectIds.Count == 0)
+        if (selection.Count == 0)
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, paymentMethod, invoiceNumber);
@@ -764,7 +999,7 @@ public class StudentDashboardController(
         else
         {
             logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
-                examScheduleId, registration.Id, amount, paymentMethod, invoiceNumber, subjectIds);
+                examScheduleId, registration.Id, amount, paymentMethod, invoiceNumber, selection);
         }
 
         await HandlePostPaymentRegistration(logId);
@@ -774,7 +1009,7 @@ public class StudentDashboardController(
             new { invoiceNumber, amount, method = paymentMethod, examScheduleId, registrationId = registration.Id },
             entityName: "PaymentRequestLog", entityId: logId.ToString());
 
-        TempData["SuccessMessage"] = $"Payment of Rs {amount:N0} via {paymentMethod} completed successfully. Invoice: {invoiceNumber}";
+        await CompleteExamFormSubmissionAsync(logId, invoiceNumber);
         return RedirectToAction(nameof(PaymentSuccess));
     }
 
@@ -796,23 +1031,24 @@ public class StudentDashboardController(
         if (registration == null) return NotFound("Student registration not found.");
 
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
-        var subjectIds = string.IsNullOrEmpty(selectedSubjectIds)
-            ? new List<int>()
-            : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+        var selection = ReExamSubjectSelection.Parse(selectedSubjectIds);
 
-        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, subjectIds);
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection);
         if (!selectionValidation.Ok)
         {
             TempData["ErrorMessage"] = selectionValidation.Error;
             return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
         }
 
+        // Security: the posted amount is never trusted (see ProcessPayment).
+        amount = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection);
+
         var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
 
         var transactionUuid = esewaService.GenerateTransactionUuid();
 
         int logId;
-        if (subjectIds.Count == 0)
+        if (selection.Count == 0)
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "esewa", invoiceNumber,
@@ -821,10 +1057,16 @@ public class StudentDashboardController(
         else
         {
             logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
-                examScheduleId, registration.Id, amount, "esewa", invoiceNumber, subjectIds,
+                examScheduleId, registration.Id, amount, "esewa", invoiceNumber, selection,
                 fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, transactionUuid);
         }
 
+        return await InitiateESewaGatewayAsync(amount, logId, transactionUuid, invoiceNumber, registration.Id, examScheduleId);
+    }
+
+    private async Task<IActionResult> InitiateESewaGatewayAsync(
+        decimal amount, int logId, string transactionUuid, string invoiceNumber, int studentRegistrationId, int examScheduleId)
+    {
         var defaultCallbackUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students" }, Request.Scheme)!;
         var successUrl = defaultCallbackUrl;
         var failureUrl = defaultCallbackUrl;
@@ -837,12 +1079,12 @@ public class StudentDashboardController(
         HttpContext.Session.SetInt32("ESewaLogId", logId);
         await auditLogWriter.LogAsync(ActivityTypes.PaymentInitiated,
             $"eSewa payment initiated for Rs {amount:N0} (Invoice {invoiceNumber})",
-            new { gateway = "esewa", invoiceNumber, amount, examScheduleId, registrationId = registration.Id },
+            new { gateway = "esewa", invoiceNumber, amount, examScheduleId, registrationId = studentRegistrationId },
             entityName: "PaymentRequestLog", entityId: logId.ToString());
         ViewBag.LogId = logId;
         ViewBag.TransactionUuid = transactionUuid;
 
-        return View(formData);
+        return View("ESewaPayment", formData);
     }
 
     public async Task<IActionResult> ESewaCallback(string? data)
@@ -880,7 +1122,7 @@ public class StudentDashboardController(
                                 new { gateway = "esewa", transactionCode = status.TransactionCode, transactionUuid = uuid, amount = status.TotalAmount },
                                 entityName: "PaymentRequestLog", entityId: sessionLogId.Value.ToString());
 
-                            TempData["SuccessMessage"] = "Payment successful!";
+                            await CompleteExamFormSubmissionAsync(sessionLogId.Value, status.TransactionCode ?? uuid);
                             TempData["TransactionCode"] = status.TransactionCode;
                             TempData["TransactionUuid"] = uuid;
                             return RedirectToAction(nameof(PaymentSuccess));
@@ -1017,7 +1259,14 @@ public class StudentDashboardController(
                     entityName: "PaymentRequestLog", entityId: resolvedLogId.Value.ToString());
             }
 
-            TempData["SuccessMessage"] = "Payment successful!";
+            if (resolvedLogId.HasValue)
+            {
+                await CompleteExamFormSubmissionAsync(resolvedLogId.Value, response.TransactionCode);
+            }
+            else
+            {
+                TempData["SuccessMessage"] = "Payment successful!";
+            }
             TempData["TransactionCode"] = response.TransactionCode;
             TempData["TransactionUuid"] = response.TransactionUuid;
 
@@ -1049,22 +1298,23 @@ public class StudentDashboardController(
         if (registration == null) return NotFound("Student registration not found.");
 
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
-        var subjectIds = string.IsNullOrEmpty(selectedSubjectIds)
-            ? new List<int>()
-            : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+        var selection = ReExamSubjectSelection.Parse(selectedSubjectIds);
 
-        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, subjectIds);
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection);
         if (!selectionValidation.Ok)
         {
             TempData["ErrorMessage"] = selectionValidation.Error;
             return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
         }
 
+        // Security: the posted amount is never trusted (see ProcessPayment).
+        amount = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection);
+
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
         var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
 
         int logId;
-        if (subjectIds.Count == 0)
+        if (selection.Count == 0)
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "khalti", invoiceNumber,
@@ -1073,10 +1323,18 @@ public class StudentDashboardController(
         else
         {
             logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
-                examScheduleId, registration.Id, amount, "khalti", invoiceNumber, subjectIds,
+                examScheduleId, registration.Id, amount, "khalti", invoiceNumber, selection,
                 fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
         }
 
+        return await InitiateKhaltiGatewayAsync(amount, logId, invoiceNumber, examScheduleId,
+            schedule?.ExamScheduleName, fullName, registration.Email, registration.ContactNumber);
+    }
+
+    private async Task<IActionResult> InitiateKhaltiGatewayAsync(
+        decimal amount, int logId, string invoiceNumber, int examScheduleId, string? examScheduleName,
+        string? customerFullName = null, string? customerEmail = null, string? customerPhone = null)
+    {
         var scheme = Request.Scheme;
         var host = Request.Host.Value;
         var baseUrl = $"{scheme}://{host}";
@@ -1084,7 +1342,6 @@ public class StudentDashboardController(
         var returnUrl = Url.Action(nameof(KhaltiCallback), "StudentDashboard",
             new { area = "Students" }, scheme)!;
 
-        var customerEmail = registration.Email;
         if (string.IsNullOrWhiteSpace(customerEmail))
             customerEmail = null;
         else
@@ -1099,12 +1356,12 @@ public class StudentDashboardController(
             WebsiteUrl = baseUrl,
             Amount = (long)(amount * 100),
             PurchaseOrderId = invoiceNumber,
-            PurchaseOrderName = $"Exam Fee - {schedule?.ExamScheduleName ?? ""}",
+            PurchaseOrderName = $"Exam Fee - {examScheduleName ?? ""}",
             CustomerInfo = new KhaltiCustomerInfo
             {
-                Name = string.IsNullOrWhiteSpace(fullName) ? null : fullName,
+                Name = string.IsNullOrWhiteSpace(customerFullName) ? null : customerFullName,
                 Email = customerEmail,
-                Phone = string.IsNullOrWhiteSpace(registration.ContactNumber) ? null : registration.ContactNumber
+                Phone = string.IsNullOrWhiteSpace(customerPhone) ? null : customerPhone
             }
         };
 
@@ -1122,7 +1379,7 @@ public class StudentDashboardController(
 
             await auditLogWriter.LogAsync(ActivityTypes.PaymentInitiated,
                 $"Khalti payment initiated for Rs {amount:N0} (Invoice {invoiceNumber})",
-                new { gateway = "khalti", invoiceNumber, amount, examScheduleId, registrationId = registration.Id, pidx = response.Pidx },
+                new { gateway = "khalti", invoiceNumber, amount, examScheduleId, pidx = response.Pidx },
                 entityName: "PaymentRequestLog", entityId: logId.ToString());
             logger.LogInformation("Khalti redirecting to: {PaymentUrl}", response.PaymentUrl);
             HttpContext.Session.SetInt32("KhaltiLogId", logId);
@@ -1202,7 +1459,14 @@ public class StudentDashboardController(
                     entityName: "PaymentRequestLog", entityId: khaltiResolvedLogId.Value.ToString());
             }
 
-            TempData["SuccessMessage"] = "Payment successful!";
+            if (khaltiResolvedLogId.HasValue)
+            {
+                await CompleteExamFormSubmissionAsync(khaltiResolvedLogId.Value, lookup.TransactionId ?? transaction_id);
+            }
+            else
+            {
+                TempData["SuccessMessage"] = "Payment successful!";
+            }
             TempData["TransactionCode"] = lookup.TransactionId ?? transaction_id;
             TempData["TransactionUuid"] = pidx;
 
@@ -1231,8 +1495,17 @@ public class StudentDashboardController(
     private async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(AppUser user) =>
         await dashboardService.GetMissingMandatoryProfileFieldsAsync(user.Id, user.Email, user.PhoneNumber, user.ProfilePath, user.SignaturePath);
 
-    private async Task<(bool Ok, string? Error)> ValidateSubjectSelectionAsync(int examScheduleId, List<int> subjectIds)
+    private async Task<(bool Ok, string? Error)> ValidateSubjectSelectionAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection)
     {
+        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
+        if (schedule == null)
+            return (false, "Exam schedule not found.");
+
+        if (dashboardService.IsReExamType(schedule.ExamType?.Name))
+            return await ValidateReExamSubjectSelectionAsync(examScheduleId, selection);
+
+        var subjectIds = selection.Keys.ToList();
+
         var offerings = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var offeringLookup = offerings.ToDictionary(o => o.Id);
         foreach (var id in subjectIds)
@@ -1258,6 +1531,111 @@ public class StudentDashboardController(
         return (true, null);
     }
 
+    // Re-exam forms draw subjects from the student's failed history, which may
+    // reference offerings of an older curriculum version than the schedule
+    // resolves to. Membership is therefore validated against every offering of
+    // the same program + semester number regardless of version. Each chosen leg
+    // must actually be offered by that subject (HasTheory/HasPractical) and at
+    // least one leg must be ticked per subject. The elective-group rule is
+    // skipped (students may sit what they failed).
+    private async Task<(bool Ok, string? Error)> ValidateReExamSubjectSelectionAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection)
+    {
+        if (selection.Count == 0)
+            return (false, "Please select at least one subject.");
+
+        var info = await context.ExamSchedules.AsNoTracking()
+            .Where(es => es.Id == examScheduleId)
+            .Select(es => new { es.ProgramId, SemesterNumber = es.SemesterInstance!.Semester!.Number })
+            .FirstOrDefaultAsync();
+        if (info == null)
+            return (false, "Exam schedule not found.");
+
+        var offerings = await context.SubjectOfferings.AsNoTracking()
+            .Where(so => so.ProgramId == info.ProgramId
+                      && so.Semester != null && so.Semester.Number == info.SemesterNumber)
+            .Select(so => new { so.Id, so.HasTheory, so.HasPractical })
+            .ToListAsync();
+        var offeringLookup = offerings.ToDictionary(o => o.Id);
+
+        foreach (var (offeringId, legs) in selection)
+        {
+            if (!offeringLookup.TryGetValue(offeringId, out var offering))
+                return (false, "Selected subject is not part of this exam schedule.");
+
+            // Legacy plain-id tokens carry ReExamLegs.None meaning "both
+            // available papers" (see ReExamSubjectSelection.Parse) — resolve
+            // them instead of rejecting.
+            var effectiveLegs = legs == ReExamLegs.None
+                ? (offering.HasTheory ? ReExamLegs.Theory : ReExamLegs.None)
+                  | (offering.HasPractical ? ReExamLegs.Practical : ReExamLegs.None)
+                : legs;
+
+            if (effectiveLegs == ReExamLegs.None || (!effectiveLegs.HasFlag(ReExamLegs.Theory) && !effectiveLegs.HasFlag(ReExamLegs.Practical)))
+                return (false, $"Please select at least one exam paper (theory or practical) for every chosen subject.");
+
+            if (effectiveLegs.HasFlag(ReExamLegs.Theory) && !offering.HasTheory)
+                return (false, "One of the selected subjects does not offer a theory paper.");
+            if (effectiveLegs.HasFlag(ReExamLegs.Practical) && !offering.HasPractical)
+                return (false, "One of the selected subjects does not offer a practical paper.");
+        }
+
+        return (true, null);
+    }
+
+    // Legacy plain-id tokens ("301") parse to ReExamLegs.None meaning "both
+    // available papers". Upgrade them to explicit legs so validation, the
+    // charge-delta math and every stored log carry unambiguous data.
+    private async Task<Dictionary<int, ReExamLegs>> NormalizeLegacySelectionLegsAsync(
+        int examScheduleId, Dictionary<int, ReExamLegs> selection)
+    {
+        var legacyIds = selection.Where(kvp => kvp.Value == ReExamLegs.None)
+            .Select(kvp => kvp.Key)
+            .ToList();
+        if (legacyIds.Count == 0)
+            return selection;
+
+        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
+        if (schedule == null)
+            return selection;
+
+        Dictionary<int, (bool HasTheory, bool HasPractical)> availability;
+        if (dashboardService.IsReExamType(schedule.ExamType?.Name))
+        {
+            // Same membership pool the re-exam validator uses: every offering
+            // of the program + semester number regardless of curriculum version.
+            var info = await context.ExamSchedules.AsNoTracking()
+                .Where(es => es.Id == examScheduleId)
+                .Select(es => new { es.ProgramId, SemesterNumber = es.SemesterInstance!.Semester!.Number })
+                .FirstOrDefaultAsync();
+            if (info == null)
+                return selection;
+
+            availability = await context.SubjectOfferings.AsNoTracking()
+                .Where(so => so.ProgramId == info.ProgramId
+                          && so.Semester != null && so.Semester.Number == info.SemesterNumber)
+                .Select(so => new { so.Id, so.HasTheory, so.HasPractical })
+                .ToDictionaryAsync(x => x.Id, x => (x.HasTheory, x.HasPractical));
+        }
+        else
+        {
+            availability = (await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId))
+                .ToDictionary(o => o.Id, o => (o.HasTheory, o.HasPractical));
+        }
+
+        foreach (var offeringId in legacyIds)
+        {
+            if (!availability.TryGetValue(offeringId, out var flags))
+                continue;
+
+            var legs = ReExamLegs.None;
+            if (flags.HasTheory) legs |= ReExamLegs.Theory;
+            if (flags.HasPractical) legs |= ReExamLegs.Practical;
+            selection[offeringId] = legs;
+        }
+
+        return selection;
+    }
+
     private async Task HandlePostPaymentRegistration(int logId)
     {
         var user = await userManager.GetUserAsync(User);
@@ -1271,6 +1649,15 @@ public class StudentDashboardController(
         if (paymentLog == null)
         {
             logger.LogWarning("HandlePostPaymentRegistration: PaymentLog not found for logId={LogId}", logId);
+            return;
+        }
+
+        // A confirmed payment while the form is rejected with an older confirmed
+        // payment is a reapply top-up: revive the rejected registration with this
+        // log's subject tokens rather than creating a duplicate registration.
+        if (await dashboardService.TryCompleteApplyAgainTopUpAsync(logId, user.Id))
+        {
+            logger.LogInformation("HandlePostPaymentRegistration: Reapply top-up completed for logId={LogId}", logId);
             return;
         }
 
@@ -1289,14 +1676,9 @@ public class StudentDashboardController(
             return;
         }
 
-        var subjectIds = string.IsNullOrEmpty(paymentLog.SelectedSubjectIds)
-            ? new List<int>()
-            : paymentLog.SelectedSubjectIds
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(int.Parse)
-                .ToList();
+        var selection = ReExamSubjectSelection.Parse(paymentLog.SelectedSubjectIds);
 
-        if (subjectIds.Count == 0)
+        if (selection.Count == 0)
         {
             logger.LogWarning("HandlePostPaymentRegistration: No subject IDs on logId={LogId} (SelectedSubjectIds={SelectedSubjectIds}). Skipping registration creation.",
                 logId, paymentLog.SelectedSubjectIds ?? "null");
@@ -1304,8 +1686,43 @@ public class StudentDashboardController(
         }
 
         logger.LogInformation("HandlePostPaymentRegistration: Creating ExamRegistration for logId={LogId}, scheduleId={ScheduleId}, userId={UserId}, subjects={SubjectCount}",
-            logId, paymentLog.ExamScheduleId, user.Id, subjectIds.Count);
-        await dashboardService.CreateExamRegistrationAsync(paymentLog.ExamScheduleId, user.Id, paymentLog.Amount, subjectIds, paymentLog.StudentRegistrationId.Value);
+            logId, paymentLog.ExamScheduleId, user.Id, selection.Count);
+        await dashboardService.CreateExamRegistrationAsync(paymentLog.ExamScheduleId, user.Id, paymentLog.Amount, selection.Keys.ToList(), paymentLog.StudentRegistrationId.Value, selection);
+    }
+
+    private async Task CompleteExamFormSubmissionAsync(int logId, string? reference)
+    {
+        var log = await dashboardService.GetPaymentLogByIdAsync(logId);
+        if (log == null)
+        {
+            logger.LogWarning("CompleteExamFormSubmission: PaymentRequestLog not found for logId={LogId}", logId);
+            return;
+        }
+
+        var schedule = await dashboardService.GetExamScheduleByIdAsync(log.ExamScheduleId);
+        var scheduleName = schedule?.ExamScheduleName ?? $"Exam Schedule #{log.ExamScheduleId}";
+
+        try
+        {
+            await notificationService.SendAsync(
+                log.Email,
+                log.MobileNumber,
+                "exam_form_submitted",
+                new Dictionary<string, string>
+                {
+                    ["StudentName"] = log.FullName,
+                    ["ExamScheduleName"] = scheduleName,
+                    ["Amount"] = log.Amount.ToString("N0"),
+                    ["Reference"] = reference ?? string.Empty
+                });
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to send exam form submitted notification for logId={LogId}", log.Id);
+        }
+
+        TempData["ExamScheduleName"] = scheduleName;
+        TempData["SuccessMessage"] = $"Your exam form for \"{scheduleName}\" has been submitted successfully.";
     }
 
     [RequirePermission(Permissions.StudentPortalMarksheet)]

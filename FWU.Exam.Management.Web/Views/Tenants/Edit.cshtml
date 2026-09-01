@@ -60,7 +60,7 @@
                     <input type="file" name="bannerImage" accept=".jpg,.jpeg,.png,.gif,.webp"
                            class="w-full text-sm text-gray-600 file:mr-3 file:px-3 file:py-2 file:rounded-md file:border-0 file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" />
                     <span asp-validation-for="BannerImagePath" class="text-xs text-red-500 mt-1 block"></span>
-                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB. Leave empty to keep the current banner.</p>
+                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 2 MB. Leave empty to keep the current banner.</p>
                 </div>
                 <div class="md:col-span-2">
                     <label asp-for="LogoPath" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Logo</label>
@@ -74,7 +74,7 @@
                     <input type="file" name="logoImage" accept=".jpg,.jpeg,.png,.gif,.webp"
                            class="w-full text-sm text-gray-600 file:mr-3 file:px-3 file:py-2 file:rounded-md file:border-0 file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" />
                     <span asp-validation-for="LogoPath" class="text-xs text-red-500 mt-1 block"></span>
-                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB. Leave empty to keep the current logo.</p>
+                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 2 MB. Leave empty to keep the current logo.</p>
                 </div>
                 <div>
                     <label asp-for="TenantType" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Tenant Type</label>
@@ -102,8 +102,8 @@
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="~/lib/select2/css/select2.min.css" asp-append-version="true" rel="stylesheet" />
+    <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
     <style>
         .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
         .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }

@@ -379,19 +379,22 @@ public class GradeCalculationServiceTests
     }
 
     [Fact]
-    public void IsStudentPassing_SkipsPracticalCheck_WhenSupplementary()
+    public void IsStudentPassing_EnforcesPracticalPassMarks_EvenWhenSupplementary()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx => TestData.SeedBase(ctx));
         var service = new GradeCalculationService(db.Context);
         var offering = TheoryAndPracticalOffering();
 
-        Assert.True(service.IsStudentPassing(30, 15, offering, isSupplementary: true));
-        Assert.True(service.IsStudentPassing(25, null, offering, isSupplementary: true));
+        // Practical re-sat below the pass mark fails even on supplementary rows.
+        Assert.False(service.IsStudentPassing(30, 15, offering, isSupplementary: true));
+        // Theory unregistered (null) is skipped; a passing practical suffices.
+        Assert.True(service.IsStudentPassing(null, 30, offering, isSupplementary: true));
+        Assert.True(service.IsStudentPassing(30, 25, offering, isSupplementary: true));
         Assert.False(service.IsStudentPassing(20, null, offering, isSupplementary: true));
     }
 
     [Fact]
-    public void AssignGrades_UsesTheoryOnlyPass_ForSupplementaryStudent()
+    public void AssignGrades_SupplementaryFailsAgain_WhenReSatPracticalBelowPass()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
@@ -415,7 +418,37 @@ public class GradeCalculationServiceTests
 
         service.AssignGrades(result, offering, isSupplementary: true);
 
-        Assert.Equal(75f, result.ObtainedMarks);
+        Assert.Equal("Fail", result.Remarks);
+    }
+
+    [Fact]
+    public void AssignGrades_SupplementaryPracticalOnlyResit_PassesWhenAbovePass()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.GradingSchemes.Add(Scheme(1, TestData.ProgramId,
+                ("A", 80, 100, 4.0m, true),
+                ("F", 0, 39, 0.0m, false)));
+        });
+
+        var service = new GradeCalculationService(db.Context);
+        var offering = TheoryAndPracticalOffering();
+        // Practical-only re-sit: the passed theory external is absent from the
+        // row; only its internals carried forward.
+        var result = new ExamSubjectResult
+        {
+            TenantId = TestData.TenantId,
+            ObtainedMarksTheory = null,
+            ObtainedMarksTheoryInternal = 35,
+            ObtainedMarksPractical = 45,
+            IsSupplementary = true
+        };
+
+        service.AssignGrades(result, offering, isSupplementary: true);
+
+        Assert.Null(result.GradeLetterTheory);
+        Assert.NotNull(result.GradeLetterPractical);
         Assert.Equal("Pass", result.Remarks);
     }
 

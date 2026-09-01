@@ -68,6 +68,13 @@ public static class UserScopeExtensions
         return query.Where(p => false);
     }
 
+    public static IQueryable<Program> ApplyTenantScope(this IQueryable<Program> query, ITenantContext tenant)
+    {
+        if (tenant.IsCentralTenant) return query;
+        var tenantId = tenant.TenantId;
+        return query.Where(p => p.Faculty != null && p.Faculty.TenantId == tenantId);
+    }
+
     public static IQueryable<SubjectCatalog> ApplyScope(this IQueryable<SubjectCatalog> query, IUserContext user)
     {
         if (user.IsSuperAdmin) return query;

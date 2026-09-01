@@ -2,6 +2,9 @@
 
 @{
     ViewData["Title"] = "Edit Exam Schedule";
+    var today = DateOnly.FromDateTime(DateTime.Today);
+    var minStartDate = Model.StartDate.HasValue && Model.StartDate.Value >= today ? DateTime.Today.ToString("yyyy-MM-dd") : "";
+    var minEndDate = Model.EndDate.HasValue && Model.EndDate.Value >= today ? DateTime.Today.ToString("yyyy-MM-dd") : "";
 }
 
 <div class="space-y-6">
@@ -103,12 +106,12 @@
                 </div>
                 <div>
                     <label asp-for="StartDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Start Date (AD)</label>
-                    <input asp-for="StartDate" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <input asp-for="StartDate" type="date" min="@minStartDate" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                     <span asp-validation-for="StartDate" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="EndDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">End Date (AD)</label>
-                    <input asp-for="EndDate" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <input asp-for="EndDate" type="date" min="@minEndDate" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                     <span asp-validation-for="EndDate" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
@@ -155,8 +158,8 @@
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="~/lib/select2/css/select2.min.css" asp-append-version="true" rel="stylesheet" />
+    <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
 
     <style>
         .select2-container--default .select2-selection--single {

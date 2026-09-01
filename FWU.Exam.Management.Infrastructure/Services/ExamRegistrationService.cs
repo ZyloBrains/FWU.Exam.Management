@@ -1,7 +1,9 @@
 using FWU.Exam.Management.Application.DTOs;
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -377,7 +379,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         {
             ExamRegistrationId = er.Id,
             ExamScheduleName = er.ExamSchedule!.ExamScheduleName,
-            ExamTypeName = er.ExamSchedule.ExamType?.Name
+            ExamTypeName = er.ExamSchedule.ExamType?.Name,
+            IsReExamForm = IsReExamForm(er)
         };
 
         var matchedLog = await FindConfirmedPaymentLogAsync(er);
@@ -396,41 +399,133 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                     : "Payment has not been confirmed for this form yet.";
         }
 
-        var selectedIds = ParseSelectedSubjectIds(matchedLog?.SelectedSubjectIds);
+        var selection = ReExamSubjectSelection.Parse(matchedLog?.SelectedSubjectIds);
+        var selectedIds = selection.Keys.ToHashSet();
 
         var schedule = er.ExamSchedule!;
         var semesterNumber = schedule.SemesterInstance!.Semester?.Number ?? 0;
         var resolvedVersion = await CurriculumVersionResolver.ResolveAsync(
             context, schedule.ProgramId, schedule.SemesterInstance.AcademicYearId);
+        var isReExam = IsReExamForm(er);
 
-        var offerings = semesterNumber > 0
-            ? await context.SubjectOfferings
+        int? batchAcademicYearId = null;
+        if (isReExam && er.ApplicationVoucherId.HasValue)
+        {
+            batchAcademicYearId = await context.StudentRegistrations!
+                .AsNoTracking()
+                .Where(sr => context.ApplicationVouchers!
+                    .Any(v => v.Id == er.ApplicationVoucherId.Value && v.StudentRegistrationId == sr.Id))
+                .Select(sr => (int?)sr.AcademicYearId)
+                .FirstOrDefaultAsync();
+            if (batchAcademicYearId is null or <= 0)
+            {
+                batchAcademicYearId = null;
+            }
+        }
+
+        if (isReExam)
+        {
+            dto.AcademicYearName = batchAcademicYearId.HasValue
+                ? await context.AcademicYears
+                    .AsNoTracking()
+                    .Where(ay => ay.Id == batchAcademicYearId.Value)
+                    .Select(ay => ay.AcademicYearName)
+                    .FirstOrDefaultAsync()
+                : schedule.SemesterInstance.AcademicYear?.AcademicYearName;
+        }
+        else
+        {
+            dto.AcademicYearName = schedule.SemesterInstance.AcademicYear?.AcademicYearName;
+        }
+
+        int? batchVersionId = batchAcademicYearId.HasValue
+            ? await CurriculumVersionResolver.ResolveAsync(context, schedule.ProgramId, batchAcademicYearId.Value)
+            : null;
+
+        List<SubjectOffering> offerings;
+        if (semesterNumber > 0 && isReExam)
+        {
+            // Re-exam forms belong to the student's own cohort, so the editable
+            // list resolves from their batch curriculum version first; unversioned
+            // and then the schedule-instance resolution act as fallbacks.
+            var candidateLegs = new List<int?>();
+            if (batchVersionId.HasValue) candidateLegs.Add(batchVersionId);
+            candidateLegs.Add(null);
+            if (resolvedVersion.HasValue && !candidateLegs.Contains(resolvedVersion.Value))
+            {
+                candidateLegs.Add(resolvedVersion);
+            }
+
+            var versionedLegs = candidateLegs.Where(l => l.HasValue).Select(l => l!.Value).ToList();
+
+            var pool = await context.SubjectOfferings
+                .AsNoTracking()
+                .Include(so => so.SubjectCatalog)
+                .Where(so => so.ProgramId == schedule.ProgramId
+                          && so.Semester != null && so.Semester.Number == semesterNumber
+                          && (so.CurriculumVersionId == null
+                              || (so.CurriculumVersionId != null && versionedLegs.Contains(so.CurriculumVersionId.Value))))
+                .OrderBy(so => so.DisplayOrder)
+                .ToListAsync();
+
+            offerings = [];
+            foreach (var leg in candidateLegs)
+            {
+                var legRows = pool.Where(so => so.CurriculumVersionId == leg).ToList();
+                if (legRows.Count == 0) continue;
+                if (selectedIds.Count == 0 || legRows.Any(so => selectedIds.Contains(so.Id)))
+                {
+                    offerings = legRows;
+                    break;
+                }
+                if (offerings.Count == 0)
+                {
+                    offerings = legRows;
+                }
+            }
+        }
+        else if (semesterNumber > 0)
+        {
+            offerings = await context.SubjectOfferings
                 .AsNoTracking()
                 .Include(so => so.SubjectCatalog)
                 .Where(so => so.ProgramId == schedule.ProgramId
                           && so.Semester != null && so.Semester.Number == semesterNumber
                           && (resolvedVersion == null || so.CurriculumVersionId == resolvedVersion.Value || so.CurriculumVersionId == null))
                 .OrderBy(so => so.DisplayOrder)
-                .ToListAsync()
-            : [];
+                .ToListAsync();
+        }
+        else
+        {
+            offerings = [];
+        }
 
         dto.AvailableSubjects = offerings
             .Where(so => so.SubjectCatalog != null)
-            .Select(so => new ExamFormSelectableSubjectDto
+            .Select(so =>
             {
-                SubjectOfferingId = so.Id,
-                Code = so.SubjectCatalog!.SubjectCode,
-                Name = so.SubjectCatalog.SubjectName,
-                Theory = so.HasTheory,
-                Practical = so.HasPractical,
-                IsSelected = selectedIds.Contains(so.Id)
+                var legs = selection.GetValueOrDefault(so.Id);
+                return new ExamFormSelectableSubjectDto
+                {
+                    SubjectOfferingId = so.Id,
+                    Code = so.SubjectCatalog!.SubjectCode,
+                    Name = so.SubjectCatalog.SubjectName,
+                    Theory = so.HasTheory,
+                    Practical = so.HasPractical,
+                    IsSelected = selectedIds.Contains(so.Id),
+                    SelectedTheory = legs.HasFlag(ReExamLegs.Theory) || (legs == ReExamLegs.None && selectedIds.Contains(so.Id) && so.HasTheory),
+                    SelectedPractical = legs.HasFlag(ReExamLegs.Practical) || (legs == ReExamLegs.None && selectedIds.Contains(so.Id) && so.HasPractical)
+                };
             })
             .ToList();
 
         return dto;
     }
 
-    public async Task<(bool Success, string Message)> UpdateRegistrationSubjectsAsync(int examRegistrationId, List<int> subjectOfferingIds)
+    public async Task<(bool Success, string Message)> UpdateRegistrationSubjectsAsync(
+        int examRegistrationId,
+        List<int> subjectOfferingIds,
+        Dictionary<int, ReExamLegs>? subjectLegs = null)
     {
         var requestedIds = (subjectOfferingIds ?? [])
             .Where(id => id > 0)
@@ -449,6 +544,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             .Include(er => er.ExamSchedule)
                 .ThenInclude(es => es!.SemesterInstance)
                     .ThenInclude(si => si!.AcademicYear)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.ExamType)
             .FirstOrDefaultAsync();
 
         if (er?.ExamSchedule?.SemesterInstance == null)
@@ -467,13 +564,18 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         var semesterNumber = schedule.SemesterInstance!.Semester?.Number ?? 0;
         var resolvedVersion = await CurriculumVersionResolver.ResolveAsync(
             context, schedule.ProgramId, schedule.SemesterInstance.AcademicYearId);
+        var isReExam = IsReExamForm(er);
 
         var validOfferings = await context.SubjectOfferings
             .AsNoTracking()
+            .Include(so => so.SubjectCatalog)
             .Where(so => requestedIds.Contains(so.Id)
                       && so.ProgramId == schedule.ProgramId
                       && so.Semester != null && so.Semester.Number == semesterNumber
-                      && (resolvedVersion == null || so.CurriculumVersionId == resolvedVersion.Value || so.CurriculumVersionId == null))
+                      && (isReExam
+                          || resolvedVersion == null
+                          || so.CurriculumVersionId == resolvedVersion.Value
+                          || so.CurriculumVersionId == null))
             .ToDictionaryAsync(so => so.Id);
 
         if (validOfferings.Count != requestedIds.Count)
@@ -482,6 +584,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         var matchedLog = await FindConfirmedPaymentLogAsync(er, asNoTracking: false);
         if (matchedLog == null)
             return (false, "Payment has not been confirmed for this form yet.");
+
+        var existingSelection = ReExamSubjectSelection.Parse(matchedLog.SelectedSubjectIds);
 
         var existingResults = await context.ExamSubjectResults!
             .Where(esr => esr.ExamRegistrationId == er.Id)
@@ -494,13 +598,54 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
         var finalIds = validOfferings.Keys.ToHashSet();
 
+        // Desired papers per retained offering. On leg-aware re-exam forms the
+        // admin's explicit choice wins; an empty map keeps the legacy behaviour
+        // of falling back to stored tokens / both available papers.
+        Dictionary<int, ReExamLegs> desiredLegs = [];
+        if (isReExam && subjectLegs is { Count: > 0 })
+        {
+            foreach (var offeringId in finalIds)
+            {
+                var offering = validOfferings[offeringId];
+                var requested = subjectLegs.GetValueOrDefault(offeringId);
+                var chosen = (requested.HasFlag(ReExamLegs.Theory) && offering.HasTheory ? ReExamLegs.Theory : ReExamLegs.None)
+                           | (requested.HasFlag(ReExamLegs.Practical) && offering.HasPractical ? ReExamLegs.Practical : ReExamLegs.None);
+                if (chosen == ReExamLegs.None)
+                {
+                    var label = offering.SubjectCatalog?.SubjectName
+                                ?? offering.SubjectCatalog?.SubjectCode
+                                ?? $"offering {offeringId}";
+                    return (false, $"Select at least one available exam paper for \"{label}\".");
+                }
+                desiredLegs[offeringId] = chosen;
+            }
+        }
+
         foreach (var result in activeByOffering.Values.Where(r => !finalIds.Contains(r.SubjectOfferingId)))
         {
             result.IsActive = false;
         }
 
+        // Changing the papers of an already-registered subject retires its row
+        // so it is recreated below through the same carry-forward path used for
+        // brand-new registrations.
+        if (desiredLegs.Count > 0)
+        {
+            foreach (var result in activeByOffering.Values.ToList())
+            {
+                if (!desiredLegs.TryGetValue(result.SubjectOfferingId, out var wanted)) continue;
+
+                var current = (result.IsTheoryRegistered == true ? ReExamLegs.Theory : ReExamLegs.None)
+                            | (result.IsPracticalRegistered == true ? ReExamLegs.Practical : ReExamLegs.None);
+                if (current == wanted) continue;
+
+                result.IsActive = false;
+                activeByOffering.Remove(result.SubjectOfferingId);
+            }
+        }
+
         HashSet<int>? previousScheduleIds = null;
-        if (er.IsSupplementary)
+        if (isReExam)
         {
             previousScheduleIds = await context.ExamSchedules!
                 .AsNoTracking()
@@ -519,11 +664,23 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         {
             var offering = validOfferings[offeringId];
 
+            // Chosen legs for this subject: admin choice on leg-aware forms,
+            // else the stored token, else the offering's own papers.
+            var chosenLegs = desiredLegs.TryGetValue(offeringId, out var adminLegs)
+                ? adminLegs
+                : existingSelection.TryGetValue(offeringId, out var legs) && legs != ReExamLegs.None
+                    ? legs
+                    : (offering.HasTheory ? ReExamLegs.Theory : ReExamLegs.None)
+                    | (offering.HasPractical ? ReExamLegs.Practical : ReExamLegs.None);
+            var theorySelected = chosenLegs.HasFlag(ReExamLegs.Theory);
+            var practicalSelected = chosenLegs.HasFlag(ReExamLegs.Practical);
+
             float? carriedPractical = null;
+            float? carriedTheory = null;
             float? carriedPracticalInternal = null;
             float? carriedTheoryInternal = null;
 
-            if (er.IsSupplementary && previousScheduleIds is { Count: > 0 })
+            if (isReExam && previousScheduleIds is { Count: > 0 })
             {
                 var previousResult = await context.ExamSubjectResults!
                     .AsNoTracking()
@@ -537,7 +694,10 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
                 if (previousResult != null)
                 {
-                    carriedPractical = previousResult.ObtainedMarksPractical;
+                    // Marks carry forward; only the external marks of a re-sat
+                    // leg are cleared for fresh entry.
+                    carriedPractical = practicalSelected ? null : previousResult.ObtainedMarksPractical;
+                    carriedTheory = theorySelected ? null : previousResult.ObtainedMarksTheory;
                     carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
                     carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
                 }
@@ -550,18 +710,30 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 SubjectOfferingId = offeringId,
                 ExamScheduleId = er.ExamScheduleId,
                 ExamTypeId = schedule.ExamTypeId,
-                IsTheoryRegistered = offering.HasTheory,
-                IsPracticalRegistered = offering.HasPractical,
+                IsTheoryRegistered = theorySelected,
+                IsPracticalRegistered = practicalSelected,
                 IsActive = true,
                 IsSubmitted = false,
                 IsSupplementary = er.IsSupplementary,
+                ObtainedMarksTheory = carriedTheory,
                 ObtainedMarksPractical = carriedPractical,
                 ObtainedMarksPracticalInternal = carriedPracticalInternal,
                 ObtainedMarksTheoryInternal = carriedTheoryInternal
             });
+
+            existingSelection[offeringId] = chosenLegs;
         }
 
-        matchedLog.SelectedSubjectIds = string.Join(",", finalIds.OrderBy(id => id));
+        // Tokens mirror the final desired state, including retained subjects
+        // whose stored entry was legacy or stale.
+        foreach (var kvp in desiredLegs)
+        {
+            existingSelection[kvp.Key] = kvp.Value;
+        }
+
+        matchedLog.SelectedSubjectIds = ReExamSubjectSelection.Format(
+            existingSelection.Where(kvp => finalIds.Contains(kvp.Key))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
 
         await context.SaveChangesAsync();
         return (true, "Subjects updated successfully.");
@@ -607,14 +779,14 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
     private static HashSet<int> ParseSelectedSubjectIds(string? selectedSubjectIds)
     {
-        return string.IsNullOrWhiteSpace(selectedSubjectIds)
-            ? []
-            : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(id => int.TryParse(id, out var value) ? value : (int?)null)
-                .Where(value => value.HasValue)
-                .Select(value => value!.Value)
-                .ToHashSet();
+        return ReExamSubjectSelection.Parse(selectedSubjectIds).Keys.ToHashSet();
     }
+
+    // Rows created before the IsSupplementary stamping shipped (e.g. by a stale
+    // deployment) still describe re-exams, so the schedule's exam type is the
+    // source of truth and the stored flag is only a fast path.
+    private static bool IsReExamForm(ExamRegistration er) =>
+        er.IsSupplementary || StudentDashboardService.IsReExamTypeStatic(er.ExamSchedule?.ExamType?.Name);
 
     public async Task<List<SelectOption>> GetFilterAcademicYearsAsync()
     {
@@ -704,6 +876,23 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
         var srLookup = studentRegistrations.ToDictionary(sr => sr.Id);
 
+        var batchAyByRegistrationId = new Dictionary<int, int>();
+        foreach (var item in items)
+        {
+            if (!IsReExamForm(item) || !item.ApplicationVoucherId.HasValue) continue;
+            if (!erIdToSrId.TryGetValue(item.ApplicationVoucherId.Value, out var batchSrId)) continue;
+            if (!srLookup.TryGetValue(batchSrId, out var batchSr) || batchSr.AcademicYearId <= 0) continue;
+            batchAyByRegistrationId[item.Id] = batchSr.AcademicYearId;
+        }
+
+        var batchAcademicYearIds = batchAyByRegistrationId.Values.Distinct().ToList();
+        var batchYearNameLookup = batchAcademicYearIds.Count > 0
+            ? await context.AcademicYears
+                .AsNoTracking()
+                .Where(ay => batchAcademicYearIds.Contains(ay.Id))
+                .ToDictionaryAsync(ay => ay.Id, ay => ay.AcademicYearName)
+            : [];
+
         var paymentLogs = await context.PaymentRequestLogs!
             .AsNoTracking()
             .Where(prl => scheduleIds.Contains(prl.ExamScheduleId)
@@ -773,6 +962,15 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 context, key.ProgramId, key.AcademicYearId);
         }
 
+        var batchVersionMap = new Dictionary<(int ProgramId, int AcademicYearId), int?>();
+        foreach (var key in items
+            .Where(i => i.ExamSchedule != null && batchAyByRegistrationId.ContainsKey(i.Id))
+            .Select(i => (ProgramId: i.ExamSchedule!.ProgramId, AcademicYearId: batchAyByRegistrationId[i.Id]))
+            .Distinct())
+        {
+            batchVersionMap[key] = await CurriculumVersionResolver.ResolveAsync(context, key.ProgramId, key.AcademicYearId);
+        }
+
         var programIds = subjectKeys.Select(k => k.ProgramId).Distinct().ToList();
         var semesterIds = subjectKeys.Select(k => k.SemesterId).Distinct().ToList();
 
@@ -786,6 +984,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         var semesterNumbers = semesterNumberMap.Select(s => s.Number).Distinct().ToList();
 
         var activeVersionIds = curriculumVersionMap.Values.Where(v => v.HasValue).Select(v => v!.Value).Distinct().ToHashSet();
+        var batchVersionIds = batchVersionMap.Values.Where(v => v.HasValue).Select(v => v!.Value).Distinct().ToHashSet();
 
         var offerings = subjectKeys.Count > 0
             ? await context.SubjectOfferings
@@ -794,7 +993,10 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 .Include(so => so.Semester)
                 .Where(so => programIds.Contains(so.ProgramId)
                           && so.Semester != null && semesterNumbers.Contains(so.Semester.Number)
-                          && (activeVersionIds.Count == 0 || (so.CurriculumVersionId != null && activeVersionIds.Contains(so.CurriculumVersionId.Value)) || so.CurriculumVersionId == null))
+                          && (activeVersionIds.Count == 0
+                              || (so.CurriculumVersionId != null && activeVersionIds.Contains(so.CurriculumVersionId.Value))
+                              || so.CurriculumVersionId == null
+                              || (so.CurriculumVersionId != null && batchVersionIds.Contains(so.CurriculumVersionId.Value))))
                 .OrderBy(so => so.DisplayOrder)
                 .ToListAsync()
             : [];
@@ -815,6 +1017,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             bool paymentConfirmed = false;
             string? invoiceNumber = null;
             HashSet<int>? selectedSubjectIds = null;
+            Dictionary<int, ReExamLegs>? selectedLegsByOffering = null;
 
             if (er.ApplicationVoucherId.HasValue
                 && erIdToSrId.TryGetValue(er.ApplicationVoucherId.Value, out var srId)
@@ -854,13 +1057,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 paymentConfirmed = true;
                 invoiceNumber = matchedLog.InvoiceNumber;
                 paidAmount = matchedLog.Amount;
-                selectedSubjectIds = string.IsNullOrWhiteSpace(matchedLog.SelectedSubjectIds)
-                    ? new HashSet<int>()
-                    : matchedLog.SelectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                        .Select(id => int.TryParse(id, out var value) ? value : (int?)null)
-                        .Where(value => value.HasValue)
-                        .Select(value => value!.Value)
-                        .ToHashSet();
+                selectedSubjectIds = ReExamSubjectSelection.Parse(matchedLog.SelectedSubjectIds).Keys.ToHashSet();
+                selectedLegsByOffering = ReExamSubjectSelection.Parse(matchedLog.SelectedSubjectIds);
             }
 
             var schedule = er.ExamSchedule;
@@ -869,22 +1067,76 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 && semesterIdToNumber.TryGetValue(schedule.SemesterInstance.SemesterId, out var scheduleSemNumber)
                 && offeringLookup.TryGetValue((schedule.ProgramId, scheduleSemNumber), out var scheduleOfferings))
             {
-                var resolvedVersion = curriculumVersionMap.GetValueOrDefault((schedule.ProgramId, schedule.SemesterInstance.AcademicYearId));
-                var eligible = scheduleOfferings.Where(so => so.SubjectCatalog != null
-                    && (resolvedVersion == null || so.CurriculumVersionId == resolvedVersion.Value || so.CurriculumVersionId == null));
-                if (selectedSubjectIds is { Count: > 0 })
-                    eligible = eligible.Where(so => selectedSubjectIds.Contains(so.Id));
+                // Re-exam forms belong to the student's own cohort: resolve
+                // eligible offerings strictly from one curriculum leg, preferring
+                // the student's batch version, then unversioned rows, and only
+                // then the schedule-instance resolution.
+                List<SubjectOffering> eligible;
+                if (IsReExamForm(er) && batchVersionMap.Count > 0)
+                {
+                    var candidateLegs = new List<int?>();
+                    var batchVersion = batchAyByRegistrationId.TryGetValue(er.Id, out var batchAy)
+                        ? batchVersionMap.GetValueOrDefault((schedule.ProgramId, batchAy))
+                        : null;
+                    if (batchVersion.HasValue) candidateLegs.Add(batchVersion);
+                    candidateLegs.Add(null);
+                    var scheduleResolved = curriculumVersionMap.GetValueOrDefault(
+                        (schedule.ProgramId, schedule.SemesterInstance.AcademicYearId));
+                    if (scheduleResolved.HasValue && !candidateLegs.Contains(scheduleResolved.Value))
+                        candidateLegs.Add(scheduleResolved);
+
+                    var pool = scheduleOfferings.Where(so => so.SubjectCatalog != null);
+                    List<SubjectOffering>? legRows = null;
+                    foreach (var leg in candidateLegs)
+                    {
+                        var current = pool.Where(so => so.CurriculumVersionId == leg).ToList();
+                        if (current.Count == 0) continue;
+                        if (selectedSubjectIds is not { Count: > 0 }
+                            || current.Any(so => selectedSubjectIds.Contains(so.Id)))
+                        {
+                            legRows = current;
+                            break;
+                        }
+                        if (legRows == null)
+                        {
+                            legRows = current;
+                        }
+                    }
+
+                    if (legRows is { Count: > 0 } && selectedSubjectIds is { Count: > 0 })
+                        eligible = legRows.Where(so => selectedSubjectIds.Contains(so.Id)).ToList();
+                    else
+                        eligible = [];
+                }
                 else
-                    eligible = [];
+                {
+                    var resolvedVersion = curriculumVersionMap.GetValueOrDefault((schedule.ProgramId, schedule.SemesterInstance.AcademicYearId));
+                    var baseEligible = scheduleOfferings.Where(so => so.SubjectCatalog != null
+                        && (resolvedVersion == null || so.CurriculumVersionId == resolvedVersion.Value || so.CurriculumVersionId == null));
+                    if (selectedSubjectIds is { Count: > 0 })
+                        baseEligible = baseEligible.Where(so => selectedSubjectIds.Contains(so.Id));
+                    else
+                        baseEligible = [];
+
+                    eligible = baseEligible.ToList();
+                }
 
                 subjects = eligible
-                    .Select(so => new ExamFormSubjectDto
+                    .Select(so =>
                     {
-                        SubjectOfferingId = so.Id,
-                        Code = so.SubjectCatalog!.SubjectCode,
-                        Name = so.SubjectCatalog.SubjectName,
-                        Theory = so.HasTheory,
-                        Practical = so.HasPractical
+                        // Leg-aware registration may cover fewer papers than the
+                        // offering provides; reflect what was actually paid for.
+                        var legs = selectedLegsByOffering?.GetValueOrDefault(so.Id) ?? ReExamLegs.None;
+                        return new ExamFormSubjectDto
+                        {
+                            SubjectOfferingId = so.Id,
+                            Code = so.SubjectCatalog!.SubjectCode,
+                            Name = so.SubjectCatalog.SubjectName,
+                            Theory = so.HasTheory,
+                            Practical = so.HasPractical,
+                            RegisteredTheory = legs == ReExamLegs.None ? so.HasTheory : legs.HasFlag(ReExamLegs.Theory),
+                            RegisteredPractical = legs == ReExamLegs.None ? so.HasPractical : legs.HasFlag(ReExamLegs.Practical)
+                        };
                     })
                     .ToList();
             }
@@ -907,7 +1159,12 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 LevelName = schedule?.Program?.Level?.LevelName ?? er.Program?.Level?.LevelName,
                 SemesterName = schedule?.SemesterInstance?.Semester?.Name,
                 ExamTypeName = schedule?.ExamType?.Name,
-                AcademicYearName = er.AcademicYear?.AcademicYearName ?? schedule?.SemesterInstance?.AcademicYear?.AcademicYearName,
+                // Re-exam forms present the student's own cohort year; the
+                // schedule instance year only describes when the exam runs.
+                AcademicYearName = batchAyByRegistrationId.TryGetValue(er.Id, out var displayBatchAy)
+                                && batchYearNameLookup.TryGetValue(displayBatchAy, out var batchYearName)
+                    ? batchYearName
+                    : er.AcademicYear?.AcademicYearName ?? schedule?.SemesterInstance?.AcademicYear?.AcademicYearName,
                 FeeEnclosed = er.FeeEnclosed,
                 PaidAmount = paidAmount ?? er.FeeEnclosed,
                 PhotoPath = photoPath,
