@@ -102,16 +102,6 @@ public class BanksController(IBankService bankService) : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var bank = await bankService.GetBankByIdAsync(id.Value);
-        if (bank == null) return NotFound();
-
-        return View(bank);
-    }
-
     [RequirePermission("banks.create")]
     public IActionResult Create()
     {

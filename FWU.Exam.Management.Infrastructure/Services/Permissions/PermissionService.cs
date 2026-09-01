@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Permissions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace FWU.Exam.Management.Infrastructure.Services.Permissions;
 
-public class PermissionService(AppDbContext context, IMemoryCache cache) : IPermissionService
+public class PermissionService(AppDbContext context, IMemoryCache cache, IAuditLogWriter auditLogWriter) : IPermissionService
 {
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(10);
     private static readonly ConcurrentDictionary<string, object> _locks = new();
@@ -98,6 +99,11 @@ public class PermissionService(AppDbContext context, IMemoryCache cache) : IPerm
         await context.RolePermissions!.AddRangeAsync(newPermissions);
         await context.SaveChangesAsync();
 
+        var roleName = await context.Roles.Where(r => r.Id == roleId).Select(r => r.Name).FirstOrDefaultAsync();
+        await auditLogWriter.LogAsync(ActivityTypes.PermissionsUpdated,
+            $"Updated permissions for role {roleName}",
+            new { roleId, roleName, permissionIds });
+
         var userIds = await context.UserRoles
             .Where(ur => ur.RoleId == roleId)
             .Select(ur => ur.UserId)
@@ -120,6 +126,17 @@ public class PermissionService(AppDbContext context, IMemoryCache cache) : IPerm
         return await context.RolePermissions!
             .Where(rp => rp.RoleId == roleId)
             .Select(rp => rp.PermissionId)
+            .ToListAsync();
+    }
+
+    public async Task<List<string>> GetRolePermissionsAsync(string roleId)
+    {
+        return await context.Set<Domain.Entities.Permissions.RolePermission>()
+            .Where(rp => rp.RoleId == roleId)
+            .Include(rp => rp.Permission)
+            .Where(rp => rp.Permission.IsActive)
+            .Select(rp => rp.Permission.Name)
+            .Distinct()
             .ToListAsync();
     }
 }

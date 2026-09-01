@@ -111,16 +111,6 @@ public class BillTitlesController(
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var billTitle = await billTitleService.GetBillTitleByIdAsync(id.Value);
-        if (billTitle == null) return NotFound();
-
-        return View(billTitle);
-    }
-
     [RequirePermission("billtitles.create")]
     public async Task<IActionResult> Create()
     {

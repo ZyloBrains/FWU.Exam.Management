@@ -1,6 +1,7 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -8,8 +9,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class AdmitCardService(AppDbContext context, IUserContext userContext, ITenantContext tenantContext) : IAdmitCardService
+public class AdmitCardService(AppDbContext context, IUserContext userContext) : IAdmitCardService
 {
+    private readonly Dictionary<int, string?> _tenantSignatureCache = [];
+
+    private async Task<string?> GetTenantControllerSignatureAsync(int tenantId)
+    {
+        if (_tenantSignatureCache.TryGetValue(tenantId, out var cached))
+            return cached;
+
+        var tenant = await context.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId);
+
+        var signature = tenant?.ControllerSignaturePath;
+        _tenantSignatureCache[tenantId] = signature;
+        return signature;
+    }
     public async Task<(List<AdmitCard> Items, int TotalCount)> GetAdmitCardsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null)
     {
         var query = BuildQuery(search, sort, sortDir, examScheduleId).ApplyScope(userContext);
@@ -38,9 +54,9 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
         return (items, totalCount);
     }
 
-    public async Task<List<AdmitCard>> GetFilteredItemsAsync(string? search)
+    public async Task<List<AdmitCard>> GetFilteredItemsAsync(string? search, int? examScheduleId = null)
     {
-        var query = BuildQuery(search, "Id", "asc", null).ApplyScope(userContext);
+        var query = BuildQuery(search, "Id", "asc", examScheduleId).ApplyScope(userContext);
         return await query
             .Select(e => new AdmitCard
             {
@@ -60,7 +76,107 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
 
     public async Task<AdmitCard?> GetAdmitCardByIdAsync(int id)
     {
-        var admitCard = await context.AdmitCards
+        var admitCard = await LoadAdmitCardAsync(id);
+        if (admitCard == null || !IsInScope(admitCard)) return null;
+        await EnrichAdmitCardAsync(admitCard);
+        return admitCard;
+    }
+
+    public async Task<AdmitCard?> GetAdmitCardByIdForStudentAsync(int id, string userId, int studentRegistrationId)
+    {
+        var admitCard = await LoadAdmitCardAsync(id);
+        if (admitCard == null || !admitCard.IsActive) return null;
+
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        var isOwner = studentErIds.Contains(admitCard.ExamRegistrationId)
+                      || admitCard.StudentRegistrationId == studentRegistrationId;
+        if (!isOwner) return null;
+
+        await EnrichAdmitCardAsync(admitCard);
+        return admitCard;
+    }
+
+    private async Task<List<int>> GetStudentExamRegistrationIdsAsync(string userId)
+    {
+        var user = await context.Users.FindAsync(userId);
+        if (user?.Email == null) return [];
+
+        var sr = await context.StudentRegistrations!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Email == user.Email && s.IsActive);
+        if (sr == null) return [];
+
+        var voucherIds = await context.ApplicationVouchers!
+            .AsNoTracking()
+            .Where(av => av.StudentRegistrationId == sr.Id)
+            .Select(av => av.Id)
+            .ToListAsync();
+
+        if (voucherIds.Count == 0) return [];
+
+        return await context.ExamRegistrations!
+            .AsNoTracking()
+            .Where(er => er.ApplicationVoucherId != null
+                      && voucherIds.Contains(er.ApplicationVoucherId!.Value)
+                      && er.IsActive)
+            .Select(er => er.Id)
+            .ToListAsync();
+    }
+
+    private async Task<List<Subject>> LoadRegisteredSubjectsAsync(AdmitCard admitCard)
+    {
+        var results = await context.ExamSubjectResults
+            .AsNoTracking()
+            .Include(r => r.SubjectOffering)
+                .ThenInclude(so => so!.SubjectCatalog)
+            .Where(r => r.ExamRegistrationId == admitCard.ExamRegistrationId && r.IsActive)
+            .OrderBy(r => r.SubjectOffering!.DisplayOrder)
+            .ThenBy(r => r.Id)
+            .ToListAsync();
+
+        return results
+            .Where(r => r.SubjectOffering?.SubjectCatalog != null)
+            .Select(r => new Subject
+            {
+                Code = r.SubjectOffering!.SubjectCatalog!.SubjectCode,
+                Name = r.SubjectOffering.SubjectCatalog.SubjectName,
+                Theory = r.IsTheoryRegistered ?? r.SubjectOffering.HasTheory,
+                Practical = r.IsPracticalRegistered ?? r.SubjectOffering.HasPractical,
+                Remarks = null
+            })
+            .ToList();
+    }
+
+    private async Task<List<Subject>> LoadCurriculumSubjectsAsync(AdmitCard admitCard)
+    {
+        var schedule = admitCard.ExamSchedule;
+        var semesterId = schedule?.SemesterInstance?.SemesterId ?? 0;
+        if (schedule == null || semesterId == 0) return [];
+
+        var subjectOfferings = await context.SubjectOfferings
+            .AsNoTracking()
+            .Include(so => so.SubjectCatalog)
+            .Where(so => so.ProgramId == schedule.ProgramId
+                      && so.SemesterId == semesterId)
+            .OrderBy(so => so.DisplayOrder)
+            .ToListAsync();
+
+        return subjectOfferings
+            .Where(so => so.SubjectCatalog != null)
+            .Select(so => new Subject
+            {
+                Code = so.SubjectCatalog!.SubjectCode,
+                Name = so.SubjectCatalog.SubjectName,
+                Theory = so.HasTheory,
+                Practical = so.HasPractical,
+                Remarks = null
+            })
+            .ToList();
+    }
+
+    public async Task<List<AdmitCard>> GetAdmitCardsForPrintAsync(int? examScheduleId = null, string? search = null)
+    {
+        var query = context.AdmitCards
             .AsNoTracking()
             .Include(e => e.ExamRegistration)
                 .ThenInclude(er => er!.College)
@@ -72,7 +188,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
                 .ThenInclude(er => er!.ApplicationVoucher)
                     .ThenInclude(v => v!.StudentRegistration)
             .Include(e => e.ExamSchedule)
-                .ThenInclude(s => s!.Semester)
+                .ThenInclude(s => s!.SemesterInstance).ThenInclude(si => si!.Semester)
             .Include(e => e.ExamSchedule)
                 .ThenInclude(s => s!.Program)
                     .ThenInclude(p => p!.Level)
@@ -81,33 +197,75 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             .Include(e => e.ExamSchedule)
                 .ThenInclude(s => s!.ExamType)
             .Include(e => e.ExamSchedule)
-                .ThenInclude(s => s!.AcademicYear)
+                .ThenInclude(s => s!.SemesterInstance).ThenInclude(si => si!.AcademicYear)
+            .Include(e => e.StudentRegistration)
+            .Where(ac => ac.IsActive)
+            .ApplyScope(userContext);
+
+        if (examScheduleId.HasValue)
+            query = query.Where(ac => ac.ExamScheduleId == examScheduleId.Value);
+
+        if (!string.IsNullOrEmpty(search))
+            query = query.Where(ac => ac.AdmitCardNumber != null && ac.AdmitCardNumber.Contains(search));
+
+        var admitCards = await query
+            .OrderBy(ac => ac.ExamRegistration != null ? ac.ExamRegistration.SymbolNumber : string.Empty)
+            .ThenBy(ac => ac.AdmitCardNumber)
+            .ToListAsync();
+
+        foreach (var admitCard in admitCards)
+            await EnrichAdmitCardAsync(admitCard);
+
+        return admitCards;
+    }
+
+    private async Task<AdmitCard?> LoadAdmitCardAsync(int id)
+    {
+        return await context.AdmitCards
+            .AsNoTracking()
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.College)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.ExamCenter)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.Program)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.ApplicationVoucher)
+                    .ThenInclude(v => v!.StudentRegistration)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.SemesterInstance).ThenInclude(si => si!.Semester)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.Program)
+                    .ThenInclude(p => p!.Level)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.Level)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.ExamType)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.SemesterInstance).ThenInclude(si => si!.AcademicYear)
             .Include(e => e.StudentRegistration)
             .FirstOrDefaultAsync(e => e.Id == id);
+    }
 
-        if (admitCard == null) return null;
+    private bool IsInScope(AdmitCard admitCard)
+    {
+        if (userContext.IsSuperAdmin) return true;
+        var er = admitCard.ExamRegistration;
+        if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+            return er?.CollegeId == userContext.CollegeId.Value;
+        if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+            return er?.Program != null && er.Program.FacultyId == userContext.FacultyId.Value;
+        return false;
+    }
 
+    private async Task EnrichAdmitCardAsync(AdmitCard admitCard)
+    {
         if (admitCard.ExamSchedule != null)
         {
-            var subjectOfferings = await context.SubjectOfferings
-                .AsNoTracking()
-                .Include(so => so.SubjectCatalog)
-                .Where(so => so.ProgramId == admitCard.ExamSchedule.ProgramId
-                          && so.SemesterId == admitCard.ExamSchedule.SemesterId)
-                .OrderBy(so => so.DisplayOrder)
-                .ToListAsync();
+            admitCard.Subjects = await LoadRegisteredSubjectsAsync(admitCard);
 
-            admitCard.Subjects = subjectOfferings
-                .Where(so => so.SubjectCatalog != null)
-                .Select(so => new Subject
-                {
-                    Code = so.SubjectCatalog!.SubjectCode,
-                    Name = so.SubjectCatalog.SubjectName,
-                    Theory = so.HasTheory,
-                    Practical = so.HasPractical,
-                    Remarks = null
-                })
-                .ToList();
+            if (admitCard.Subjects.Count == 0)
+                admitCard.Subjects = await LoadCurriculumSubjectsAsync(admitCard);
         }
 
         var sr = admitCard.StudentRegistration
@@ -123,7 +281,11 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             {
                 if (!string.IsNullOrEmpty(sr.RegistrationNumber))
                 {
-                    var appUser = await context.Users.FirstOrDefaultAsync(u => u.Email == sr.RegistrationNumber);
+                    // Students have UserName = RegistrationNumber; legacy rows stored the
+                    // registration number in the Email column instead.
+                    var appUser = await context.Users.FirstOrDefaultAsync(u =>
+                        u.NormalizedUserName == sr.RegistrationNumber.ToUpperInvariant()
+                        || (u.Email != null && u.Email == sr.RegistrationNumber));
                     if (appUser != null)
                     {
                         admitCard.PhotoPath ??= appUser.ProfilePath;
@@ -144,26 +306,21 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
                 ?? admitCard.ExamRegistration?.Program?.ProgramName;
 
         if (string.IsNullOrEmpty(admitCard.Semester))
-            admitCard.Semester = admitCard.ExamSchedule?.Semester?.Name;
+            admitCard.Semester = admitCard.ExamSchedule?.SemesterInstance?.Semester?.Name;
 
         if (string.IsNullOrEmpty(admitCard.ExamType))
             admitCard.ExamType = admitCard.ExamSchedule?.ExamType?.Name;
 
         if (string.IsNullOrEmpty(admitCard.Year))
-            admitCard.Year = admitCard.ExamSchedule?.AcademicYear?.AcademicYearCode;
+            admitCard.Year = admitCard.ExamSchedule?.SemesterInstance?.AcademicYear?.AcademicYearCode;
 
         if (string.IsNullOrEmpty(admitCard.ExamRollNo))
             admitCard.ExamRollNo = admitCard.ExamRegistration?.ExamRollNumber
                 ?? admitCard.ExamRegistration?.SymbolNumber;
 
-        if (string.IsNullOrEmpty(admitCard.ControllerSignaturePath) && admitCard.ExamRegistration?.CollegeId != null)
-        {
-            var tenant = await context.Tenants.FindAsync(tenantContext.TenantId);
-            if (!string.IsNullOrEmpty(tenant?.ControllerSignaturePath))
-                admitCard.ControllerSignaturePath = tenant.ControllerSignaturePath;
-        }
-
-        return admitCard;
+        var tenantSignature = await GetTenantControllerSignatureAsync(admitCard.TenantId);
+        if (!string.IsNullOrEmpty(tenantSignature))
+            admitCard.ControllerSignaturePath = tenantSignature;
     }
 
     public async Task CreateAdmitCardAsync(AdmitCard admitCard)
@@ -206,6 +363,13 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             .FirstOrDefaultAsync(er => er.Id == examRegistrationId)
             ?? throw new InvalidOperationException("Exam registration not found.");
 
+        if (registration.Status < Domain.Enums.RegistrationStatus.CollegeVerified)
+        {
+            throw new InvalidOperationException(
+                "Cannot generate admit card: the exam registration has not been approved by the college. " +
+                "Please approve the student form first.");
+        }
+
         if (string.IsNullOrEmpty(registration.SymbolNumber))
         {
             throw new InvalidOperationException(
@@ -214,7 +378,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
         }
 
         var studentUser = await ResolveStudentUserAsync(registration);
-        var controllerSignaturePath = await ResolveControllerSignatureAsync();
+        var controllerSignaturePath = await GetTenantControllerSignatureAsync(registration.TenantId);
 
         int? resolvedSrId = null;
         string? resolvedStudentRegNumber = null;
@@ -231,6 +395,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
 
         var admitCard = new AdmitCard
         {
+            TenantId = registration.TenantId,
             ExamRegistrationId = examRegistrationId,
             ExamScheduleId = registration.ExamScheduleId,
             StudentRegistrationId = resolvedSrId,
@@ -253,7 +418,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
     public async Task<List<AdmitCard>> GenerateBulkAdmitCardsAsync(int examScheduleId)
     {
         var registrations = await context.ExamRegistrations
-            .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status == Domain.Enums.RegistrationStatus.Registered)
+            .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= Domain.Enums.RegistrationStatus.CollegeVerified)
             .Include(er => er.College)
             .ToListAsync();
 
@@ -283,16 +448,13 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             : [];
         var srLookup = studentRegistrations.ToDictionary(sr => sr.Id);
 
-        var currentTenant = await context.Tenants.FindAsync(tenantContext.TenantId);
-        var currentTenantSignature = currentTenant?.ControllerSignaturePath;
-
         var admitCards = new List<AdmitCard>();
         foreach (var registration in registrations)
         {
             if (existingRegistrationIds.Contains(registration.Id))
                 continue;
 
-            string? controllerSignaturePath = currentTenantSignature;
+            string? controllerSignaturePath = await GetTenantControllerSignatureAsync(registration.TenantId);
 
             string? photoPath = null;
             string? signaturePath = null;
@@ -319,6 +481,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
 
             var admitCard = new AdmitCard
             {
+                TenantId = registration.TenantId,
                 ExamRegistrationId = registration.Id,
                 ExamScheduleId = examScheduleId,
                 StudentRegistrationId = resolvedSrId,
@@ -351,13 +514,11 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
         if (voucher?.StudentRegistrationId == null) return null;
         var sr = await context.StudentRegistrations.FindAsync(voucher.StudentRegistrationId.Value);
         if (sr?.RegistrationNumber == null) return null;
-        return await context.Users.FirstOrDefaultAsync(u => u.Email == sr.RegistrationNumber);
-    }
-
-    private async Task<string?> ResolveControllerSignatureAsync()
-    {
-        var tenant = await context.Tenants.FindAsync(tenantContext.TenantId);
-        return tenant?.ControllerSignaturePath;
+        // Students have UserName = RegistrationNumber; legacy rows stored the
+        // registration number in the Email column instead.
+        return await context.Users.FirstOrDefaultAsync(u =>
+            u.NormalizedUserName == sr.RegistrationNumber.ToUpperInvariant()
+            || (u.Email != null && u.Email == sr.RegistrationNumber));
     }
 
     public async Task<AdmitCardSelectListsDto> GetSelectListDataAsync(AdmitCard? admitCard = null)

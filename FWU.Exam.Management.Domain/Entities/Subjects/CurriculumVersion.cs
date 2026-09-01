@@ -30,4 +30,5 @@ public class CurriculumVersion : ITenantScoped
 
     public virtual Program? Program { get; set; }
     public virtual AcademicYear? EffectiveAcademicYear { get; set; }
+    public virtual ICollection<SubjectOffering> SubjectOfferings { get; set; } = [];
 }

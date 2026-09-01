@@ -7,6 +7,8 @@
 }
 
 <div x-data="{ expandedMarksheet: null, printScheduleId: null }">
+
+<!-- ═══ SCREEN LAYOUT ═══ -->
 <div class="space-y-6 screen-only">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -79,6 +81,10 @@
                                 <span><i class="fas fa-clipboard-list text-gray-400 mr-1"></i>@marksheet.ExamType</span>
                             }
                             <span><i class="far fa-building text-gray-400 mr-1"></i>@marksheet.Program</span>
+                            @if (!string.IsNullOrEmpty(marksheet.Faculty))
+                            {
+                                <span><i class="fas fa-book-open text-gray-400 mr-1"></i>@marksheet.Faculty</span>
+                            }
                             @if (!string.IsNullOrEmpty(marksheet.College))
                             {
                                 <span><i class="fas fa-university text-gray-400 mr-1"></i>@marksheet.College</span>
@@ -88,9 +94,9 @@
                     </div>
                 </button>
                 <div class="flex items-center gap-2 shrink-0">
-                    <button @@click="printScheduleId = @marksheet.ExamScheduleId; $nextTick(() => window.print())"
+                    <button @@click="printScheduleId=@marksheet.ExamScheduleId; setTimeout(()=>window.print(),100);"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
-                        <i class="fas fa-print text-xs"></i> Print
+                        <i class="fas fa-download text-xs"></i> Download
                     </button>
                     <button @@click="expandedMarksheet = expandedMarksheet === '@msId' ? null : '@msId'"
                             class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
@@ -114,6 +120,8 @@
                                     <th class="px-5 py-2 text-xs font-medium text-gray-400 uppercase w-8">#</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-left">Subject</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Grade</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">TH</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">PR</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Status</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Action</th>
                                 </tr>
@@ -151,6 +159,34 @@
                                             else
                                             {
                                                 <span class="px-2 py-0.5 text-xs font-semibold rounded-full @gradeColor">@subject.Grade</span>
+                                            }
+                                        </td>
+                                        <td class="px-4 py-2.5 text-center text-xs text-gray-700">
+                                            @if (subject.TheoryGradePoint.HasValue)
+                                            {
+                                                <span>@(subject.TheoryGradePoint?.ToString("0.##"))</span>
+                                                if (!string.IsNullOrEmpty(subject.TheoryGrade))
+                                                {
+                                                    <span class="text-[10px] text-gray-400 ml-0.5">(@subject.TheoryGrade)</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span>-</span>
+                                            }
+                                        </td>
+                                        <td class="px-4 py-2.5 text-center text-xs text-gray-700">
+                                            @if (subject.PracticalGradePoint.HasValue)
+                                            {
+                                                <span>@(subject.PracticalGradePoint?.ToString("0.##"))</span>
+                                                if (!string.IsNullOrEmpty(subject.PracticalGrade))
+                                                {
+                                                    <span class="text-[10px] text-gray-400 ml-0.5">(@subject.PracticalGrade)</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span>-</span>
                                             }
                                         </td>
                                         <td class="px-4 py-2.5 text-center">
@@ -220,11 +256,13 @@
         </div>
     }
 </div>
+
 <!-- ═══ PRINT LAYOUT (hidden on screen, shown on print) ═══ -->
 <div class="print-only">
     @foreach (var marksheet in Model)
     {
-        <div class="print-page" x-show="printScheduleId === null || printScheduleId === @marksheet.ExamScheduleId">
+        <div class="print-page" x-show="printScheduleId === @marksheet.ExamScheduleId">
+            <!-- Header -->
             <div class="header-top">
                 <div class="header-logo">
                     <div class="logo-box">
@@ -244,6 +282,7 @@
                 </div>
             </div>
 
+            <!-- Student Info -->
             <div class="student-info">
                 <div class="info-row">
                     <span class="info-label">Name:</span>
@@ -254,7 +293,7 @@
                     <span class="info-value">@(marksheet.SymbolNumber ?? "-")</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Campus:</span>
+                    <span class="info-label">College:</span>
                     <span class="info-value">@(marksheet.College ?? "-")</span>
                 </div>
                 <div class="info-row">
@@ -265,6 +304,13 @@
                     <span class="info-label">Program:</span>
                     <span class="info-value">@(marksheet.Program ?? "-")</span>
                 </div>
+                @if (!string.IsNullOrEmpty(marksheet.Faculty))
+                {
+                    <div class="info-row">
+                        <span class="info-label">Faculty:</span>
+                        <span class="info-value">@(marksheet.Faculty)</span>
+                    </div>
+                }
                 <div class="info-row">
                     <span class="info-label">Exam Schedule:</span>
                     <span class="info-value">@(marksheet.ExamSchedule ?? "-")</span>
@@ -290,7 +336,7 @@
                             <th rowspan="2">Course Code</th>
                             <th rowspan="2">Course Title</th>
                             <th rowspan="2">Credit Hrs</th>
-                            <th colspan="2">Obtained Marks</th>
+                            <th colspan="2">Grade Letter</th>
                             <th rowspan="2">Final Grade</th>
                             <th rowspan="2">Grade Value</th>
                             <th rowspan="2">Grade Point</th>
@@ -308,8 +354,8 @@
                                 <td>@(subject.SubjectCode ?? "-")</td>
                                 <td>@(subject.SubjectName ?? "-")</td>
                                 <td>@(subject.CreditHours?.ToString("0.#") ?? "-")</td>
-                                <td>@(string.IsNullOrEmpty(marksheet.TheoryGrade) ? "-" : marksheet.TheoryGrade)</td>
-                                <td>@(string.IsNullOrEmpty(marksheet.PracticalGrade) ? "-" : marksheet.PracticalGrade)</td>
+                                <td>@(subject.TheoryGrade ?? "-")</td>
+                                <td>@(subject.PracticalGrade ?? "-")</td>
                                 <td>@(subject.Grade ?? "")</td>
                                 <td>@(subject.GradeValue?.ToString("0.00") ?? "-")</td>
                                 <td>@(subject.GradePoint?.ToString("0.00") ?? "-")</td>
@@ -364,99 +410,273 @@
                 </div>
             }
 
+            <!-- Footer -->
             <div class="footer">
                 <div>Date: @DateTime.Now.ToString("MMMM dd, yyyy")</div>
                 <div class="note">Note: This Mark Sheet is for general idea of mark(s) you secured. This is not for official use. If any mistakes appear; record at Administration ledger will be referred.</div>
             </div>
-
-            @if (Model.Last() != marksheet)
-            {
-                <div style="page-break-after: always;"></div>
-            }
         </div>
     }
 </div>
+
 </div>
 
 <style>
-    /* ═══ Print Layout Styles ═══ */
-    .print-only { display: none; }
+    /* ═══ Screen-only & print-only toggling ═══ */
+    .print-only {
+        display: none;
+    }
 
+    /* ═══ PRINT PAGE ═══ */
     .print-page {
-        width: 100%;
-        padding: 15mm 12mm;
+        width: 210mm;
+        min-height: auto;
+        margin: 0 auto;
+        padding: 6mm 8mm;
+        background: #fff;
         font-family: 'Segoe UI', 'Nirmala UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-size: 13px;
         color: #111827;
     }
 
+    /* ═══ HEADER ═══ */
     .header-top {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
+        gap: 12px;
         border-bottom: 3px double #1a2a4a;
-        padding-bottom: 8px;
-        margin-bottom: 10px;
+        padding-bottom: 6px;
+        margin-bottom: 8px;
     }
-    .logo-box { width: 90px; height: 70px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .logo-box img { width: 100%; height: 100%; object-fit: contain; }
-    .header-center { flex: 1; text-align: center; }
-    .header-center .univ-name { font-size: 20px; font-weight: 700; color: #1a2a4a; letter-spacing: 1.5px; text-transform: uppercase; line-height: 1.2; }
-    .header-center .office { font-size: 13px; font-weight: 600; color: #2c3e6b; margin-top: 1px; }
-    .header-center .address { font-size: 11px; color: #555; margin-top: 1px; }
-    .header-center .doc-title { font-size: 17px; font-weight: 700; color: #1a2a4a; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; border-top: 1px solid #ccc; padding-top: 4px; display: inline-block; padding-left: 14px; padding-right: 14px; }
 
+    .header-logo {
+        flex-shrink: 0;
+    }
+
+    .logo-box {
+        width: 70px;
+        height: 55px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .logo-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .header-center {
+        flex: 1;
+        text-align: center;
+    }
+
+    .header-center .univ-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a2a4a;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        line-height: 1.2;
+    }
+
+    .header-center .office {
+        font-size: 12px;
+        font-weight: 600;
+        color: #2c3e6b;
+        margin-top: 1px;
+    }
+
+    .header-center .address {
+        font-size: 11px;
+        color: #555;
+        margin-top: 0px;
+    }
+
+    .header-center .doc-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a2a4a;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-top: 4px;
+        border-top: 1px solid #ccc;
+        padding-top: 4px;
+        display: inline-block;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    /* ═══ STUDENT INFO ═══ */
     .student-info {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 2px 24px;
+        gap: 2px 20px;
         border: 1px solid #d1d5db;
-        border-radius: 4px;
-        padding: 8px 12px;
-        margin-bottom: 10px;
-        font-size: 12px;
+        border-radius: 3px;
+        padding: 6px 10px;
+        margin-bottom: 8px;
+        font-size: 11px;
     }
-    .info-row { display: flex; gap: 4px; }
-    .info-label { font-weight: 600; color: #374151; min-width: 95px; }
-    .info-value { color: #111827; font-weight: 500; }
 
-    .marks-table { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-bottom: 8px; }
-    .marks-table thead th { background: #f3f4f6; border: 1px solid #d1d5db; padding: 5px 6px; font-weight: 600; color: #374151; text-align: center; font-size: 11px; }
-    .marks-table thead th:first-child, .marks-table thead th:nth-child(2) { text-align: left; }
-    .marks-table tbody td { border: 1px solid #d1d5db; padding: 4px 6px; color: #111827; }
-    .marks-table tbody td:first-child { text-align: left; font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; }
-    .marks-table tbody td:nth-child(2) { text-align: left; }
-    .marks-table tbody td:not(:first-child):not(:nth-child(2)) { text-align: center; }
-    .marks-table tbody tr:nth-child(even) { background: #fafafa; }
-    .marks-table tbody tr.total-row { font-weight: 700; background: #f9fafb; }
-    .marks-table tbody tr.gpa-row { font-weight: 700; background: #eef2ff; }
-    .marks-table tbody tr.result-row { font-weight: 700; background: #f0fdf4; }
-    .marks-table tbody tr.result-row.fail { background: #fef2f2; }
+    .info-row {
+        display: flex;
+        gap: 4px;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #374151;
+        min-width: 90px;
+    }
+
+    .info-value {
+        color: #111827;
+        font-weight: 500;
+    }
+
+    /* ═══ MARKS TABLE ═══ */
+    .marks-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+        table-layout: fixed;
+        margin-bottom: 8px;
+    }
+
+    .marks-table th,
+    .marks-table td {
+        border: 1px solid #d1d5db;
+        padding: 3px 4px;
+        line-height: 1.2;
+    }
+
+    .marks-table thead th {
+        background: #f3f4f6;
+        font-weight: 600;
+        color: #374151;
+        text-align: center;
+        font-size: 10.5px;
+        padding: 4px 3px;
+    }
+
+    .marks-table thead th:first-child,
+    .marks-table thead th:nth-child(2) {
+        text-align: left;
+    }
+
+    .marks-table tbody td {
+        color: #111827;
+    }
+
+    .marks-table tbody td:first-child {
+        text-align: left;
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 10.5px;
+    }
+
+    .marks-table tbody td:nth-child(2) {
+        text-align: left;
+    }
+
+    .marks-table tbody td:not(:first-child):not(:nth-child(2)) {
+        text-align: center;
+    }
+
+    .marks-table tbody tr:nth-child(even) {
+        background: #fafafa;
+    }
+
+    .total-row {
+        font-weight: 700;
+        background: #f9fafb !important;
+    }
+
+    .gpa-row {
+        font-weight: 700;
+        background: #eef2ff !important;
+    }
+
+    .result-row {
+        font-weight: 700;
+        background: #f0fdf4 !important;
+    }
+
+    .result-row.fail {
+        background: #fef2f2 !important;
+    }
+
     .result-pass { color: #16a34a; }
     .result-fail { color: #dc2626; }
     .result-pending { color: #d97706; }
 
-    .footer { margin-top: 10px; font-size: 10px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 6px; }
-    .footer .note { font-style: italic; margin-top: 2px; }
+    /* ═══ FOOTER ═══ */
+    .footer {
+        margin-top: 6px;
+        font-size: 10px;
+        color: #6b7280;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 4px;
+    }
 
-    /* ═══ Print Media ═══ */
+    .footer .note {
+        font-style: italic;
+        margin-top: 2px;
+        line-height: 1.2;
+    }
+
+    /* ═══ PRINT MEDIA ═══ */
     @@media print {
-        /* Hide layout chrome */
-        #sidebar, header, .flex.h-screen > div:first-child { display: none !important; }
+        @@page {
+            size: A4 portrait;
+            margin: 8mm;
+        }
 
-        /* Flatten layout so content fills page */
-        .flex.h-screen { display: block !important; overflow: visible !important; height: auto !important; }
-        .flex.h-screen > div { overflow: visible !important; width: 100% !important; }
-        main { overflow: visible !important; padding: 0 !important; }
-        main > div { max-width: none !important; }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+        }
 
-        /* Toggle listing vs print */
-        .screen-only { display: none !important; }
-        .print-only { display: block !important; }
-        .print-only .print-page { width: 100%; padding: 12mm 12mm; page-break-after: always; page-break-inside: avoid; }
-        .print-only .print-page:last-child { page-break-after: auto; }
+        .screen-only,
+        .no-print,
+        header,
+        nav,
+        aside,
+        #sidebar {
+            display: none !important;
+        }
 
-        body { background: #fff; margin: 0; padding: 0; }
+        .print-only {
+            display: block !important;
+        }
+
+        .print-page {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+            min-height: auto;
+            page-break-after: avoid;
+            page-break-inside: avoid;
+        }
+
+        .student-info {
+            page-break-inside: avoid;
+        }
+
+        .marks-table {
+            page-break-inside: avoid;
+        }
+
+        .marks-table tr {
+            page-break-inside: avoid;
+        }
+
+        .footer {
+            page-break-inside: avoid;
+        }
     }
 </style>

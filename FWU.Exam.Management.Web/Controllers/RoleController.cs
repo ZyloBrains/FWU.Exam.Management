@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Controllers;
 
 [RequirePermission("roles.view")]
-public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
+public class RoleController(RoleManager<IdentityRole> roleManager, IAuditLogWriter auditLogWriter) : Controller
 {
 
     // GET: Role
@@ -51,6 +53,9 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
         var result = await roleManager.CreateAsync(new IdentityRole(roleName.Trim()));
         if (result.Succeeded)
         {
+            await auditLogWriter.LogAsync(ActivityTypes.RoleCreated,
+                $"Created role {roleName.Trim()}",
+                new { roleName = roleName.Trim() });
             TempData["SuccessMessage"] = "Role created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -95,6 +100,9 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
         var result = await roleManager.UpdateAsync(role);
         if (result.Succeeded)
         {
+            await auditLogWriter.LogAsync(ActivityTypes.RoleUpdated,
+                $"Updated role {role.Name}",
+                new { roleId = role.Id, roleName = role.Name });
             TempData["SuccessMessage"] = "Role updated successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -129,7 +137,12 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
         {
             var role = await roleManager.FindByIdAsync(id);
             if (role != null)
+            {
                 await roleManager.DeleteAsync(role);
+                await auditLogWriter.LogAsync(ActivityTypes.RoleDeleted,
+                    $"Deleted role {role.Name}",
+                    new { roleId = role.Id, roleName = role.Name });
+            }
 
             TempData["SuccessMessage"] = "Role deleted successfully!";
             return RedirectToAction(nameof(Index));

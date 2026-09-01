@@ -5,10 +5,11 @@ using System.Text.Json;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ESewaService(AppDbContext context, HttpClient httpClient) : IESewaService
+public class ESewaService(AppDbContext context, HttpClient httpClient, IConfiguration configuration) : IESewaService
 {
     public string GenerateTransactionUuid()
     {
@@ -80,7 +81,8 @@ public class ESewaService(AppDbContext context, HttpClient httpClient) : IESewaS
     {
         var config = await GetConfigAsync();
 
-        if (string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase))
+        var skipVerification = string.Equals(configuration["ESewaConfig:SkipVerification"], "true", StringComparison.OrdinalIgnoreCase);
+        if (skipVerification)
         {
             return new ESewaVerifyResponse
             {

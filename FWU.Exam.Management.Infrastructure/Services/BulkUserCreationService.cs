@@ -19,23 +19,28 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public class BulkUserCreationService(
     AppDbContext context,
     IServiceScopeFactory scopeFactory,
-    ITenantContext tenantContext) : IBulkUserCreationService
+    ITenantContext tenantContext,
+    IUserContext userContext,
+    IAuditLogWriter auditLogWriter) : IBulkUserCreationService
 {
     private const int BatchSize = 50;
 
     public async Task<(List<StudentWithoutUserDto> Data, int TotalCount)> GetStudentsWithoutUsersAsync(
-        int? collegeId, int? facultyId, int page, int pageSize)
+        int? collegeId, int? facultyId, int? programId, int page, int pageSize)
     {
         var query = context.StudentRegistrations
             .AsNoTracking()
             .Where(s => s.IsActive)
             .Where(s => !context.Users.Any(u => u.Email != null && u.Email == s.Email)
-                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber));
+                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber))
+            .ApplyScope(userContext);
 
         if (collegeId.HasValue)
             query = query.Where(s => s.CollegeId == collegeId.Value);
         if (facultyId.HasValue)
             query = query.Where(s => s.FacultyId == facultyId.Value);
+        if (programId.HasValue)
+            query = query.Where(s => s.ProgramId == programId.Value);
 
         var totalCount = await query.CountAsync();
 
@@ -62,10 +67,17 @@ public class BulkUserCreationService(
 
     public async Task<BulkUserCreationJob> StartJobAsync(List<int> registrationIds, string userId)
     {
+        var scopedIds = await context.StudentRegistrations
+            .AsNoTracking()
+            .ApplyScope(userContext)
+            .Where(s => registrationIds.Contains(s.Id))
+            .Select(s => s.Id)
+            .ToListAsync();
+
         var job = new BulkUserCreationJob
         {
             UserId = userId,
-            TotalStudents = registrationIds.Count,
+            TotalStudents = scopedIds.Count,
             Status = "Running",
             CreatedAt = DateTime.UtcNow
         };
@@ -74,28 +86,33 @@ public class BulkUserCreationService(
         await context.SaveChangesAsync();
 
         var jobId = job.Id;
-        var idsJson = JsonSerializer.Serialize(registrationIds);
+        var idsJson = JsonSerializer.Serialize(scopedIds);
         var capturedTenantId = tenantContext.TenantId;
         var capturedTenantCode = tenantContext.TenantCode;
         var capturedTenantType = tenantContext.Type;
+
+        await auditLogWriter.LogAsync(ActivityTypes.UsersBulkCreationStarted, $"Bulk user creation job {jobId} started", new { jobId, totalStudents = job.TotalStudents, requestedCount = registrationIds.Count, scopedCount = scopedIds.Count }, entityName: "BulkUserCreationJob", entityId: jobId.ToString(), actorUserId: userId);
 
         _ = Task.Run(async () => await ProcessJobBackgroundAsync(jobId, idsJson, capturedTenantId, capturedTenantCode, capturedTenantType));
 
         return job;
     }
 
-    public async Task<BulkUserCreationJob> StartJobFromFiltersAsync(int? collegeId, int? facultyId, string userId)
+    public async Task<BulkUserCreationJob> StartJobFromFiltersAsync(int? collegeId, int? facultyId, int? programId, string userId)
     {
         var query = context.StudentRegistrations
             .AsNoTracking()
             .Where(s => s.IsActive)
             .Where(s => !context.Users.Any(u => u.Email != null && u.Email == s.Email)
-                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber));
+                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber))
+            .ApplyScope(userContext);
 
         if (collegeId.HasValue)
             query = query.Where(s => s.CollegeId == collegeId.Value);
         if (facultyId.HasValue)
             query = query.Where(s => s.FacultyId == facultyId.Value);
+        if (programId.HasValue)
+            query = query.Where(s => s.ProgramId == programId.Value);
 
         var ids = await query.Select(s => s.Id).ToListAsync();
         return await StartJobAsync(ids, userId);
@@ -103,9 +120,14 @@ public class BulkUserCreationService(
 
     public async Task<BulkUserCreationJob?> GetJobStatusAsync(int jobId)
     {
-        return await context.BulkUserCreationJobs!
+        var query = context.BulkUserCreationJobs!
             .AsNoTracking()
-            .FirstOrDefaultAsync(j => j.Id == jobId);
+            .Where(j => j.Id == jobId);
+
+        if (!userContext.IsSuperAdmin)
+            query = query.Where(j => j.UserId == userContext.UserId);
+
+        return await query.FirstOrDefaultAsync();
     }
 
     private async Task ProcessJobBackgroundAsync(int jobId, string idsJson, int tenantId, string tenantCode, TenantType tenantType)
@@ -143,6 +165,7 @@ public class BulkUserCreationService(
                 var batch = registrationIds.Skip(i * BatchSize).Take(BatchSize).ToList();
 
                 var registrations = await scopedContext.StudentRegistrations
+                    .Include(s => s.StudentAdmission)
                     .Where(s => batch.Contains(s.Id))
                     .ToListAsync();
 
@@ -150,9 +173,10 @@ public class BulkUserCreationService(
                 {
                     try
                     {
-                        var loginId = !string.IsNullOrWhiteSpace(reg.Email)
-                            ? reg.Email
-                            : reg.RegistrationNumber;
+                        // The registration number is the primary login identifier for students.
+                        var loginId = !string.IsNullOrWhiteSpace(reg.RegistrationNumber)
+                            ? reg.RegistrationNumber
+                            : reg.Email;
 
                         if (string.IsNullOrWhiteSpace(loginId))
                         {
@@ -162,7 +186,8 @@ public class BulkUserCreationService(
                         }
 
                         // Check pre-loaded sets instead of individual DB queries
-                        if (existingEmailSet.Contains(loginId) || existingUserNameSet.Contains(loginId))
+                        if (existingUserNameSet.Contains(loginId)
+                            || (reg.Email != null && existingEmailSet.Contains(reg.Email)))
                         {
                             job.FailedCount++;
                             job.ProcessedCount++;
@@ -172,8 +197,8 @@ public class BulkUserCreationService(
                         var user = new AppUser
                         {
                             UserName = loginId,
-                            Email = loginId,
-                            EmailConfirmed = true,
+                            Email = reg.Email,
+                            EmailConfirmed = false,
                             FullName = reg.FirstName.GetFullName(reg.LastName),
                             IsActive = true,
                             FacultyId = reg.FacultyId,
@@ -197,9 +222,13 @@ public class BulkUserCreationService(
                         await scopedUserManager.AddToRoleAsync(user, Role.Student);
                         await scopedUserManager.AddClaimAsync(user, new Claim("must_change_password", "true"));
 
+                        if (reg.StudentAdmission != null)
+                            reg.StudentAdmission.AppUserId = user.Id;
+
                         // Add to pre-loaded sets so duplicates within same batch are caught
-                        existingEmailSet.Add(loginId);
                         existingUserNameSet.Add(loginId);
+                        if (reg.Email != null)
+                            existingEmailSet.Add(reg.Email);
 
                         job.SuccessCount++;
                         job.ProcessedCount++;
@@ -219,6 +248,9 @@ public class BulkUserCreationService(
             job.Status = "Completed";
             job.CompletedAt = DateTime.UtcNow;
             await scopedContext.SaveChangesAsync();
+
+            var scopedAuditWriter = scope.ServiceProvider.GetRequiredService<IAuditLogWriter>();
+            await scopedAuditWriter.LogAsync(ActivityTypes.UsersBulkCreationCompleted, $"Bulk user creation job {jobId} completed", new { jobId, successCount = job.SuccessCount, failedCount = job.FailedCount, totalStudents = job.TotalStudents }, entityName: "BulkUserCreationJob", entityId: jobId.ToString(), actorUserId: job.UserId);
         }
         catch (Exception ex)
         {
@@ -233,6 +265,9 @@ public class BulkUserCreationService(
                     job.CompletedAt = DateTime.UtcNow;
                     await scopedContext.SaveChangesAsync();
                 }
+
+                var scopedAuditWriter = scope.ServiceProvider.GetRequiredService<IAuditLogWriter>();
+                await scopedAuditWriter.LogAsync(ActivityTypes.UsersBulkCreationFailed, $"Bulk user creation job {jobId} failed", new { jobId, error = ex.Message }, AuditSeverity.Error, "BulkUserCreationJob", jobId.ToString(), job?.UserId);
             }
             catch (Exception innerEx)
             {

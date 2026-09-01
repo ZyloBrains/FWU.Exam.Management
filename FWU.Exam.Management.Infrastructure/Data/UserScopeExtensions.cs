@@ -12,6 +12,29 @@ namespace FWU.Exam.Management.Infrastructure.Data;
 
 public static class UserScopeExtensions
 {
+    public static async Task<List<Faculty>> GetScopedFacultiesAsync(this AppDbContext context, IUserContext user)
+    {
+        IQueryable<Faculty> query = context.Faculties.AsNoTracking();
+
+        if (user.IsSuperAdmin)
+            return await query.OrderBy(f => f.Name).ToListAsync();
+
+        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
+            return await query.Where(f => f.Id == user.FacultyId.Value).ToListAsync();
+
+        if (user.IsCollegeAdmin && user.CollegeId.HasValue)
+        {
+            var collegeId = user.CollegeId.Value;
+            return await query
+                .Where(f => context.CollegeFaculties.Any(cf =>
+                    cf.CollegeId == collegeId && cf.FacultyId == f.Id))
+                .OrderBy(f => f.Name)
+                .ToListAsync();
+        }
+
+        return [];
+    }
+
     public static IQueryable<Faculty> ApplyScope(this IQueryable<Faculty> query, IUserContext user)
     {
         if (user.IsSuperAdmin) return query;
@@ -28,9 +51,11 @@ public static class UserScopeExtensions
     public static IQueryable<College> ApplyScope(this IQueryable<College> query, IUserContext user)
     {
         if (user.IsSuperAdmin) return query;
+        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
+            return query.Where(c => c.CollegeFaculties!.Any(cf => cf.FacultyId == user.FacultyId.Value));
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(c => c.Id == user.CollegeId.Value);
-        return query;
+        return query.Where(c => false);
     }
 
     public static IQueryable<Program> ApplyScope(this IQueryable<Program> query, IUserContext user)
@@ -43,12 +68,17 @@ public static class UserScopeExtensions
         return query.Where(p => false);
     }
 
+    public static IQueryable<Program> ApplyTenantScope(this IQueryable<Program> query, ITenantContext tenant)
+    {
+        if (tenant.IsCentralTenant) return query;
+        var tenantId = tenant.TenantId;
+        return query.Where(p => p.Faculty != null && p.Faculty.TenantId == tenantId);
+    }
+
     public static IQueryable<SubjectCatalog> ApplyScope(this IQueryable<SubjectCatalog> query, IUserContext user)
     {
         if (user.IsSuperAdmin) return query;
-        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-            return query.Where(sc => sc.SubjectOfferings!.Any(so =>
-                so.Program != null && so.Program.FacultyId == user.FacultyId.Value));
+        if (user.IsFacultyAdmin) return query;
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(sc => sc.SubjectOfferings!.Any(so =>
                 so.Program != null && so.Program.CollegePrograms!.Any(cp => cp.CollegeId == user.CollegeId.Value)));
@@ -67,11 +97,23 @@ public static class UserScopeExtensions
         return query.Where(so => false);
     }
 
+    public static IQueryable<CurriculumVersion> ApplyScope(this IQueryable<CurriculumVersion> query, IUserContext user)
+    {
+        if (user.IsSuperAdmin) return query;
+        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
+            return query.Where(cv => cv.Program != null && cv.Program.FacultyId == user.FacultyId.Value);
+        if (user.IsCollegeAdmin && user.CollegeId.HasValue)
+            return query.Where(cv => cv.Program != null && cv.Program.CollegePrograms!.Any(cp => cp.CollegeId == user.CollegeId.Value));
+        return query.Where(cv => false);
+    }
+
     public static IQueryable<StudentRegistration> ApplyScope(this IQueryable<StudentRegistration> query, IUserContext user)
     {
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-            return query.Where(sr => sr.FacultyId == user.FacultyId.Value);
+            return query.Where(sr =>
+                sr.FacultyId == user.FacultyId.Value ||
+                (sr.Program != null && sr.Program.FacultyId == user.FacultyId.Value));
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(sr => sr.CollegeId == user.CollegeId.Value);
         return query.Where(sr => false);
@@ -106,7 +148,8 @@ public static class UserScopeExtensions
             return query.Where(es =>
                 es.Program != null && es.Program.FacultyId == user.FacultyId.Value);
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
-            return query.Where(es => es.CollegeId == user.CollegeId.Value);
+            return query.Where(es =>
+                es.Program != null && es.Program.CollegePrograms!.Any(cp => cp.CollegeId == user.CollegeId.Value));
         return query.Where(es => false);
     }
 

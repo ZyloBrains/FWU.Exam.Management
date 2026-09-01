@@ -12,7 +12,9 @@ public interface ICurriculumVersionService
     Task<CurriculumVersion?> GetCurriculumVersionByIdAsync(int id);
     Task CreateCurriculumVersionAsync(CurriculumVersion curriculumVersion);
     Task UpdateCurriculumVersionAsync(CurriculumVersion curriculumVersion);
-    Task DeleteCurriculumVersionAsync(int id);
+    Task<(bool Deleted, int SkippedOfferings)> DeleteCurriculumVersionAsync(int id);
     Task<bool> CurriculumVersionExistsAsync(int id);
     Task<(List<Program> Programs, List<AcademicYear> AcademicYears)> GetSelectListsAsync(int? programId = null, int? academicYearId = null);
+    Task<List<CurriculumVersion>> GetCurriculumVersionsByProgramAsync(int programId);
+    Task<CurriculumVersion?> CopyCurriculumVersionAsync(int sourceVersionId, int targetAcademicYearId, string name);
 }

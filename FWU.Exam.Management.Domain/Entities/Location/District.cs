@@ -1,4 +1,3 @@
-using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Students;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
@@ -30,7 +29,6 @@ public class District
 
     public virtual Province? Province { get; set; }
 
-    public virtual ICollection<College> Colleges { get; set; } = [];
     public virtual ICollection<LocalLevel> LocalLevels { get; set; } = [];
     public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
 }

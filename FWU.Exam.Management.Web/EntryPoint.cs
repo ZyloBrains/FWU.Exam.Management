@@ -17,15 +17,20 @@ using FWU.Exam.Management.Infrastructure.Interceptor;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Middleware;
 
+using System.IO.Compression;
 using Serilog;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.ResponseCompression;
+using QuestPDF.Infrastructure;
 
 public partial class EntryPoint
 {
     private static async Task Main(string[] args)
     {
+        QuestPDF.Settings.License = LicenseType.Community;
+
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
             .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30)
@@ -56,10 +61,11 @@ public partial class EntryPoint
         builder.Services.AddScoped<TenantSaveChangesInterceptor>();
         builder.Services.AddScoped<AuditLogInterceptor>();
 
+        var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
         builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-            options.UseSqlServer(connectionString);
+            options.UseSqlServer(defaultConnection, sql => sql.CommandTimeout(120));
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
             options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditLogInterceptor>());
@@ -177,11 +183,12 @@ public partial class EntryPoint
         builder.Services.AddHostedService<SemesterPromotionBackgroundService>();
         builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
-        builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
         builder.Services.AddScoped<ISmsConfigurationService, SmsConfigurationService>();
         builder.Services.AddHttpClient<ISmsService, SmsService>();
         builder.Services.AddScoped<IGumpNowEmailConfigurationService, GumpNowEmailConfigurationService>();
         builder.Services.AddHttpClient<IGumpNowEmailService, GumpNowEmailService>();
+        builder.Services.AddScoped<INotificationTemplateService, NotificationTemplateService>();
+        builder.Services.AddScoped<INotificationService, NotificationService>();
 
         builder.Services.AddScoped<IBoardService, BoardService>();
         builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
@@ -222,6 +229,16 @@ public partial class EntryPoint
         builder.Services.AddScoped<IPermissionService, PermissionService>();
         builder.Services.AddMemoryCache();
         builder.Services.AddDistributedMemoryCache();
+        builder.Services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
+        builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+            options.Level = CompressionLevel.Fastest);
+        builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+            options.Level = CompressionLevel.SmallestSize);
         builder.Services.AddSession(options =>
         {
             options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -236,14 +253,20 @@ public partial class EntryPoint
         builder.Services.AddScoped<IExamCenterService, ExamCenterService>();
         builder.Services.AddScoped<IAdmitCardService, AdmitCardService>();
         builder.Services.AddScoped<IExamCenterDistributionService, ExamCenterDistributionService>();
+        builder.Services.AddScoped<ISymbolNumberService, SymbolNumberService>();
         builder.Services.AddScoped<IRetotalRequestService, RetotalRequestService>();
         builder.Services.AddScoped<ICollegeAdminMarksService, CollegeAdminMarksService>();
+        builder.Services.AddScoped<ITheoryMarksService, TheoryMarksService>();
+        builder.Services.AddScoped<IPracticalMarksService, PracticalMarksService>();
         builder.Services.AddScoped<ICollegeAdminSubjectAssignmentService, CollegeAdminSubjectAssignmentService>();
         builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
+        builder.Services.AddScoped<IPublishResultsService, PublishResultsService>();
         builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+        builder.Services.AddScoped<IAuditLogWriter, AuditLogWriter>();
         builder.Services.AddScoped<IExamRollNumberService, ExamRollNumberService>();
         builder.Services.AddScoped<IBackupRestoreService, BackupRestoreService>();
         builder.Services.AddScoped<IBulkUserCreationService, BulkUserCreationService>();
+        builder.Services.AddScoped<IPaymentVerificationService, PaymentVerificationService>();
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
@@ -259,14 +282,19 @@ public partial class EntryPoint
             await RunSeederAsync(services, AcademicYearSeeder.SeedAcademicYearsAsync);
             await RunSeederAsync(services, FacultySeeder.SeedFacultiesAsync);
             await RunSeederAsync(services, ProgramSeeder.SeedProgramsAsync);
+            await RunSeederAsync(services, SemesterSeeder.SeedSemestersAsync);
+            await RunSeederAsync(services, SemesterSeeder.SeedProgramSemestersAsync);
+            await RunSeederAsync(services, SemesterSeeder.SeedSemesterInstancesAsync);
             await RunSeederAsync(services, CollegeSeeder.SeedCollegesAsync);
             await RunSeederAsync(services, CollegeProgramSeeder.SeedCollegeProgramsAsync);
+            await RunSeederAsync(services, GradeGroupSeeder.SeedGradeGroupsAsync);
             await RunSeederAsync(services, GradingSeeder.SeedGradingDataAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedPaymentTypesAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedESewaConfigurationAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedKhaltiConfigurationAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedConnectIPSConfigurationAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedSmsConfigurationAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedNotificationTemplatesAsync);
             await RunSeederAsync(services, UserSeeder.SeedUsersAsync);
         }
 
@@ -274,6 +302,8 @@ public partial class EntryPoint
         EmailTemplateHelper.SiteUrl = builder.Configuration["EmailSettings:SiteUrl"];
 
         // Configure the HTTP request pipeline.
+        app.UseForwardedHeaders();
+
         if (app.Environment.IsDevelopment())
         {
             app.UseMigrationsEndPoint();
@@ -284,7 +314,6 @@ public partial class EntryPoint
         {
             app.UseExceptionHandler("/Home/Error");
             app.UseHsts();
-            app.UseForwardedHeaders();
         }
 
         app.UseMiddleware<SecurityHeadersMiddleware>();
@@ -292,6 +321,7 @@ public partial class EntryPoint
 
         app.UseMiddleware<TenantResolutionMiddleware>();
 
+        app.UseResponseCompression();
         app.UseStaticFiles();
 
         app.UseRouting();

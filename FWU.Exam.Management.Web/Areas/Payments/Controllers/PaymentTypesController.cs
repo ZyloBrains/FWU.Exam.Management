@@ -100,16 +100,6 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var paymentType = await paymentTypeService.GetPaymentTypeByIdAsync(id.Value);
-        if (paymentType == null) return NotFound();
-
-        return View(paymentType);
-    }
-
     [RequirePermission("paymenttypes.create")]
     public IActionResult Create()
     {

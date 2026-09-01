@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,11 @@ public class AuditLogInterceptor(
     IUserContext userContext,
     ILogger<AuditLogInterceptor> logger) : SaveChangesInterceptor
 {
+    private const int BulkSummarizeThreshold = 50;
+    private const int BulkSampleSize = 5;
+
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
+
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
         CaptureChanges(eventData.Context);
@@ -42,11 +48,10 @@ public class AuditLogInterceptor(
         var now = DateTime.UtcNow;
         var auditLogs = new List<AuditLog>();
 
-        foreach (var entry in entries)
+        foreach (var group in entries.GroupBy(e => new { Name = e.Metadata.ShortName(), e.State }))
         {
-            var entityName = entry.Metadata.ShortName();
-            var entityId = GetPrimaryKeyValue(entry);
-            var action = entry.State switch
+            var entityName = group.Key.Name;
+            var action = group.Key.State switch
             {
                 EntityState.Added => "Created",
                 EntityState.Modified => "Updated",
@@ -54,25 +59,52 @@ public class AuditLogInterceptor(
                 _ => "Unknown"
             };
 
-            var changes = GetChanges(entry);
-            if (entry.State == EntityState.Added && changes.Count == 0)
-                continue;
+            var groupEntries = group.ToList();
 
-            var changesJson = changes.Count > 0
-                ? JsonSerializer.Serialize(changes, new JsonSerializerOptions { WriteIndented = false })
-                : null;
-
-            auditLogs.Add(new AuditLog
+            // Bulk operations (bulk marks save, Excel import, bulk user creation, ...) would
+            // otherwise produce one row per entity. Collapse them into a single summary row.
+            if (groupEntries.Count > BulkSummarizeThreshold)
             {
-                TenantId = tenantId,
-                EntityName = entityName,
-                EntityId = entityId,
-                Action = action,
-                UserName = userName,
-                UserId = userId,
-                Timestamp = now,
-                ChangesJson = changesJson
-            });
+                var sample = groupEntries
+                    .Take(BulkSampleSize)
+                    .SelectMany(entry => GetChanges(entry))
+                    .ToList();
+
+                auditLogs.Add(new AuditLog
+                {
+                    TenantId = tenantId,
+                    Kind = AuditLogKinds.DataChange,
+                    EntityName = entityName,
+                    Action = action,
+                    UserName = userName,
+                    UserId = userId,
+                    Timestamp = now,
+                    RowCount = groupEntries.Count,
+                    Description = $"Bulk {action.ToLowerInvariant()} of {groupEntries.Count} {entityName} row(s)",
+                    ChangesJson = sample.Count > 0 ? JsonSerializer.Serialize(sample, JsonOptions) : null
+                });
+                continue;
+            }
+
+            foreach (var entry in groupEntries)
+            {
+                var changes = GetChanges(entry);
+                if (entry.State == EntityState.Added && changes.Count == 0)
+                    continue;
+
+                auditLogs.Add(new AuditLog
+                {
+                    TenantId = tenantId,
+                    Kind = AuditLogKinds.DataChange,
+                    EntityName = entityName,
+                    EntityId = GetPrimaryKeyValue(entry),
+                    Action = action,
+                    UserName = userName,
+                    UserId = userId,
+                    Timestamp = now,
+                    ChangesJson = changes.Count > 0 ? JsonSerializer.Serialize(changes, JsonOptions) : null
+                });
+            }
         }
 
         if (auditLogs.Count > 0)

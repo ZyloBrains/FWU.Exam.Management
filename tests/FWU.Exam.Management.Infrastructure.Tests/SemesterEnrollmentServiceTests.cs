@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -48,7 +49,7 @@ public class SemesterEnrollmentServiceTests
         var created = await service.PromoteCompletedSemestersAsync();
 
         Assert.Equal(1, created);
-        var next = db.Context.SemesterEnrollments!.Single(se => se.SemesterId == 2);
+        var next = db.Context.SemesterEnrollments!.Single(se => se.SemesterInstanceId == 2);
         Assert.Equal(StudentEnrollmentStatus.Active, next.EnrollmentStatus);
         Assert.Equal(TestData.TenantId, next.TenantId);
     }
@@ -130,7 +131,7 @@ public class SemesterEnrollmentServiceTests
 
         Assert.Equal(1, first);
         Assert.Equal(0, second);
-        Assert.Single(db.Context.SemesterEnrollments!.Where(se => se.SemesterId == 2));
+        Assert.Single(db.Context.SemesterEnrollments!.Where(se => se.SemesterInstanceId == 2));
     }
 
     [Fact]
@@ -193,7 +194,7 @@ public class SemesterEnrollmentServiceTests
 
         Assert.Equal(3, created);
         Assert.Equal(0, skipped);
-        var enrollments = db.Context.SemesterEnrollments!.Where(se => se.SemesterId == 2).ToList();
+        var enrollments = db.Context.SemesterEnrollments!.Where(se => se.SemesterInstanceId == 2).ToList();
         Assert.Equal(3, enrollments.Count);
         Assert.All(enrollments, se =>
         {
@@ -221,7 +222,7 @@ public class SemesterEnrollmentServiceTests
 
         Assert.Equal(2, created);
         Assert.Equal(0, skipped);
-        Assert.All(db.Context.SemesterEnrollments!.Where(se => se.SemesterId == 2), se =>
+        Assert.All(db.Context.SemesterEnrollments!.Where(se => se.SemesterInstanceId == 2), se =>
             Assert.Equal(EnrollmentType.PartTime, se.EnrollmentType));
     }
 
@@ -242,7 +243,7 @@ public class SemesterEnrollmentServiceTests
 
         Assert.Equal(1, created);
         Assert.Equal(1, skipped);
-        Assert.Equal(2, db.Context.SemesterEnrollments!.Count(se => se.SemesterId == 2));
+        Assert.Equal(2, db.Context.SemesterEnrollments!.Count(se => se.SemesterInstanceId == 2));
     }
 
     [Fact]
@@ -306,7 +307,7 @@ public class SemesterEnrollmentServiceTests
         Assert.Equal(1, created);
         Assert.Equal(1, skipped);
         Assert.Equal(2, db.Context.SemesterEnrollments!.Count());
-        Assert.Contains(db.Context.SemesterEnrollments!, se => se.StudentAdmissionId == 2 && se.SemesterId == 2);
+        Assert.Contains(db.Context.SemesterEnrollments!, se => se.StudentAdmissionId == 2 && se.SemesterInstanceId == 2);
     }
 
     [Fact]
@@ -437,7 +438,7 @@ public class SemesterEnrollmentServiceTests
         Assert.True(created);
         var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
         Assert.Equal(1, enrollment.StudentAdmissionId);
-        Assert.Equal(1, enrollment.SemesterId);
+        Assert.Equal(1, enrollment.SemesterInstanceId);
         Assert.Equal(StudentEnrollmentStatus.Active, enrollment.EnrollmentStatus);
     }
 
@@ -457,7 +458,7 @@ public class SemesterEnrollmentServiceTests
 
         Assert.False(created);
         var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
-        Assert.Equal(1, enrollment.SemesterId);
+        Assert.Equal(1, enrollment.SemesterInstanceId);
     }
 
     [Fact]
@@ -470,5 +471,11 @@ public class SemesterEnrollmentServiceTests
 
         Assert.False(created);
         Assert.Empty(db.Context.SemesterEnrollments!);
+    }
+
+    private static void SeedProgramSemesters(AppDbContext ctx)
+    {
+        ctx.ProgramSemesters.Add(new ProgramSemester { Id = 1, ProgramId = TestData.ProgramId, SemesterId = 1, IsActive = true });
+        ctx.ProgramSemesters.Add(new ProgramSemester { Id = 2, ProgramId = TestData.ProgramId, SemesterId = 2, IsActive = true });
     }
 }

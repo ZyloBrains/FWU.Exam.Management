@@ -30,6 +30,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(s => s.SubjectCatalog)
             .Include(s => s.Program)
             .Include(s => s.Semester)
+            .Where(s => s.IsActive)
             .AsNoTracking();
         query = query.ApplyScope(_userContext);
 
@@ -78,6 +79,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(s => s.SubjectCatalog)
             .Include(s => s.Program)
             .Include(s => s.Semester)
+            .Where(s => s.IsActive)
             .AsNoTracking();
         query = query.ApplyScope(_userContext);
 
@@ -102,6 +104,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(s => s.SubjectCatalog)
             .Include(s => s.Program)
             .Include(s => s.Semester)
+            .Include(s => s.CurriculumVersion)
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.Id == id);
     }
@@ -124,12 +127,12 @@ public class SubjectOfferingService : ISubjectOfferingService
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteSubjectOfferingAsync(int id)
+    public async Task ArchiveSubjectOfferingAsync(int id)
     {
         var subjectOffering = await _context.SubjectOfferings.FindAsync(id);
         if (subjectOffering != null)
         {
-            _context.SubjectOfferings.Remove(subjectOffering);
+            subjectOffering.IsActive = false;
             await _context.SaveChangesAsync();
         }
     }
@@ -139,49 +142,76 @@ public class SubjectOfferingService : ISubjectOfferingService
         return await _context.SubjectOfferings.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId)
+    public async Task<bool> IsSubjectOfferingReferencedAsync(int id)
+    {
+        return await _context.ExamSlots.AnyAsync(x => x.SubjectOfferingId == id)
+            || await _context.ExamSubjectResults.AnyAsync(x => x.SubjectOfferingId == id)
+            || await _context.CollegeAdminSubjectAssignments.AnyAsync(x => x.SubjectOfferingId == id);
+    }
+
+    public async Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId, int? curriculumVersionId = null)
     {
         return await _context.SubjectOfferings
-            .Where(so => so.ProgramId == programId && so.SemesterId == semesterId)
+            .Where(so => so.IsActive
+                         && so.ProgramId == programId
+                         && so.SemesterId == semesterId
+                         && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId))
             .Select(so => so.SubjectCatalogId)
             .ToListAsync();
     }
 
-    public async Task<List<SelectOption>> GetAcademicYearsAsync()
+    public async Task<Dictionary<int, List<int>>> GetExistingSubjectCatalogIdsBySemesterAsync(int programId, int curriculumVersionId)
     {
-        return await _context.AcademicYears
-            .Where(ay => ay.IsActive)
-            .OrderByDescending(ay => ay.Id)
+        return await _context.SubjectOfferings
             .AsNoTracking()
-            .Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName })
-            .ToListAsync();
+            .Where(so => so.IsActive
+                         && so.ProgramId == programId
+                         && so.CurriculumVersionId == curriculumVersionId)
+            .GroupBy(so => so.SemesterId)
+            .Select(g => new
+            {
+                SemesterId = g.Key,
+                SubjectCatalogIds = g.Select(so => so.SubjectCatalogId).Distinct().ToList()
+            })
+            .ToDictionaryAsync(x => x.SemesterId, x => x.SubjectCatalogIds);
     }
 
-    public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId, int? programId = null)
+    public async Task<List<SelectOption>> GetSemestersByCurriculumVersionAsync(int curriculumVersionId, int? programId = null)
     {
-        var allowUpperSemesters = programId is > 0
-                                  && await _context.Programs.AsNoTracking().AnyAsync(p => p.Id == programId.Value && p.Duration >= 10);
+        var academicYearId = await _context.CurriculumVersions
+            .AsNoTracking()
+            .Where(cv => cv.Id == curriculumVersionId)
+            .Select(cv => (int?)cv.EffectiveAcademicYearId)
+            .FirstOrDefaultAsync();
+
+        if (academicYearId is null) return new List<SelectOption>();
+
+        var assignedSemesterIds = programId is > 0
+            ? await _context.ProgramSemesters
+                .AsNoTracking()
+                .Where(ps => ps.ProgramId == programId.Value && ps.IsActive)
+                .Select(ps => ps.SemesterId)
+                .ToListAsync()
+            : null;
 
         return await _context.Semesters
             .AsNoTracking()
-            .ApplyScope(_userContext)
-            .Where(s => s.AcademicYearId == academicYearId
-                        && (s.Number <= 8 || allowUpperSemesters))
+            .Where(s => assignedSemesterIds == null || assignedSemesterIds.Contains(s.Id))
             .OrderBy(s => s.Number)
             .Select(s => new SelectOption
             {
                 Id = s.Id,
-                Name = s.Name + " (" + s.Code + " - " + s.AcademicYear!.AcademicYearName + ")"
+                Name = s.Name + " (" + s.Code + ")"
             })
             .ToListAsync();
     }
 
-    public async Task<List<ProgramOfferingSummary>> GetProgramsByAcademicYearAsync(int academicYearId)
+    public async Task<List<ProgramOfferingSummary>> GetProgramsByCurriculumVersionAsync(int curriculumVersionId)
     {
         var groups = await _context.SubjectOfferings
             .AsNoTracking()
             .ApplyScope(_userContext)
-            .Where(so => so.Semester != null && so.Semester.AcademicYearId == academicYearId)
+            .Where(so => so.IsActive && so.CurriculumVersionId == curriculumVersionId)
             .GroupBy(so => so.ProgramId)
             .Select(g => new
             {
@@ -210,7 +240,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .ToList();
     }
 
-    public async Task<List<SemesterOfferingSummary>> GetSemestersByProgramAsync(int programId, int academicYearId)
+    public async Task<List<SemesterOfferingSummary>> GetSemestersByProgramAsync(int programId, int curriculumVersionId)
     {
         var assignedSemesterIds = _context.ProgramSemesters
             .AsNoTracking()
@@ -219,17 +249,72 @@ public class SubjectOfferingService : ISubjectOfferingService
 
         return await _context.Semesters
             .AsNoTracking()
-            .ApplyScope(_userContext)
-            .Where(s => assignedSemesterIds.Contains(s.Id) && s.AcademicYearId == academicYearId)
+            .Where(s => assignedSemesterIds.Contains(s.Id))
             .OrderBy(s => s.Number)
             .Select(s => new SemesterOfferingSummary
             {
                 SemesterId = s.Id,
                 SemesterNumber = s.Number,
                 SemesterName = s.Name!,
-                SubjectCount = _context.SubjectOfferings.Count(so => so.ProgramId == programId && so.SemesterId == s.Id)
+                SubjectCount = _context.SubjectOfferings.Count(so =>
+                    so.IsActive
+                    && so.ProgramId == programId
+                    && so.SemesterId == s.Id
+                    && so.CurriculumVersionId == curriculumVersionId)
             })
             .ToListAsync();
+    }
+
+    public async Task<List<SemesterOfferingSummary>> GetSemestersForOfferingAsync(int programId, int curriculumVersionId)
+    {
+        var assigned = await GetSemestersByProgramAsync(programId, curriculumVersionId);
+        if (assigned.Count > 0) return assigned;
+
+        var duration = await _context.Programs.AsNoTracking()
+            .Where(p => p.Id == programId)
+            .Select(p => (int?)p.Duration)
+            .FirstOrDefaultAsync();
+        var cap = duration is > 0 ? duration.Value : 8;
+
+        return await _context.Semesters
+            .AsNoTracking()
+            .Where(s => s.Number <= cap)
+            .OrderBy(s => s.Number)
+            .Select(s => new SemesterOfferingSummary
+            {
+                SemesterId = s.Id,
+                SemesterNumber = s.Number,
+                SemesterName = s.Name!,
+                SubjectCount = _context.SubjectOfferings.Count(so =>
+                    so.IsActive
+                    && so.ProgramId == programId
+                    && so.SemesterId == s.Id
+                    && so.CurriculumVersionId == curriculumVersionId)
+            })
+            .ToListAsync();
+    }
+
+    public async Task EnsureSemesterAssignedToProgramAsync(int programId, int semesterId)
+    {
+        var existing = await _context.ProgramSemesters
+            .FirstOrDefaultAsync(ps => ps.ProgramId == programId && ps.SemesterId == semesterId);
+
+        if (existing == null)
+        {
+            _context.ProgramSemesters.Add(new ProgramSemester
+            {
+                ProgramId = programId,
+                SemesterId = semesterId,
+                IsActive = true,
+                DisplayOrder = 0
+            });
+        }
+        else if (!existing.IsActive)
+        {
+            existing.IsActive = true;
+        }
+
+        await _context.SaveChangesAsync();
     }
 
     public async Task<List<SubjectOffering>> GetSubjectOfferingsAsync(int programId, int? semesterId = null)
@@ -240,7 +325,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(so => so.Semester)
             .AsNoTracking()
             .ApplyScope(_userContext)
-            .Where(so => so.ProgramId == programId);
+            .Where(so => so.IsActive && so.ProgramId == programId);
 
         if (semesterId.HasValue)
             query = query.Where(so => so.SemesterId == semesterId.Value);
@@ -268,8 +353,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .ToListAsync();
 
         var semesters = await _context.Semesters
-            .Include(s => s.AcademicYear)
-            .OrderByDescending(s => s.Id)
+            .OrderBy(s => s.Number)
             .AsNoTracking()
             .ToListAsync();
 
@@ -281,6 +365,84 @@ public class SubjectOfferingService : ISubjectOfferingService
         return await _context.ProgramSemesters
             .AsNoTracking()
             .AnyAsync(ps => ps.ProgramId == programId && ps.SemesterId == semesterId && ps.IsActive);
+    }
+
+    public async Task<List<SelectOption>> GetCurriculumVersionsAsync(int? programId = null)
+    {
+        var query = _context.CurriculumVersions
+            .AsNoTracking()
+            .ApplyScope(_userContext)
+            .Where(cv => cv.IsActive);
+
+        if (programId.HasValue && programId.Value > 0)
+            query = query.Where(cv => cv.ProgramId == programId.Value);
+
+        return await query
+            .OrderByDescending(cv => cv.Id)
+            .Select(cv => new SelectOption
+            {
+                Id = cv.Id,
+                Name = cv.Name + (cv.EffectiveAcademicYear != null ? " (" + cv.EffectiveAcademicYear.AcademicYearName + ")" : "")
+            })
+            .ToListAsync();
+    }
+
+    public async Task<CurriculumVersion?> GetCurriculumVersionByIdAsync(int id)
+    {
+        return await _context.CurriculumVersions
+            .AsNoTracking()
+            .ApplyScope(_userContext)
+            .Include(cv => cv.Program)
+            .Include(cv => cv.EffectiveAcademicYear)
+            .FirstOrDefaultAsync(cv => cv.Id == id);
+    }
+
+    public async Task<List<SubjectOffering>> GetSubjectOfferingsByCurriculumVersionAsync(int curriculumVersionId)
+    {
+        return await _context.SubjectOfferings
+            .Include(so => so.SubjectCatalog)
+            .ThenInclude(sc => sc!.SubjectType)
+            .Include(so => so.Semester)
+            .AsNoTracking()
+            .ApplyScope(_userContext)
+            .Where(so => so.IsActive && so.CurriculumVersionId == curriculumVersionId)
+            .OrderBy(so => so.Semester != null ? so.Semester.Number : 0)
+            .ThenBy(so => so.DisplayOrder)
+            .ThenBy(so => so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "")
+            .ToListAsync();
+    }
+
+    public async Task<bool> IsCurriculumVersionForProgramAsync(int curriculumVersionId, int programId)
+    {
+        return await _context.CurriculumVersions
+            .AsNoTracking()
+            .AnyAsync(cv => cv.Id == curriculumVersionId && cv.ProgramId == programId);
+    }
+
+    public async Task<List<SubjectOffering>> GetSearchResultsAsync(int? curriculumVersionId, int? programId, int? semesterId)
+    {
+        var query = _context.SubjectOfferings
+            .Include(so => so.SubjectCatalog)
+            .Include(so => so.Program)
+            .Include(so => so.Semester)
+            .Include(so => so.CurriculumVersion)
+            .Where(so => so.IsActive)
+            .AsNoTracking()
+            .ApplyScope(_userContext);
+
+        if (curriculumVersionId is > 0)
+            query = query.Where(so => so.CurriculumVersionId == curriculumVersionId.Value);
+        if (programId is > 0)
+            query = query.Where(so => so.ProgramId == programId.Value);
+        if (semesterId is > 0)
+            query = query.Where(so => so.SemesterId == semesterId.Value);
+
+        return await query
+            .OrderBy(so => so.Program != null ? so.Program.ProgramName : "")
+            .ThenBy(so => so.Semester != null ? so.Semester.Number : 0)
+            .ThenBy(so => so.DisplayOrder)
+            .ThenBy(so => so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "")
+            .ToListAsync();
     }
 
     private static Expression<Func<SubjectOffering, object>> GetSortProperty(string sort)

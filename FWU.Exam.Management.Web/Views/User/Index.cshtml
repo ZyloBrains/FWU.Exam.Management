@@ -9,6 +9,10 @@
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "email";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentRole = ViewBag.RoleFilter as string ?? "";
+    var filterRoles = ViewBag.RolesList as IEnumerable<string> ?? Enumerable.Empty<string>();
+    var currentIsActive = ViewBag.IsActive as bool?;
+    var hasActiveFilters = !string.IsNullOrEmpty(currentSearch) || !string.IsNullOrEmpty(currentRole) || currentIsActive.HasValue;
 }
 
 <div class="space-y-6">
@@ -28,20 +32,60 @@
                 </p>
             </div>
         </div>
-        <a asp-action="Create"
-           class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
-            <i class="fas fa-plus text-xs"></i> Create New
-        </a>
+        <div class="flex items-center gap-2">
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                ButtonClass = "bg-gray-800 hover:bg-gray-900",
+                ScopeLabel = " (Current Page)",
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["page"] = currentPage.ToString(),
+                    ["pageSize"] = pageSize.ToString(),
+                    ["search"] = currentSearch,
+                    ["role"] = currentRole,
+                    ["isActive"] = currentIsActive?.ToString() ?? "",
+                    ["sort"] = currentSort,
+                    ["sortDir"] = currentSortDir
+                }
+            })
+            <a asp-action="Create"
+               class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+                <i class="fas fa-plus text-xs"></i> Create New
+            </a>
+        </div>
     </div>
 
     <!-- Search Bar -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <form method="get" asp-action="Index" class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
+                <label class="sr-only" for="searchInput">Search users</label>
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <input type="text" name="search" value="@currentSearch"
+                <input id="searchInput" type="text" name="search" value="@currentSearch"
                        placeholder="Search by name, email, faculty, or college..."
                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" />
+            </div>
+            <div class="relative">
+                <label class="sr-only" for="roleFilter">Filter by role</label>
+                <i class="fas fa-user-shield absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <select id="roleFilter" name="role"
+                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white">
+                    <option value="">All roles</option>
+                    @foreach (var filterRole in filterRoles)
+                    {
+                        <option value="@filterRole" selected="@(filterRole == currentRole)">@filterRole</option>
+                    }
+                </select>
+            </div>
+            <div class="relative">
+                <label class="sr-only" for="statusFilter">Filter by status</label>
+                <i class="fas fa-circle absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <select id="statusFilter" name="isActive"
+                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white">
+                    <option value="">All statuses</option>
+                    <option value="true" selected="@(currentIsActive == true)">Active</option>
+                    <option value="false" selected="@(currentIsActive == false)">Inactive</option>
+                </select>
             </div>
             <input type="hidden" name="sort" value="@currentSort" />
             <input type="hidden" name="sortDir" value="@currentSortDir" />
@@ -49,7 +93,7 @@
                 <button type="submit" class="px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
                     Search
                 </button>
-                @if (!string.IsNullOrEmpty(currentSearch))
+                @if (hasActiveFilters)
                 {
                     <a asp-action="Index" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                            class="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
@@ -67,10 +111,49 @@
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">#</th>
-                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
-                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <a asp-action="Index" asp-route-search="@currentSearch" asp-route-role="@currentRole" asp-route-isActive="@currentIsActive" asp-route-pageSize="@pageSize" asp-route-sort="email" asp-route-sortDir="@(currentSort == "email" && currentSortDir == "asc" ? "desc" : "asc")"
+                               class="inline-flex items-center gap-1 hover:text-blue-600">
+                                User
+                                @if (currentSort == "email")
+                                {
+                                    <i class="fas fa-sort-@(currentSortDir == "asc" ? "up" : "down") text-[10px]"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort text-[10px] text-gray-300"></i>
+                                }
+                            </a>
+                        </th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <a asp-action="Index" asp-route-search="@currentSearch" asp-route-role="@currentRole" asp-route-isActive="@currentIsActive" asp-route-pageSize="@pageSize" asp-route-sort="isactive" asp-route-sortDir="@(currentSort == "isactive" && currentSortDir == "asc" ? "desc" : "asc")"
+                               class="inline-flex items-center gap-1 hover:text-blue-600">
+                                Status
+                                @if (currentSort == "isactive")
+                                {
+                                    <i class="fas fa-sort-@(currentSortDir == "asc" ? "up" : "down") text-[10px]"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort text-[10px] text-gray-300"></i>
+                                }
+                            </a>
+                        </th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Faculty / College</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <a asp-action="Index" asp-route-search="@currentSearch" asp-route-role="@currentRole" asp-route-isActive="@currentIsActive" asp-route-pageSize="@pageSize" asp-route-sort="faculty" asp-route-sortDir="@(currentSort == "faculty" && currentSortDir == "asc" ? "desc" : "asc")"
+                               class="inline-flex items-center gap-1 hover:text-blue-600">
+                                Faculty / College
+                                @if (currentSort == "faculty")
+                                {
+                                    <i class="fas fa-sort-@(currentSortDir == "asc" ? "up" : "down") text-[10px]"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort text-[10px] text-gray-300"></i>
+                                }
+                            </a>
+                        </th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                     </tr>
                 </thead>
@@ -270,7 +353,7 @@
             <div class="flex flex-1 justify-between sm:hidden">
                 @if (currentPage > 1)
                 {
-                    <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                    <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-role="@currentRole" asp-route-isActive="@currentIsActive" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                            class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">
                         Previous
                     </a>
@@ -281,7 +364,7 @@
                 }
                 @if (currentPage < totalPages)
                 {
-                    <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                    <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-role="@currentRole" asp-route-isActive="@currentIsActive" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                            class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">
                         Next
                     </a>
@@ -303,7 +386,7 @@
                     <div class="flex items-center gap-2">
                         <label class="text-xs sm:text-sm text-gray-700">Rows:</label>
                         <select class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500"
-                                onchange="window.location.href='@Url.Action("Index", new { search = currentSearch, sort = currentSort, sortDir = currentSortDir, pageSize = "__val__" })'.replace('__val__', this.value)">
+                                onchange="window.location.href='@Url.Action("Index", new { search = currentSearch, role = currentRole, isActive = currentIsActive, sort = currentSort, sortDir = currentSortDir, pageSize = "__val__" })'.replace('__val__', this.value)">
                             <option value="10" selected="@(pageSize == 10)">10</option>
                             <option value="25" selected="@(pageSize == 25)">25</option>
                             <option value="50" selected="@(pageSize == 50)">50</option>
@@ -311,7 +394,7 @@
                         </select>
                     </div>
                     <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
-                        <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                        <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-role="@currentRole" asp-route-isActive="@currentIsActive" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                                class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
                             <i class="fas fa-chevron-left text-xs"></i>
                         </a>
@@ -320,7 +403,7 @@
                             var endPage = Math.Min(totalPages, currentPage + 2);
                             if (startPage > 1)
                             {
-                                <a asp-action="Index" asp-route-page="1" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                <a asp-action="Index" asp-route-page="1" asp-route-search="@currentSearch" asp-route-role="@currentRole" asp-route-isActive="@currentIsActive" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                                        class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">1</a>
                                 if (startPage > 2)
                                 {
@@ -329,7 +412,7 @@
                             }
                             for (int i = startPage; i <= endPage; i++)
                             {
-                                <a asp-action="Index" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                <a asp-action="Index" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-role="@currentRole" asp-route-isActive="@currentIsActive" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                                        class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-blue-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
                             }
                             if (endPage < totalPages)
@@ -338,11 +421,11 @@
                                 {
                                     <span class="relative inline-flex items-center px-4 py-2 text-xs sm:text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
                                 }
-                                <a asp-action="Index" asp-route-page="@totalPages" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                <a asp-action="Index" asp-route-page="@totalPages" asp-route-search="@currentSearch" asp-route-role="@currentRole" asp-route-isActive="@currentIsActive" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                                        class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">@totalPages</a>
                             }
                         }
-                        <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                        <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-role="@currentRole" asp-route-isActive="@currentIsActive" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                                class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">
                             <i class="fas fa-chevron-right text-xs"></i>
                         </a>

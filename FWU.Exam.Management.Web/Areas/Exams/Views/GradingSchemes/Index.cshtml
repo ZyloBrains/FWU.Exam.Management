@@ -24,6 +24,15 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["search"] = currentSearch
+                },
+                ButtonClass = "bg-green-600 hover:bg-green-700",
+                ScopeLabel = " (All)"
+            })
             <a asp-action="Create" asp-area="Exams" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                 <i class="fas fa-plus text-xs"></i> Create New
             </a>
@@ -60,8 +69,7 @@
                 <tr>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Name</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Program</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Academic Year</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Programs</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Grades</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
@@ -75,8 +83,13 @@
                     <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
                         <td class="px-4 py-3 text-gray-500">@serial</td>
                         <td class="px-4 py-3 font-medium text-gray-800">@item.Name</td>
-                        <td class="px-4 py-3 text-gray-600">@item.Program?.ProgramName</td>
-                        <td class="px-4 py-3 text-gray-600">@item.AcademicYear?.AcademicYearName</td>
+                        <td class="px-4 py-3 text-gray-600">
+                            @{
+                                var programs = item.ProgramAssignments?.Select(gsp => gsp.Program?.ProgramName ?? "") ?? Enumerable.Empty<string>();
+                                var programList = string.Join(", ", programs.Where(p => !string.IsNullOrEmpty(p)));
+                            }
+                            @(string.IsNullOrEmpty(programList) ? "-" : programList)
+                        </td>
                         <td class="px-4 py-3 text-gray-600">
                             <span class="text-xs text-gray-500">@(item.GradeDefinitions?.Count ?? 0) grades</span>
                         </td>
@@ -132,7 +145,13 @@
                             </div>
                             <div>
                                 <h3 class="font-semibold text-gray-800 text-sm">@item.Name</h3>
-                                <p class="text-xs text-gray-500">@item.Program?.ProgramName</p>
+                                <p class="text-xs text-gray-500">
+                                    @{
+                                        var mPrograms = item.ProgramAssignments?.Select(gsp => gsp.Program?.ProgramName ?? "") ?? Enumerable.Empty<string>();
+                                        var mProgramList = string.Join(", ", mPrograms.Where(p => !string.IsNullOrEmpty(p)));
+                                    }
+                                    @(string.IsNullOrEmpty(mProgramList) ? "-" : mProgramList)
+                                </p>
                             </div>
                         </div>
                         <div>
@@ -147,8 +166,6 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
-                        <div class="text-gray-500">Academic Year</div>
-                        <div class="text-gray-800">@(item.AcademicYear?.AcademicYearName ?? "-")</div>
                         <div class="text-gray-500">Grades</div>
                         <div class="text-gray-800">@(item.GradeDefinitions?.Count ?? 0) grade(s)</div>
                     </div>

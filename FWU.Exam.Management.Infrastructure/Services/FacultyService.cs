@@ -23,6 +23,7 @@ public class FacultyService(
     {
         return await context.Faculties
             .AsNoTracking()
+            .Include(f => f.Tenant)
             .ApplyScope(userContext)
             .OrderBy(f => f.Name)
             .ToListAsync();
@@ -32,6 +33,7 @@ public class FacultyService(
     {
         var query = context.Faculties
             .AsNoTracking()
+            .Include(f => f.Tenant)
             .ApplyScope(userContext);
 
         if (!string.IsNullOrEmpty(search))
@@ -77,13 +79,6 @@ public class FacultyService(
     public async Task<Faculty?> GetFacultyByIdAsync(int id)
     {
         return await context.Faculties.FindAsync(id);
-    }
-
-    public async Task<Faculty?> GetFacultyByOfficeCodeAsync(string officeCode)
-    {
-        return await context.Faculties
-            .AsNoTracking()
-            .FirstOrDefaultAsync(f => f.OfficeCode == officeCode);
     }
 
     public async Task<string> CreateFacultyAsync(Faculty faculty, string adminPassword)

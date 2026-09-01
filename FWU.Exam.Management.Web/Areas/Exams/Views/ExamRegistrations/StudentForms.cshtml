@@ -1,16 +1,34 @@
 @model IEnumerable<FWU.Exam.Management.Application.DTOs.ExamFormAdminDto>
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "Student Exam Forms";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
     var totalCount = ViewBag.TotalCount ?? Model.Count();
     var currentPage = ViewBag.CurrentPage ?? 1;
     var totalPages = ViewBag.TotalPages ?? 1;
     var pageSize = ViewBag.PageSize ?? 25;
     var currentSearch = ViewBag.Search as string ?? "";
+    var currentAcademicYearId = ViewBag.AcademicYearId as int?;
+    var currentLevelId = ViewBag.LevelId as int?;
     var currentExamScheduleId = ViewBag.ExamScheduleId as int?;
     var paymentConfirmedCount = ViewBag.PaymentConfirmedCount ?? 0;
     var admitCardGeneratedCount = ViewBag.AdmitCardGeneratedCount ?? 0;
     var pendingAdmitCardCount = ViewBag.PendingAdmitCardCount ?? 0;
+    var pendingApprovalCount = ViewBag.PendingApprovalCount ?? 0;
+    var pendingBySchedule = (ViewBag.PendingBySchedule as List<FWU.Exam.Management.Application.DTOs.SchedulePendingCountDto>) ?? [];
+    var academicYearOptions = (ViewBag.AcademicYearOptions as List<FWU.Exam.Management.Application.DTOs.SelectOption>) ?? [];
+    var levelOptions = (ViewBag.LevelOptions as List<FWU.Exam.Management.Application.DTOs.SelectOption>) ?? [];
+    var examScheduleOptions = (ViewBag.ExamScheduleOptions as List<FWU.Exam.Management.Application.DTOs.SelectOption>) ?? [];
+    var hasCriteria = !string.IsNullOrEmpty(currentSearch)
+        || currentAcademicYearId.HasValue
+        || currentLevelId.HasValue
+        || currentExamScheduleId.HasValue;
 }
 
 <div class="space-y-6">
@@ -26,14 +44,17 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a asp-area="Exams" asp-controller="AdmitCards" asp-action="Generate"
-               class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
-                <i class="fas fa-ticket-alt text-xs"></i> Generate Admit Cards
-            </a>
+            @if (HasPerm("admitcards.generate"))
+            {
+                <a asp-area="Exams" asp-controller="AdmitCards" asp-action="Generate"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
+                    <i class="fas fa-ticket-alt text-xs"></i> Generate Admit Cards
+                </a>
+            }
         </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -44,6 +65,28 @@
                     <p class="text-xl font-bold text-gray-800">@totalCount</p>
                 </div>
             </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-amber-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clock text-amber-600"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-xs text-gray-500 font-medium">Pending Approval</p>
+                    <p class="text-xl font-bold text-gray-800">@pendingApprovalCount</p>
+                </div>
+            </div>
+            @if (pendingBySchedule.Any())
+            {
+                <div class="mt-3 flex flex-wrap gap-1.5 max-h-16 overflow-y-auto">
+                    @foreach (var item in pendingBySchedule)
+                    {
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-medium" title="@item.ScheduleName">
+                            @item.ScheduleName: @item.PendingCount
+                        </span>
+                    }
+                </div>
+            }
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div class="flex items-center gap-3">
@@ -58,8 +101,8 @@
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-ticket-alt text-emerald-600"></i>
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-ticket-alt text-purple-600"></i>
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 font-medium">Admit Cards Generated</p>
@@ -67,43 +110,59 @@
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-clock text-amber-600"></i>
-                </div>
-                <div>
-                    <p class="text-xs text-gray-500 font-medium">Pending Admit Cards</p>
-                    <p class="text-xl font-bold text-gray-800">@pendingAdmitCardCount</p>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <form method="get" asp-action="StudentForms" asp-area="Exams" class="flex flex-col sm:flex-row gap-3">
-            <div class="relative flex-1">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <input type="text" name="search" value="@currentSearch"
-                       placeholder="Search by roll number, schedule, college..."
-                       class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            </div>
-            <div>
-                <select name="examScheduleId" class="select2 border border-gray-300 rounded-md px-3 py-2.5 text-sm" onchange="this.form.submit()">
-                    <option value="">All Schedules</option>
-                    @if (ViewData["ExamScheduleId"] is SelectList sl)
-                    {
-                        foreach (var item in (sl.Items as IEnumerable<dynamic>)!)
+        <form method="get" asp-action="StudentForms" asp-area="Exams" id="studentFormsFilter">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Academic Year</label>
+                    <select name="academicYearId" id="academicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                            data-initial="@currentAcademicYearId">
+                        <option value="">-- Select Academic Year --</option>
+                        @foreach (var option in academicYearOptions)
                         {
-                            <option value="@item.Id" selected="@(item.Id.ToString() == currentExamScheduleId?.ToString())">@item.ExamScheduleName</option>
+                            <option value="@option.Id" selected="@(option.Id == currentAcademicYearId)">@option.Name</option>
                         }
-                    }
-                </select>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Level</label>
+                    <select name="levelId" id="levelId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                            data-initial="@currentLevelId">
+                        <option value="">-- Select Level --</option>
+                        @foreach (var option in levelOptions)
+                        {
+                            <option value="@option.Id" selected="@(option.Id == currentLevelId)">@option.Name</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Exam Schedule</label>
+                    <select name="examScheduleId" id="examScheduleId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                            data-initial="@currentExamScheduleId">
+                        <option value="">-- Select Exam Schedule --</option>
+                        @foreach (var option in examScheduleOptions)
+                        {
+                            <option value="@option.Id" selected="@(option.Id == currentExamScheduleId)">@option.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="lg:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Search</label>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text" name="search" value="@currentSearch"
+                               placeholder="Search by roll number, registration number..."
+                               class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                    </div>
+                </div>
             </div>
             <input type="hidden" name="pageSize" value="@pageSize" />
-            <div class="flex gap-2">
+            <input type="hidden" name="page" value="@currentPage" />
+            <div class="flex gap-2 mt-4">
                 <button type="submit" class="px-4 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors">Search</button>
-                @if (!string.IsNullOrEmpty(currentSearch) || currentExamScheduleId.HasValue)
+                @if (!string.IsNullOrEmpty(currentSearch) || currentAcademicYearId.HasValue || currentLevelId.HasValue || currentExamScheduleId.HasValue)
                 {
                     <a asp-action="StudentForms" asp-area="Exams"
                        class="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
@@ -114,19 +173,22 @@
         </form>
     </div>
 
+    <div id="reviewPanel" class="hidden"></div>
+
+    <div id="editSubjectsModal" class="hidden"></div>
+
+    @if (hasCriteria)
+    {
     <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
         <table class="w-full text-sm text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Regd No</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">College</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Schedule</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Fee</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Payment</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Program</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Semester</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Admit Card</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
                 </tr>
             </thead>
@@ -137,66 +199,37 @@
                     serial++;
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-4 py-3 text-gray-500">@serial</td>
+                        <td class="px-4 py-3 text-gray-700 font-medium">@(item.RegistrationNumber ?? "-")</td>
+                        <td class="px-4 py-3 text-gray-800 font-medium">@(item.StudentName ?? "N/A")</td>
+                        <td class="px-4 py-3 text-gray-600">@(item.ProgramName ?? "-")</td>
+                        <td class="px-4 py-3 text-gray-600">@(item.SemesterName ?? "-")</td>
                         <td class="px-4 py-3">
-                            <div class="font-medium text-gray-800">@(item.StudentName ?? "N/A")</div>
-                        </td>
-                        <td class="px-4 py-3 text-gray-600">@(item.RegistrationNumber ?? "-")</td>
-                        <td class="px-4 py-3 text-gray-600">@(item.CollegeName ?? "-")</td>
-                        <td class="px-4 py-3 text-gray-600">@(item.ExamScheduleName ?? "-")</td>
-                        <td class="px-4 py-3 text-gray-600">@(item.FeeEnclosed?.ToString("N2") ?? "-")</td>
-                        <td class="px-4 py-3">
-                            @if (item.PaymentConfirmed)
-                            {
-                                <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Confirmed</span>
-                            }
-                            else
-                            {
-                                <span class="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">Pending</span>
-                            }
-                        </td>
-                        <td class="px-4 py-3">
-                            @switch (item.Status)
-                            {
-                                case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Pending:
-                                    <span class="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">Pending</span>
-                                    break;
-                                case FWU.Exam.Management.Domain.Enums.RegistrationStatus.CollegeVerified:
-                                    <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">College Verified</span>
-                                    break;
-                                case FWU.Exam.Management.Domain.Enums.RegistrationStatus.AdminVerified:
-                                    <span class="px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full">Admin Verified</span>
-                                    break;
-                                case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Registered:
-                                    <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Registered</span>
-                                    break;
-                                case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Withheld:
-                                    <span class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">Withheld</span>
-                                    break;
-                                case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Rejected:
-                                    <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">Rejected</span>
-                                    break;
-                            }
-                        </td>
-                        <td class="px-4 py-3">
-                            @if (item.HasAdmitCard)
-                            {
-                                <span class="px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 rounded-full">Generated</span>
-                            }
-                            else
-                            {
-                                <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 rounded-full">Not Generated</span>
-                            }
+                            @await Html.PartialAsync("_StatusBadge", item.Status)
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-1">
-                                <a asp-action="Details" asp-area="Exams" asp-route-id="@item.ExamRegistrationId" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="View Details">
+                                <button type="button" class="review-btn p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                                        data-id="@item.ExamRegistrationId" data-show-actions="true" title="Edit / Review">
+                                    <i class="fas fa-edit text-xs"></i>
+                                </button>
+                                <button type="button" class="review-btn p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                        data-id="@item.ExamRegistrationId" data-show-actions="false" title="View Detail">
                                     <i class="fas fa-eye text-xs"></i>
-                                </a>
-                                @if (item.ExamScheduleId.HasValue)
+                                </button>
+                                @if (item.CanAdminApprove && HasPerm("examregistration.approve"))
                                 {
-                                    <a asp-area="Exams" asp-controller="AdmitCards" asp-action="Generate" asp-route-examScheduleId="@item.ExamScheduleId" class="p-1.5 text-purple-600 hover:bg-purple-50 rounded-md transition-colors" title="Generate Admit Cards for this Schedule">
-                                        <i class="fas fa-ticket-alt text-xs"></i>
-                                    </a>
+                                    <form method="post" asp-action="Approve" asp-area="Exams" onsubmit="return confirm('Final approve this student exam form?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.ExamRegistrationId" />
+                                        <input type="hidden" name="academicYearId" value="@currentAcademicYearId" />
+                                        <input type="hidden" name="levelId" value="@currentLevelId" />
+                                        <input type="hidden" name="examScheduleId" value="@currentExamScheduleId" />
+                                        <input type="hidden" name="search" value="@currentSearch" />
+                                        <input type="hidden" name="page" value="@currentPage" />
+                                        <button type="submit" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Final Approve">
+                                            <i class="fas fa-check-double text-xs"></i>
+                                        </button>
+                                    </form>
                                 }
                             </div>
                         </td>
@@ -220,45 +253,42 @@
         {
             serialMobile++;
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center justify-between mb-3">
+                <div class="flex items-start justify-between mb-3">
                     <div>
                         <h3 class="font-semibold text-gray-800 text-sm">@(item.StudentName ?? "N/A")</h3>
                         <p class="text-xs text-gray-500">@(item.RegistrationNumber ?? "-")</p>
                     </div>
                     <div class="flex flex-col items-end gap-1">
+                        @await Html.PartialAsync("_StatusBadge", item.Status)
                         @if (item.PaymentConfirmed)
                         {
                             <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Payment OK</span>
                         }
-                        else
-                        {
-                            <span class="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">Payment Pending</span>
-                        }
-                        @switch (item.Status)
-                        {
-                            case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Pending:
-                                <span class="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">Pending</span>
-                                break;
-                            case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Registered:
-                                <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Registered</span>
-                                break;
-                            default:
-                                <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">@item.Status</span>
-                                break;
-                        }
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
-                    <div class="text-gray-500">College</div><div class="text-gray-800">@(item.CollegeName ?? "-")</div>
-                    <div class="text-gray-500">Schedule</div><div class="text-gray-800">@(item.ExamScheduleName ?? "-")</div>
-                    <div class="text-gray-500">Fee</div><div class="text-gray-800">@(item.FeeEnclosed?.ToString("N2") ?? "-")</div>
-                    <div class="text-gray-500">Admit Card</div><div class="text-gray-800">@(item.HasAdmitCard ? "Generated" : "Not Generated")</div>
+                    <div class="text-gray-500">Program</div><div class="text-gray-800">@(item.ProgramName ?? "-")</div>
+                    <div class="text-gray-500">Semester</div><div class="text-gray-800">@(item.SemesterName ?? "-")</div>
                 </div>
                 <div class="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
-                    <a asp-action="Details" asp-area="Exams" asp-route-id="@item.ExamRegistrationId" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"><i class="fas fa-eye mr-1"></i> Details</a>
-                    @if (item.ExamScheduleId.HasValue)
+                    <button type="button" class="review-btn flex-1 text-center py-2 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100"
+                            data-id="@item.ExamRegistrationId" data-show-actions="true"><i class="fas fa-edit mr-1"></i> Edit</button>
+                    <button type="button" class="review-btn flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
+                            data-id="@item.ExamRegistrationId" data-show-actions="false"><i class="fas fa-eye mr-1"></i> Detail</button>
+                    @if (item.CanAdminApprove && HasPerm("examregistration.approve"))
                     {
-                        <a asp-area="Exams" asp-controller="AdmitCards" asp-action="Generate" asp-route-examScheduleId="@item.ExamScheduleId" class="flex-1 text-center py-2 text-xs font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100"><i class="fas fa-ticket-alt mr-1"></i> Admit Cards</a>
+                        <form method="post" asp-action="Approve" asp-area="Exams" onsubmit="return confirm('Final approve this student exam form?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.ExamRegistrationId" />
+                            <input type="hidden" name="academicYearId" value="@currentAcademicYearId" />
+                            <input type="hidden" name="levelId" value="@currentLevelId" />
+                            <input type="hidden" name="examScheduleId" value="@currentExamScheduleId" />
+                            <input type="hidden" name="search" value="@currentSearch" />
+                            <input type="hidden" name="page" value="@currentPage" />
+                            <button type="submit" class="flex-1 text-center py-2 text-xs font-medium text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100">
+                                <i class="fas fa-check-double mr-1"></i> Final Approve
+                            </button>
+                        </form>
                     }
                 </div>
             </div>
@@ -284,7 +314,9 @@
             <div class="flex items-center justify-between sm:justify-end gap-2">
                 @if (currentPage > 1)
                 {
-                    <a asp-action="StudentForms" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-examScheduleId="@currentExamScheduleId" asp-route-pageSize="@pageSize"
+                    <a asp-action="StudentForms" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch"
+                       asp-route-academicYearId="@currentAcademicYearId" asp-route-levelId="@currentLevelId"
+                       asp-route-examScheduleId="@currentExamScheduleId" asp-route-pageSize="@pageSize"
                        class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
                         <i class="fas fa-chevron-left text-xs"></i> Previous
                     </a>
@@ -292,7 +324,9 @@
                 <span class="text-sm font-semibold text-gray-700 min-w-[4rem] text-center">@currentPage / @totalPages</span>
                 @if (currentPage < totalPages)
                 {
-                    <a asp-action="StudentForms" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-examScheduleId="@currentExamScheduleId" asp-route-pageSize="@pageSize"
+                    <a asp-action="StudentForms" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch"
+                       asp-route-academicYearId="@currentAcademicYearId" asp-route-levelId="@currentLevelId"
+                       asp-route-examScheduleId="@currentExamScheduleId" asp-route-pageSize="@pageSize"
                        class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
                         Next <i class="fas fa-chevron-right text-xs"></i>
                     </a>
@@ -300,17 +334,264 @@
             </div>
         </div>
     }
+    }
+    else
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-10 text-center">
+            <div class="mx-auto w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mb-4">
+                <i class="fas fa-search text-emerald-500 text-xl"></i>
+            </div>
+            <h3 class="text-base font-semibold text-gray-900 mb-1">Search to view exam forms</h3>
+            <p class="text-sm text-gray-500 max-w-md mx-auto">Select an academic year, level and exam schedule (or enter a registration number to search) and click <span class="font-semibold text-gray-700">Search</span> to load the student exam forms.</p>
+        </div>
+    }
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="~/lib/select2/css/select2.min.css" asp-append-version="true" rel="stylesheet" />
+    <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
     <style>
         .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
         .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
         .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
     </style>
     <script>
-        $(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: 'resolve' }); });
+        $(function () {
+            var $form = $('#studentFormsFilter');
+            var $ay = $('#academicYearId');
+            var $level = $('#levelId');
+            var $schedule = $('#examScheduleId');
+
+            $form.on('submit', function () {
+                $('input[name="page"]', this).val('1');
+            });
+
+            $ay.select2({ minimumResultsForSearch: -1, width: 'resolve' });
+            $level.select2({ minimumResultsForSearch: -1, width: 'resolve' });
+            $schedule.select2({ minimumResultsForSearch: -1, width: 'resolve' });
+
+            function resetSelect($sel, placeholder) {
+                $sel.select2('destroy').empty().append('<option value="">' + placeholder + '</option>').select2({ minimumResultsForSearch: -1, width: 'resolve' });
+            }
+
+            function fillSelect($sel, items, placeholder, selected) {
+                $sel.select2('destroy').empty().append('<option value="">' + placeholder + '</option>');
+                if (items && items.length) {
+                    items.forEach(function (item) {
+                        $sel.append('<option value="' + item.id + '">' + item.name + '</option>');
+                    });
+                }
+                $sel.val(selected || '').select2({ minimumResultsForSearch: -1, width: 'resolve' });
+            }
+
+            function loadLevels(selectedLevelId, callback) {
+                var ayId = $ay.val();
+                if (!ayId) {
+                    resetSelect($level, '-- Select Level --');
+                    resetSelect($schedule, '-- Select Exam Schedule --');
+                    return;
+                }
+                $.get(tenantUrl('/Exams/ExamRegistrations/GetFilterLevels'), { academicYearId: ayId }, function (data) {
+                    fillSelect($level, data, '-- Select Level --', selectedLevelId);
+                    if (callback) callback();
+                });
+            }
+
+            function loadSchedules(selectedScheduleId) {
+                var ayId = $ay.val();
+                var levelId = $level.val();
+                if (!ayId || !levelId) {
+                    resetSelect($schedule, '-- Select Exam Schedule --');
+                    return;
+                }
+                $.get(tenantUrl('/Exams/ExamRegistrations/GetFilterExamSchedules'), { academicYearId: ayId, levelId: levelId }, function (data) {
+                    fillSelect($schedule, data, '-- Select Exam Schedule --', selectedScheduleId);
+                });
+            }
+
+            $ay.on('change', function () {
+                resetSelect($level, '-- Select Level --');
+                resetSelect($schedule, '-- Select Exam Schedule --');
+                if ($(this).val()) loadLevels();
+            });
+
+            $level.on('change', function () {
+                resetSelect($schedule, '-- Select Exam Schedule --');
+                if ($(this).val()) loadSchedules();
+            });
+
+            $schedule.on('change', function () {
+                if ($(this).val()) $form.submit();
+            });
+
+            var reviewPanel = $('#reviewPanel');
+
+            function loadReview(id, showActions) {
+                reviewPanel.removeClass('hidden').html('<div class="text-center py-12 bg-white rounded-xl border border-blue-200 shadow-sm"><i class="fas fa-spinner fa-spin text-3xl text-blue-400"></i></div>');
+                $.get(tenantUrl('/Exams/ExamRegistrations/StudentFormReview'), {
+                    id: id,
+                    showActions: showActions,
+                    academicYearId: $ay.val() || '',
+                    levelId: $level.val() || '',
+                    examScheduleId: $schedule.val() || '',
+                    search: $('input[name="search"]').val() || '',
+                    page: $('input[name="page"]').length ? $('input[name="page"]').val() : '1'
+                }, function (html) {
+                    reviewPanel.html(html);
+                    reviewPanel[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }).fail(function () {
+                    reviewPanel.html('<div class="text-center py-10 bg-white rounded-xl border border-red-200 shadow-sm text-red-500 text-sm">Unable to load the exam form.</div>');
+                });
+            }
+
+            $(document).on('click', '.review-btn', function () {
+                loadReview($(this).data('id'), $(this).data('show-actions') === true);
+            });
+
+            $(document).on('click', '.close-review-panel', function () {
+                reviewPanel.addClass('hidden').html('');
+            });
+
+            var editSubjectsModal = $('#editSubjectsModal');
+
+            function closeEditSubjectsModal() {
+                editSubjectsModal.addClass('hidden').html('');
+            }
+
+            $(document).on('click', '.edit-subjects-btn', function () {
+                var id = $(this).data('id');
+                editSubjectsModal.removeClass('hidden').html('<div class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl border border-amber-200 shadow-sm px-10 py-8"><i class="fas fa-spinner fa-spin text-3xl text-amber-400"></i></div></div>');
+                $.get(tenantUrl('/Exams/ExamRegistrations/StudentFormEditableSubjects'), { id: id }, function (html) {
+                    editSubjectsModal.html(html);
+                }).fail(function () {
+                    editSubjectsModal.html('<div class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl border border-red-200 shadow-sm px-8 py-6 text-red-500 text-sm">Unable to load the subjects for this form.</div></div>');
+                });
+            });
+
+            $(document).on('click', '[data-close-subjects-modal]', function () {
+                closeEditSubjectsModal();
+            });
+
+            $(document).on('click', '.subject-row', function (e) {
+                if ($(e.target).is('input')) return;
+                var $cb = $(this).find('.subject-checkbox');
+                $cb.prop('checked', !$cb.prop('checked')).trigger('change');
+            });
+
+            // Keep the row checkbox and its theory/practical paper checkboxes
+            // in sync on leg-aware (re-exam) edit forms.
+            $(document).on('change', '.leg-checkbox', function () {
+                var $row = $(this).closest('.subject-row');
+                if (this.checked) {
+                    $row.find('.subject-checkbox').prop('checked', true);
+                } else if ($row.find('.leg-checkbox:checked').length === 0) {
+                    $row.find('.subject-checkbox').prop('checked', false);
+                }
+            });
+
+            $(document).on('change', '.subject-checkbox', function () {
+                if (!this.checked) {
+                    $(this).closest('.subject-row').find('.leg-checkbox').prop('checked', false);
+                }
+            });
+
+            function showToast(message, isSuccess) {
+                var $toast = $('<div class="fixed top-5 right-5 z-[60] max-w-sm px-4 py-3 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2"></div>')
+                    .addClass(isSuccess ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white')
+                    .html('<i class="fas ' + (isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle') + '"></i><span></span>');
+                $toast.find('span').text(message);
+                $('body').append($toast);
+                setTimeout(function () { $toast.fadeOut(300, function () { $toast.remove(); }); }, 4000);
+            }
+
+            $(document).on('submit', '.edit-subjects-form', function (e) {
+                e.preventDefault();
+                var $form = $(this);
+                if (!confirm('Update the registered subjects for this exam form? Removed subjects will be deactivated and new subjects will be registered.')) {
+                    return;
+                }
+
+                var $error = $form.find('.edit-subjects-error').addClass('hidden').text('');
+                var $saveBtn = $form.find('button[type="submit"]').prop('disabled', true);
+
+                $.post(tenantUrl('/Exams/ExamRegistrations/UpdateStudentFormSubjects'), $form.serialize())
+                    .done(function (response) {
+                        if (response.success) {
+                            closeEditSubjectsModal();
+                            showToast(response.message || 'Subjects updated successfully.', true);
+                            loadReview($form.find('input[name="id"]').val(), true);
+                        } else {
+                            $error.text(response.message || 'Unable to update subjects.').removeClass('hidden');
+                        }
+                    })
+                    .fail(function (xhr) {
+                        var msg = 'Unable to update subjects.';
+                        try {
+                            var res = JSON.parse(xhr.responseText);
+                            if (res && res.message) msg = res.message;
+                        } catch (_) { }
+                        $error.text(msg).removeClass('hidden');
+                    })
+                    .always(function () {
+                        $saveBtn.prop('disabled', false);
+                    });
+            });
+
+            // The modal lives inside the AJAX-loaded review panel, so it must be
+            // looked up at event time - a ready-time cache would always be empty.
+            function getRejectModal() {
+                return $('#rejectFormModal');
+            }
+
+            function closeRejectModal() {
+                getRejectModal().addClass('hidden').find('.reject-error').addClass('hidden').text('');
+            }
+
+            $(document).on('click', '.reject-btn', function () {
+                getRejectModal().removeClass('hidden').find('textarea[name="reason"]').val('').focus();
+            });
+
+            $(document).on('click', '[data-close-reject-modal]', function () {
+                closeRejectModal();
+            });
+
+            $(document).on('submit', '.reject-form', function (e) {
+                e.preventDefault();
+                var $form = $(this);
+                var reason = $('textarea[name="reason"]', $form).val().trim();
+                if (!reason) {
+                    $form.find('.reject-error').text('Please enter a rejection reason.').removeClass('hidden');
+                    return;
+                }
+                if (!confirm('Reject this exam form? The student will be able to apply again.')) {
+                    return;
+                }
+
+                var $error = $form.find('.reject-error').addClass('hidden').text('');
+                var $btn = $form.find('button[type="submit"]').prop('disabled', true);
+
+                $.post(tenantUrl('/Exams/ExamRegistrations/Reject'), $form.serialize())
+                    .done(function (response) {
+                        if (response.success) {
+                            closeRejectModal();
+                            showToast(response.message || 'Exam form rejected.', true);
+                            loadReview($form.find('input[name="id"]').val(), true);
+                        } else {
+                            $error.text(response.message || 'Unable to reject this form.').removeClass('hidden');
+                        }
+                    })
+                    .fail(function (xhr) {
+                        var msg = 'Unable to reject this form.';
+                        try {
+                            var res = JSON.parse(xhr.responseText);
+                            if (res && res.message) msg = res.message;
+                        } catch (_) { }
+                        $error.text(msg).removeClass('hidden');
+                    })
+                    .always(function () {
+                        $btn.prop('disabled', false);
+                    });
+            });
+        });
     </script>
 }

@@ -22,13 +22,6 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         var roles = await userManager.GetRolesAsync(user);
         var primaryRole = roles.FirstOrDefault() ?? Role.Student;
 
-        if (primaryRole == Role.FacultyAdmin && user.FacultyId != null)
-        {
-            var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
-            if (faculty?.OfficeCode != null)
-                return RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
-        }
-
         DashboardStats stats;
         if (primaryRole == Role.CollegeAdmin && user.CollegeId.HasValue)
         {
@@ -66,6 +59,16 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         {
             await PopulateStudentData(vm, user);
         }
+        else if (primaryRole == Role.CollegeAdmin && user.CollegeId.HasValue)
+        {
+            vm.ExamSchedules = await context.ExamSchedules
+                .Include(es => es.Program).ThenInclude(p => p!.CollegePrograms)
+                .Include(es => es.SemesterInstance)
+                .Where(es => es.IsActive && es.Program != null && es.Program.CollegePrograms!.Any(cp => cp.CollegeId == user.CollegeId.Value))
+                .OrderByDescending(es => es.StartDate)
+                .Take(10)
+                .ToListAsync();
+        }
 
         return primaryRole switch
         {
@@ -79,7 +82,7 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
 
     private async Task PopulateStudentData(DashboardViewModel vm, AppUser user)
     {
-        var registration = await studentDashboardService.GetStudentRegistrationByEmailAsync(user.Email!);
+        var registration = await studentDashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return;
 
         vm.StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
@@ -107,7 +110,7 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         vm.StudentProgramName = program?.ProgramName;
         vm.StudentProgramCode = program?.ProgramCode;
 
-        var examSchedules = await studentDashboardService.GetExamSchedulesForStudentAsync(registration);
+        var examSchedules = await studentDashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
         vm.ExamSchedules = examSchedules;
 
         var allSubjectOfferings = await studentDashboardService.GetSubjectOfferingsForStudentAsync(user.Id, programId);

@@ -1,0 +1,167 @@
+@model FWU.Exam.Management.Application.DTOs.PublishResultsPreviewDto
+@using FWU.Exam.Management.Application.DTOs
+
+@{
+    ViewData["Title"] = "Publish Results";
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-controller="ExamSchedules" asp-action="Details" asp-area="Exams" asp-route-id="@ViewBag.ExamScheduleId"
+           class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-cloud-upload-alt text-green-600"></i>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Publish Results</h1>
+        </div>
+    </div>
+
+    <!-- Schedule Info -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <p class="text-xs font-medium text-gray-500">Exam Schedule</p>
+                <p class="text-gray-800 font-semibold">@(ViewBag.ScheduleName ?? "-")</p>
+            </div>
+            <div>
+                <p class="text-xs font-medium text-gray-500">Program</p>
+                <p class="text-gray-800">@(ViewBag.ProgramName ?? "-")</p>
+            </div>
+            <div>
+                <p class="text-xs font-medium text-gray-500">Semester</p>
+                <p class="text-gray-800">@(ViewBag.SemesterName ?? "-")</p>
+            </div>
+            <div>
+                <p class="text-xs font-medium text-gray-500">Academic Year</p>
+                <p class="text-gray-800">@(ViewBag.AcademicYearName ?? "-")</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- College Selector -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-6">
+        <form asp-action="LoadPreview" method="post" class="flex flex-wrap items-end gap-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="examScheduleId" value="@ViewBag.ExamScheduleId" />
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Select College</label>
+                <select name="collegeId" class="w-72 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <option value="">-- Select College --</option>
+                    @foreach (SelectListItem item in (SelectList)ViewBag.Colleges)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                    }
+                </select>
+            </div>
+            <button type="submit" class="px-5 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                <i class="fas fa-eye mr-1"></i> Load Preview
+            </button>
+        </form>
+    </div>
+
+    @if (Model?.Students?.Count > 0)
+    {
+        <!-- Summary -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-green-50 rounded-lg p-4 text-center border border-green-100">
+                <p class="text-2xl font-bold text-green-700">@Model.TotalStudents</p>
+                <p class="text-xs font-medium text-green-600 mt-1">Total Students</p>
+            </div>
+            <div class="bg-indigo-50 rounded-lg p-4 text-center border border-indigo-100">
+                <p class="text-2xl font-bold text-indigo-700">@Model.SubjectsCount</p>
+                <p class="text-xs font-medium text-indigo-600 mt-1">Subjects</p>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-4 text-center border border-blue-100">
+                <p class="text-2xl font-bold text-blue-700">@(Model.CollegeName ?? "-")</p>
+                <p class="text-xs font-medium text-blue-600 mt-1">College</p>
+            </div>
+            <div class="bg-amber-50 rounded-lg p-4 text-center border border-amber-100">
+                @{ var passCount = Model.Students.Count(s => s.Result == "Pass"); }
+                <p class="text-2xl font-bold text-amber-700">@passCount / @Model.TotalStudents</p>
+                <p class="text-xs font-medium text-amber-600 mt-1">Pass Rate</p>
+            </div>
+        </div>
+
+        <!-- Student Results -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-300 overflow-hidden">
+            <div class="p-4 border-b bg-gray-50 flex items-center justify-between">
+                <h2 class="text-base font-semibold text-gray-700">
+                    <i class="fas fa-users mr-2 text-green-500"></i>Student Results Preview
+                </h2>
+                <form asp-action="Publish" method="post" class="inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="examScheduleId" value="@ViewBag.ExamScheduleId" />
+                    <input type="hidden" name="collegeId" value="@Model.CollegeId" />
+                    <button type="submit" onclick="return confirm('Are you sure you want to publish results for @Model.TotalStudents students? This will replace any existing published results for this schedule and college.')"
+                            class="px-5 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition shadow-md">
+                        <i class="fas fa-cloud-upload-alt mr-1"></i> Confirm Publish (@Model.TotalStudents students)
+                    </button>
+                </form>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-100 border-b text-xs">
+                            <th class="px-3 py-2 text-left font-semibold text-gray-600">S.N.</th>
+                            <th class="px-3 py-2 text-left font-semibold text-gray-600">Symbol No.</th>
+                            <th class="px-3 py-2 text-left font-semibold text-gray-600">Reg. No.</th>
+                            <th class="px-3 py-2 text-left font-semibold text-gray-600">Student Name</th>
+                            <th class="px-3 py-2 text-center font-semibold text-gray-600">DOB</th>
+                            <th class="px-3 py-2 text-center font-semibold text-gray-600">GPA</th>
+                            <th class="px-3 py-2 text-center font-semibold text-gray-600">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @for (int i = 0; i < Model.Students.Count; i++)
+                        {
+                            var student = Model.Students[i];
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-3 py-2 text-gray-600">@(i + 1)</td>
+                                <td class="px-3 py-2 font-medium text-gray-800">@(student.SymbolNumber ?? "-")</td>
+                                <td class="px-3 py-2 text-gray-700">@(student.RegistrationNumber ?? "-")</td>
+                                <td class="px-3 py-2 font-medium text-gray-800">@(student.StudentName ?? "-")</td>
+                                <td class="px-3 py-2 text-center text-gray-600">@(student.DateOfBirthBs ?? "-")</td>
+                                <td class="px-3 py-2 text-center font-bold @(student.GPA >= 2.0m ? "text-green-700" : "text-red-600")">
+                                    @(student.GPA?.ToString("F2") ?? "-")
+                                </td>
+                                <td class="px-3 py-2 text-center">
+                                    @if (student.Result == "Pass")
+                                    {
+                                        <span class="px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
+                                            <i class="fas fa-check mr-1"></i>Pass
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded-full">
+                                            <i class="fas fa-times mr-1"></i>Fail
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else if (Model?.ExamScheduleId > 0)
+    {
+        <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8 text-center">
+            <i class="fas fa-inbox text-4xl text-gray-300 mb-3"></i>
+            <p class="text-gray-500">Select a college to preview results.</p>
+        </div>
+    }
+    else
+    {
+        <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8 text-center">
+            <i class="fas fa-exclamation-triangle text-4xl text-amber-300 mb-3"></i>
+            <p class="text-gray-500">No colleges have registered students for this exam schedule.</p>
+        </div>
+    }
+</div>

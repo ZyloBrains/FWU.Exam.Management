@@ -54,6 +54,14 @@ public class ExamSubjectResult : IAuditable, ITenantScoped
     [Display(Name = "Grade Letter")]
     public string? GradeLetter { get; set; }
 
+    [MaxLength(5)]
+    [Display(Name = "Grade Letter Theory")]
+    public string? GradeLetterTheory { get; set; }
+
+    [MaxLength(5)]
+    [Display(Name = "Grade Letter Practical")]
+    public string? GradeLetterPractical { get; set; }
+
     [MaxLength(255)]
     [Display(Name = "Remarks")]
     public string? Remarks { get; set; }
@@ -75,6 +83,9 @@ public class ExamSubjectResult : IAuditable, ITenantScoped
 
     public DateTime? ExamStartedDateTime { get; set; }
 
+    [Display(Name = "Is Supplementary")]
+    public bool IsSupplementary { get; set; }
+
     [Display(Name = "Is Submitted")]
     public bool IsSubmitted { get; set; }
 
@@ -93,4 +104,8 @@ public class ExamSubjectResult : IAuditable, ITenantScoped
     public virtual ExamType? ExamType { get; set; }
     public virtual SubjectOffering? SubjectOffering { get; set; }
     public virtual ExamSchedule? ExamSchedule { get; set; }
+
+    [Display(Name = "Grading Scheme")]
+    public int? GradingSchemeId { get; set; }
+    public virtual GradingScheme? GradingScheme { get; set; }
 }

@@ -1,0 +1,118 @@
+@inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
+
+@{
+    ViewData["Title"] = "Email & SMS";
+
+    var sectionUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
+    var isSuperAdmin = sectionUser != null && await UserManager.IsInRoleAsync(sectionUser, Role.SuperAdmin);
+    var sectionPermissions = sectionUser != null
+        ? await PermissionService.GetUserPermissionsAsync(sectionUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => isSuperAdmin || sectionPermissions.Contains(permission);
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-envelope text-indigo-600"></i>
+        </div>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Email & SMS</h1>
+            <p class="text-xs sm:text-sm text-gray-500">Configure email and SMS delivery services</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        @if (HasPerm("smtp.view"))
+        {
+        <a asp-area="Core" asp-controller="SmtpConfigurations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <i class="fas fa-envelope text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">SMTP Configuration</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Configure email server settings</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("smtp.view"))
+        {
+        <a asp-area="Core" asp-controller="TestEmail" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+                    <i class="fas fa-paper-plane text-yellow-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Send Test Email</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Test email delivery</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("sms.view"))
+        {
+        <a asp-area="Core" asp-controller="SmsConfigurations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <i class="fas fa-sms text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">SMS Configuration</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Configure SMS gateway settings</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("sms.view"))
+        {
+        <a asp-area="Core" asp-controller="TestGumpNowSms" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+                    <i class="fas fa-comment-dots text-emerald-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Test GumpNow SMS</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Send test SMS via GumpNow API</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("gumpnowemail.view"))
+        {
+        <a asp-area="Core" asp-controller="GumpNowEmailConfigurations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-violet-100 rounded-lg flex items-center justify-center group-hover:bg-violet-200 transition-colors">
+                    <i class="fas fa-envelope-open-text text-violet-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">GumpNow Email Config</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Configure GumpNow email API settings</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("gumpnowemail.view"))
+        {
+        <a asp-area="Core" asp-controller="TestGumpNowEmail" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <i class="fas fa-paper-plane text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Test GumpNow Email</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Send test email via GumpNow API</p>
+                </div>
+            </div>
+        </a>
+        }
+    </div>
+</div>

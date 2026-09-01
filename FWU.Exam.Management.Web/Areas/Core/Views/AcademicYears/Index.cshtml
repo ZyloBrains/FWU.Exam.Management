@@ -5,9 +5,6 @@
 @{
     ViewData["Title"] = "Academic Years";
     var totalCount = ViewBag.TotalCount ?? Model.Count();
-    var currentPage = ViewBag.CurrentPage ?? 1;
-    var totalPages = ViewBag.TotalPages ?? 1;
-    var pageSize = ViewBag.PageSize ?? 10;
     var currentSearch = ViewBag.Search as string ?? "";
 
     var currentUser = await UserManager.GetUserAsync(User);
@@ -33,41 +30,15 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <!-- Export dropdown -->
-            <div class="relative">
-                <button x-on:click="openExport = !openExport"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
-                    <i class="fas fa-download text-xs"></i> Export
-                </button>
-                <div x-show="openExport"
-                     x-on:click.away="openExport = false"
-                     x-transition
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                    <a asp-action="ExportToCsv"
-                        @* asp-route-search="@currentSearch" *@
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-csv text-blue-600"></i> CSV
-                    </a>
-                    <a asp-action="ExportToPdf"
-                        @* asp-route-search="@currentSearch" *@
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-pdf text-red-600"></i> PDF
-                    </a>
-                    <a asp-action="ExportToExcel"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-excel text-green-600"></i> Export Excel
-                    </a>
-                </div>
-            </div>
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["search"] = currentSearch
+                },
+                ButtonClass = "bg-green-600 hover:bg-green-700",
+                ScopeLabel = ""
+            })
             @if (HasPerm("academicyears.create"))
             {
                 <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
@@ -92,7 +63,7 @@
                 </button>
                 @if (!string.IsNullOrEmpty(currentSearch))
                 {
-                    <a asp-action="Index" asp-route-pageSize="@pageSize" class="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    <a asp-action="Index" class="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                         <i class="fas fa-times text-xs"></i> Clear
                     </a>
                 }
@@ -121,6 +92,8 @@
                     <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Name</th>
                     @* <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Name (Nepali)</th> *@
                     @* <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Remark</th> *@
+                    <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Start</th>
+                    <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">End</th>
                     <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Running</th>
                     <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
@@ -128,7 +101,7 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @{
-                    int serial = (ViewBag.CurrentPage - 1) * ViewBag.PageSize;
+                    int serial = 0;
                 }
                 @foreach (var item in Model)
                 {
@@ -139,13 +112,15 @@
                         $"'{item.AcademicYearCode}'.includes(filtered) || " +
                         $"'{item.AcademicYearCodeNepali?.ToLower()}'.includes(filtered) || " +
                         $"'{item.Remark?.ToLower()}'.includes(filtered)";
-                    <tr class="hover:bg-gray-50" x-show="@showCondition" x-transition style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
+                    <tr class="hover:bg-gray-50" x-show="@showCondition" x-transition>
                         <td class="px-6 py-4 text-gray-600">@serial</td>
                         <td class="px-6 py-4 font-medium text-gray-800">@item.AcademicYearCode</td>
                         @* <td class="px-6 py-4 text-gray-600">@item.AcademicYearCodeNepali</td> *@
                         <td class="px-6 py-4 text-gray-800">@item.AcademicYearName</td>
                         @* <td class="px-6 py-4 text-gray-600">@item.AcademicYearNameNepali</td> *@
                         @* <td class="px-6 py-4 text-gray-500 max-w-xs truncate">@(string.IsNullOrEmpty(item.Remark) ? "-" : item.Remark)</td> *@
+                        <td class="px-6 py-4 text-gray-600">@(item.StartDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                        <td class="px-6 py-4 text-gray-600">@(item.EndDate?.ToString("yyyy-MM-dd") ?? "-")</td>
                         <td class="px-6 py-4">
                             @if (item.IsRunning)
                             {
@@ -168,9 +143,6 @@
                         </td>
                         <td class="px-6 py-4 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <a asp-action="Details" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
-                                    <i class="fas fa-eye text-xs"></i>
-                                </a>
                                 @if (HasPerm("academicyears.edit"))
                                 {
                                     <a asp-action="Edit" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
@@ -194,7 +166,7 @@
     <!-- Mobile card layout (visible below md) -->
     <div class="md:hidden space-y-3">
         @{
-            int serialMobile = (ViewBag.CurrentPage - 1) * ViewBag.PageSize;
+            int serialMobile = 0;
         }
         @foreach (var item in Model)
         {
@@ -234,6 +206,10 @@
                     <div class="text-gray-800">@item.AcademicYearCodeNepali</div>
                     <div class="text-gray-500">Name (Nepali)</div>
                     <div class="text-gray-800">@item.AcademicYearNameNepali</div>
+                    <div class="text-gray-500">Start Date</div>
+                    <div class="text-gray-800">@(item.StartDate?.ToString("yyyy-MM-dd") ?? "-")</div>
+                    <div class="text-gray-500">End Date</div>
+                    <div class="text-gray-800">@(item.EndDate?.ToString("yyyy-MM-dd") ?? "-")</div>
                     <div class="text-gray-500">Remark</div>
                     <div class="text-gray-800 truncate">@(string.IsNullOrEmpty(item.Remark) ? "-" : item.Remark)</div>
                     <div class="text-gray-500">Running</div>
@@ -241,9 +217,6 @@
                 </div>
 
                 <div class="flex items-center gap-2 pt-4 border-t border-gray-100 mt-2">
-                    <a asp-action="Details" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
-                        Details
-                    </a>
                     @if (HasPerm("academicyears.edit"))
                     {
                         <a asp-action="Edit" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
@@ -260,111 +233,9 @@
             </div>
         }
     </div>
-
-    <!-- Pagination + Page Size Selector -->
-    @if (totalPages > 1)
-    {
-        <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
-            <div class="flex flex-1 justify-between sm:hidden">
-                @if (currentPage > 1)
-                {
-                    <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize"
-                           class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        Previous
-                    </a>
-                }
-                else
-                {
-                    <span class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 cursor-not-allowed">Previous</span>
-                }
-                @if (currentPage < totalPages)
-                {
-                    <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize"
-                           class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        Next
-                    </a>
-                }
-                else
-                {
-                    <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 cursor-not-allowed">Next</span>
-                }
-            </div>
-            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                <div>
-                    <p class="text-xs sm:text-sm text-gray-700">
-                        Showing
-                        <span class="font-medium">@(((currentPage - 1) * pageSize) + 1)</span>
-                        to
-                        <span class="font-medium">@(Math.Min(currentPage * pageSize, totalCount))</span>
-                        of
-                        <span class="font-medium">@totalCount</span>
-                        results
-                    </p>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs sm:text-sm text-gray-700">Rows per page:</label>
-                        <select class="select2 border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500"
-                                onchange="window.location.href='@Url.Action("Index", new { search = currentSearch, pageSize = "__val__" })'.replace('__val__', this.value)">
-                            <option value="10" selected="@(pageSize == 10 ? "selected" : null)">10</option>
-                            <option value="25" selected="@(pageSize == 25 ? "selected" : null)">25</option>
-                            <option value="50" selected="@(pageSize == 50 ? "selected" : null)">50</option>
-                            <option value="100" selected="@(pageSize == 100 ? "selected" : null)">100</option>
-                        </select>
-                    </div>
-                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                        <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize"
-                               class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
-                            <span class="sr-only">Previous</span>
-                            <i class="fas fa-chevron-left text-xs"></i>
-                        </a>
-                        @{
-                            var startPage = Math.Max(1, currentPage - 2);
-                            var endPage = Math.Min(totalPages, currentPage + 2);
-                            if (startPage > 1)
-                            {
-                                <a asp-action="Index" asp-route-page="1" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize"
-                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">1</a>
-                                if (startPage > 2)
-                                {
-                                    <span class="relative inline-flex items-center px-4 py-2 text-xs sm:text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
-                                }
-                            }
-                            for (int i = startPage; i <= endPage; i++)
-                            {
-                                <a asp-action="Index" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize"
-                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0")">@i</a>
-                            }
-                            if (endPage < totalPages)
-                            {
-                                if (endPage < totalPages - 1)
-                                {
-                                    <span class="relative inline-flex items-center px-4 py-2 text-xs sm:text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
-                                }
-                                <a asp-action="Index" asp-route-page="@totalPages" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize"
-                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">@totalPages</a>
-                            }
-                        }
-                        <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize"
-                               class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">
-                            <span class="sr-only">Next</span>
-                            <i class="fas fa-chevron-right text-xs"></i>
-                        </a>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    }
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <style>
-        .select2-container--default .select2-selection--single { height: 34px; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; padding: 0.125rem 0; }
-        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding-left: 0.5rem; color: #374151; }
-        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 32px; }
-    </style>
     @Html.AntiForgeryToken()
     <script>
         function deleteRecord(id) {
@@ -380,8 +251,5 @@
                 error: function () { alert('An error occurred while deleting.'); }
             });
         }
-    </script>
-    <script>
-        $(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: 'resolve' }); });
     </script>
 }

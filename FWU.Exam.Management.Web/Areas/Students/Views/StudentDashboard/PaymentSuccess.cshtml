@@ -1,37 +1,50 @@
 @{
-    ViewData["Title"] = "Payment Successful";
+    ViewData["Title"] = "Exam Form Submitted";
 }
 
 @await Html.PartialAsync("_AlertMessages")
 
-<div class="min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-10 max-w-md w-full text-center">
-        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5 sm:mb-6">
-            <i class="fas fa-check-circle text-3xl sm:text-4xl text-emerald-600"></i>
-        </div>
-        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h2>
-        <p class="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">Your payment has been processed successfully.</p>
-
-        @if (TempData["TransactionCode"] is string txnCode)
-        {
-            <div class="bg-emerald-50 rounded-xl p-4 sm:p-5 mb-4 sm:mb-5 text-left border border-emerald-100">
-                <p class="text-xs text-emerald-600 font-medium uppercase tracking-wider">Transaction Code</p>
-                <p class="text-sm sm:text-base font-bold text-emerald-800 mt-1 break-all">@txnCode</p>
-            </div>
-        }
-
-        @if (TempData["TransactionUuid"] is string txnUuid)
-        {
-            <div class="bg-gray-50 rounded-xl p-4 sm:p-5 mb-6 sm:mb-8 text-left border border-gray-100">
-                <p class="text-xs text-gray-600 font-medium uppercase tracking-wider">Transaction UUID</p>
-                <p class="text-sm sm:text-base font-bold text-gray-800 mt-1 break-all">@txnUuid</p>
-            </div>
-        }
-
-        <a asp-action="ExamForms"
-           class="inline-flex items-center justify-center gap-2 w-full px-6 py-3 sm:py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 active:scale-[0.97] transition-all font-semibold shadow-lg shadow-blue-600/20 text-sm sm:text-base">
-            <i class="fas fa-arrow-left"></i>
-            Back to Exam Forms
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="ExamForms" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
         </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-check-circle text-emerald-600"></i>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Exam Form Submitted!</h1>
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <!-- Basic Information Section -->
+        <div class="mb-6">
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Exam Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Schedule</p>
+                    <p class="mt-1 text-gray-800 font-semibold">@TempData["ExamScheduleName"]</p>
+                </div>
+                <div>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Transaction Code</p>
+                    <p class="mt-1 text-gray-800">@if (TempData["TransactionCode"] is string txnCode) { <text>@txnCode</text> } else { <text>-</text> }</p>
+                </div>
+                <div>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Transaction UUID</p>
+                    <p class="mt-1 text-gray-800">@if (TempData["TransactionUuid"] is string txnUuid) { <text>@txnUuid</text> } else { <text>-</text> }</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
+            <a asp-action="ExamForms"
+               class="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition shadow-md">
+                <i class="fas fa-arrow-left mr-1"></i> Back to Exam Forms
+            </a>
+        </div>
     </div>
 </div>

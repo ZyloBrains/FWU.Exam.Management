@@ -51,78 +51,24 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
         };
     }
 
-    public async Task<DashboardStats> GetFacultyDashboardStatsAsync(int facultyId)
-    {
-        var tenantCollegeIds = await context.Colleges
-            .AsNoTracking()
-            .Select(c => c.Id)
-            .ToListAsync();
-
-        var collegeIds = (await context.CollegePrograms
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Where(cp => cp.Program != null && cp.Program.FacultyId == facultyId)
-            .Select(cp => cp.CollegeId)
-            .Distinct()
-            .ToListAsync())
-            .Intersect(tenantCollegeIds)
-            .ToList();
-
-        var facultyUserIds = await userManager.Users
-            .Where(u => u.FacultyId == facultyId)
-            .Select(u => u.Id)
-            .ToListAsync();
-
-        var totalRoles = await roleManager.Roles.CountAsync();
-        var totalPrograms = await context.Programs.CountAsync(p => p.FacultyId == facultyId);
-        var totalExamSchedules = await context.ExamSchedules.CountAsync(es => es.Program != null && es.Program.FacultyId == facultyId);
-        var totalSubjects = await context.SubjectCatalogs.CountAsync(s => s.SubjectOfferings != null && s.SubjectOfferings.Any(so => so.Program != null && so.Program.FacultyId == facultyId));
-        var totalAcademicYears = await context.AcademicYears.CountAsync();
-        var totalBanks = await context.Banks.CountAsync();
-        var totalBoards = await context.Boards.CountAsync();
-        var totalBatches = await context.Batches.CountAsync();
-        var activePrograms = await context.Programs.CountAsync(p => p.FacultyId == facultyId && p.IsActive);
-        var activeExamSchedules = await context.ExamSchedules.CountAsync(es => es.Program != null && es.Program.FacultyId == facultyId && es.IsActive);
-        var totalColleges = collegeIds.Count;
-        var activeColleges = await context.Colleges.CountAsync(c => collegeIds.Contains(c.Id) && c.IsActive);
-        var totalStudents = await context.StudentRegistrations.CountAsync(s => s.FacultyId == facultyId);
-        var totalExamRegistrations = await context.ExamRegistrations.CountAsync(e => e.Program != null && e.Program.FacultyId == facultyId);
-        var activeStudents = await context.StudentRegistrations.CountAsync(s => s.FacultyId == facultyId && s.IsActive);
-
-        return new DashboardStats
-        {
-            TotalFaculties = 1,
-            TotalUsers = facultyUserIds.Count,
-            TotalRoles = totalRoles,
-            TotalColleges = totalColleges,
-            TotalPrograms = totalPrograms,
-            TotalStudents = totalStudents,
-            TotalExamSchedules = totalExamSchedules,
-            TotalExamRegistrations = totalExamRegistrations,
-            TotalSubjects = totalSubjects,
-            TotalAcademicYears = totalAcademicYears,
-            TotalBanks = totalBanks,
-            TotalBoards = totalBoards,
-            TotalBatches = totalBatches,
-            ActiveColleges = activeColleges,
-            ActivePrograms = activePrograms,
-            ActiveStudents = activeStudents,
-            ActiveExamSchedules = activeExamSchedules
-        };
-    }
-
     public async Task<DashboardStats> GetCollegeDashboardStatsAsync(int collegeId)
     {
         var totalRoles = await roleManager.Roles.CountAsync();
-        var totalPrograms = await context.Programs.CountAsync();
-        var totalExamSchedules = await context.ExamSchedules.CountAsync();
-        var totalSubjects = await context.SubjectCatalogs.CountAsync();
+        var totalPrograms = await context.Programs
+            .CountAsync(p => p.CollegePrograms!.Any(cp => cp.CollegeId == collegeId));
+        var totalExamSchedules = await context.ExamSchedules
+            .CountAsync(es => es.Program != null && es.Program.CollegePrograms!.Any(cp => cp.CollegeId == collegeId));
+        var totalSubjects = await context.SubjectCatalogs
+            .CountAsync(sc => sc.SubjectOfferings!.Any(so =>
+                so.Program != null && so.Program.CollegePrograms!.Any(cp => cp.CollegeId == collegeId)));
         var totalAcademicYears = await context.AcademicYears.CountAsync();
         var totalBanks = await context.Banks.CountAsync();
         var totalBoards = await context.Boards.CountAsync();
         var totalBatches = await context.Batches.CountAsync();
-        var activePrograms = await context.Programs.CountAsync(p => p.IsActive);
-        var activeExamSchedules = await context.ExamSchedules.CountAsync(e => e.IsActive);
+        var activePrograms = await context.Programs
+            .CountAsync(p => p.IsActive && p.CollegePrograms!.Any(cp => cp.CollegeId == collegeId));
+        var activeExamSchedules = await context.ExamSchedules
+            .CountAsync(es => es.IsActive && es.Program != null && es.Program.CollegePrograms!.Any(cp => cp.CollegeId == collegeId));
         var totalColleges = await context.Colleges.CountAsync(c => c.Id == collegeId);
         var activeColleges = await context.Colleges.CountAsync(c => c.Id == collegeId && c.IsActive);
         var totalStudents = await context.StudentRegistrations.CountAsync(s => s.CollegeId == collegeId);
@@ -142,9 +88,6 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
             TotalExamRegistrations = totalExamRegistrations,
             TotalSubjects = totalSubjects,
             TotalAcademicYears = totalAcademicYears,
-            TotalBanks = totalBanks,
-            TotalBoards = totalBoards,
-            TotalBatches = totalBatches,
             ActiveColleges = activeColleges,
             ActivePrograms = activePrograms,
             ActiveStudents = activeStudents,

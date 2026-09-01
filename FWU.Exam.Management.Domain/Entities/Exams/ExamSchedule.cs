@@ -65,21 +65,12 @@ public class ExamSchedule : ITenantScoped
     [Display(Name = "Practical Subject Fee")]
     public decimal? PracticalSubjectFee { get; set; }
 
-    [Display(Name = "College Approval Date")]
-    public DateTime? CollegeApprovalDate { get; set; }
-
     [Display(Name = "Admission Card Release Date")]
     public DateTime? AdmissionCardReleaseDate { get; set; }
 
     [MaxLength(50)]
     [Display(Name = "Exam Schedule Code")]
     public string? ExamScheduleCode { get; set; }
-
-    [Range(1, int.MaxValue)]
-    [Display(Name = "Academic Year")]
-    public int AcademicYearId { get; set; }
-
-    public virtual AcademicYear? AcademicYear { get; set; }
 
     [Range(1, int.MaxValue)]
     [Display(Name = "Program")]
@@ -89,9 +80,9 @@ public class ExamSchedule : ITenantScoped
 
     [Range(1, int.MaxValue)]
     [Display(Name = "Semester")]
-    public int SemesterId { get; set; }
+    public int SemesterInstanceId { get; set; }
 
-    public virtual Semester? Semester { get; set; }
+    public virtual SemesterInstance? SemesterInstance { get; set; }
 
     [Range(1, int.MaxValue)]
     [Display(Name = "Exam Type")]

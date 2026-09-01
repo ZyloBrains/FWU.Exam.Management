@@ -2,6 +2,9 @@
 
 @{
     ViewData["Title"] = "Edit Exam Schedule";
+    var today = DateOnly.FromDateTime(DateTime.Today);
+    var minStartDate = Model.StartDate.HasValue && Model.StartDate.Value >= today ? DateTime.Today.ToString("yyyy-MM-dd") : "";
+    var minEndDate = Model.EndDate.HasValue && Model.EndDate.Value >= today ? DateTime.Today.ToString("yyyy-MM-dd") : "";
 }
 
 <div class="space-y-6">
@@ -38,15 +41,21 @@
                     <span asp-validation-for="ExamScheduleCode" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="AcademicYearId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                    <select asp-for="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
-                        <option value="">-- Select Academic Year --</option>
+                    <label class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Batch Year</label>
+                    <select id="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">-- Select Batch Year --</option>
+                        @if (ViewBag.AcademicYearId is SelectList academicYears)
+                        {
+                            foreach (var ay in academicYears)
+                            {
+                                <option value="@ay.Value">@ay.Text</option>
+                            }
+                        }
                     </select>
-                    <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                    <select asp-for="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
+                    <select asp-for="ProgramId" id="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
                         <option value="">-- Select Program --</option>
                     </select>
                     <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
@@ -59,21 +68,16 @@
                     <span asp-validation-for="ExamTypeId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="SemesterId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                    <select asp-for="SemesterId" disabled="@(Model != null && Model.AcademicYearId > 0 ? null : "disabled")" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
+                    <label asp-for="SemesterInstanceId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                    <select asp-for="SemesterInstanceId" id="SemesterInstanceId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterInstanceId">
                         <option value="">-- Select Semester --</option>
                     </select>
-                    <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
-                </div>                
+                    <span asp-validation-for="SemesterInstanceId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
                 <div>
                     <label asp-for="PublishedDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <input asp-for="PublishedDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                     <span asp-validation-for="PublishedDate" class="text-xs text-red-500 mt-1 block"></span>
-                </div>
-                <div>
-                    <label asp-for="CollegeApprovalDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                    <input asp-for="CollegeApprovalDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                    <span asp-validation-for="CollegeApprovalDate" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="AdmissionCardReleaseDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
@@ -84,6 +88,11 @@
                     <label asp-for="ExtendedDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <input asp-for="ExtendedDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                     <span asp-validation-for="ExtendedDate" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="ExtendedDateCharge" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="ExtendedDateCharge" type="number" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 300" />
+                    <span asp-validation-for="ExtendedDateCharge" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="StartDateBs" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Start Date (BS)</label>
@@ -97,12 +106,12 @@
                 </div>
                 <div>
                     <label asp-for="StartDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Start Date (AD)</label>
-                    <input asp-for="StartDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <input asp-for="StartDate" type="date" min="@minStartDate" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                     <span asp-validation-for="StartDate" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="EndDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">End Date (AD)</label>
-                    <input asp-for="EndDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <input asp-for="EndDate" type="date" min="@minEndDate" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                     <span asp-validation-for="EndDate" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
@@ -149,8 +158,8 @@
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="~/lib/select2/css/select2.min.css" asp-append-version="true" rel="stylesheet" />
+    <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
 
     <style>
         .select2-container--default .select2-selection--single {
@@ -182,78 +191,71 @@
     }
 
     <script>
-        $(function () {
-            $('.select2').select2({ width: 'resolve' });
-        });
+        var initialAcademicYearId = '@(Model?.SemesterInstance?.AcademicYearId ?? 0)';
+        var initialProgramId = '@(Model?.ProgramId ?? 0)';
+        var initialSemesterInstanceId = '@(Model?.SemesterInstanceId ?? 0)';
 
-        var todayStr = '@DateTime.Today.ToString("yyyy-MM-dd")';
-        var originalStart = '@(Model.StartDate?.ToString("yyyy-MM-dd") ?? "")';
-        var originalEnd = '@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "")';
-        $('#examScheduleForm').on('submit', function (e) {
-            var start = $('#StartDate').val();
-            var end = $('#EndDate').val();
+        function resetSelect(selectId, placeholder) {
+            var el = $(selectId);
+            if (el.data('select2')) el.select2('destroy');
+            el.empty().append('<option value="">' + placeholder + '</option>');
+            el.prop('disabled', true).select2({ width: 'resolve' });
+        }
 
-            if (start && end && start > end) {
-                e.preventDefault();
-                alert('Start date cannot be after end date.');
-                return;
-            }
-            if (start && start !== originalStart && start < todayStr) {
-                e.preventDefault();
-                alert('Start date cannot be in the past.');
-                return;
-            }
-            if (end && end !== originalEnd && end < todayStr) {
-                e.preventDefault();
-                alert('End date cannot be in the past.');
-                return;
-            }
-        });
+        function loadSemesters(academicYearId, programId, preferredSemesterId) {
+            resetSelect('#SemesterInstanceId', '-- Select Semester --');
 
-        function loadSemesters(academicYearId, programId, selectedId) {
-            $('#SemesterId').select2('destroy');
-            var semesterDropdown = $("#SemesterId");
-            semesterDropdown.empty().append('<option value="">-- Select Semester --</option>');
+            if (!academicYearId || !programId) return;
 
-            if (!academicYearId) {
-                semesterDropdown.prop('disabled', true);
-                $('#SemesterId').select2({ width: 'resolve' });
-                return;
-            }
-
-            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
-                $.each(data, function (index, item) {
-                    semesterDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+            $.getJSON(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
+                var el = $('#SemesterInstanceId');
+                $.each(data, function (i, s) {
+                    el.append('<option value="' + s.id + '">' + s.name + '</option>');
                 });
-                if (selectedId) semesterDropdown.val(selectedId);
-                semesterDropdown.prop('disabled', false);
-                semesterDropdown.select2({ width: 'resolve' });
+                el.prop('disabled', false).select2({ width: 'resolve' });
+
+                if (preferredSemesterId && data.some(function (s) { return s.id == preferredSemesterId; })) {
+                    el.val(String(preferredSemesterId));
+                }
             });
         }
 
-        $("#AcademicYearId").change(function () {
-            loadSemesters($(this).val(), $("#ProgramId").val());
-        });
+        $(function () {
+            $('#AcademicYearId').select2({ width: 'resolve' });
 
-        $("#ProgramId").change(function () {
-            if ($("#AcademicYearId").val()) {
-                loadSemesters($("#AcademicYearId").val(), $(this).val());
+            $('#AcademicYearId').change(function () {
+                var pid = $('#ProgramId').val();
+                if (pid) {
+                    loadSemesters($(this).val(), pid);
+                }
+            });
+
+            $('#ProgramId').on('change', function () {
+                var pid = $(this).val();
+                if (pid) {
+                    loadSemesters($('#AcademicYearId').val(), pid);
+                } else {
+                    resetSelect('#SemesterInstanceId', '-- Select Semester --');
+                }
+            });
+
+            if (initialProgramId && initialProgramId !== '0') {
+                if (initialAcademicYearId && initialAcademicYearId !== '0') {
+                    $('#AcademicYearId').val(initialAcademicYearId).trigger('change');
+                    loadSemesters(initialAcademicYearId, initialProgramId, initialSemesterInstanceId);
+                }
             }
         });
 
-        var initialSemesterId = $("#SemesterId").val();
-        if ($("#AcademicYearId").val()) {
-            loadSemesters($("#AcademicYearId").val(), $("#ProgramId").val(), initialSemesterId);
-        } else {
-            loadSemesters('');
-        }
-
-        var convertTimer;
+        var startDateBsTimer;
+        var endDateBsTimer;
+        var startDateTimer;
+        var endDateTimer;
         $("#StartDateBs").on("input", function () {
             var bs = $(this).val().trim();
             if (bs.length === 10) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(startDateBsTimer);
+                startDateBsTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertBsToAd"), { bsDate: bs }, function (data) {
                         if (data.adDate) $("#StartDate").val(data.adDate);
                     });
@@ -263,8 +265,8 @@
         $("#EndDateBs").on("input", function () {
             var bs = $(this).val().trim();
             if (bs.length === 10) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(endDateBsTimer);
+                endDateBsTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertBsToAd"), { bsDate: bs }, function (data) {
                         if (data.adDate) $("#EndDate").val(data.adDate);
                     });
@@ -274,8 +276,8 @@
         $("#StartDate").on("input", function () {
             var ad = $(this).val().trim();
             if (ad.length >= 8) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(startDateTimer);
+                startDateTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertAdToBs"), { adDate: ad }, function (data) {
                         if (data.bsDate) $("#StartDateBs").val(data.bsDate);
                     });
@@ -285,8 +287,8 @@
         $("#EndDate").on("input", function () {
             var ad = $(this).val().trim();
             if (ad.length >= 8) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(endDateTimer);
+                endDateTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertAdToBs"), { adDate: ad }, function (data) {
                         if (data.bsDate) $("#EndDateBs").val(data.bsDate);
                     });

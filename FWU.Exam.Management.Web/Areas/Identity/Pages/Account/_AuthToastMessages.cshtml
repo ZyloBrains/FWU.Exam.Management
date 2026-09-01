@@ -1,0 +1,57 @@
+@{
+    var statusMessage = TempData["StatusMessage"]?.ToString();
+    var errorMessages = ViewData.ModelState
+        .Where(ms => ms.Key == string.Empty && ms.Value != null)
+        .SelectMany(ms => ms.Value!.Errors)
+        .Select(e => e.ErrorMessage)
+        .Where(m => !string.IsNullOrWhiteSpace(m))
+        .ToList();
+}
+
+@if (!string.IsNullOrWhiteSpace(statusMessage) || errorMessages.Count > 0)
+{
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="auth-toast-container" style="z-index: 1080;">
+        @if (!string.IsNullOrWhiteSpace(statusMessage))
+        {
+            <div class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-auth-toast="success">
+                <div class="d-flex">
+                    <div class="toast-body fw-medium">
+                        <i class="bi bi-check-circle-fill me-2"></i>@statusMessage
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+
+        @foreach (var message in errorMessages)
+        {
+            <div class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true" data-auth-toast="error">
+                <div class="d-flex">
+                    <div class="toast-body fw-medium">
+                        <i class="bi bi-exclamation-circle-fill me-2"></i>@message
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var container = document.getElementById('auth-toast-container');
+        if (!container || typeof bootstrap === 'undefined') return;
+        container.querySelectorAll('.toast').forEach(function (el) {
+            var isError = el.getAttribute('data-auth-toast') === 'error';
+            var delay = isError ? 6000 : 4000;
+            var toast = bootstrap.Toast.getOrCreateInstance(el, { delay: delay, autohide: true });
+            toast.show();
+            setTimeout(function () {
+                toast.hide();
+                setTimeout(function () {
+                    if (el.parentNode) el.parentNode.removeChild(el);
+                }, 300);
+            }, delay + 500);
+        });
+    });
+</script>

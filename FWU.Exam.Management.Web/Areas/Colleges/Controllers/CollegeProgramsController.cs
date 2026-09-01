@@ -112,22 +112,6 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"CollegePrograms_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var collegeProgram = await collegeProgramService.GetCollegeProgramByIdAsync(id.Value);
-        if (collegeProgram == null)
-        {
-            return NotFound();
-        }
-
-        return View(collegeProgram);
-    }
-
     [RequirePermission("collegeprograms.create")]
     public async Task<IActionResult> Create()
     {

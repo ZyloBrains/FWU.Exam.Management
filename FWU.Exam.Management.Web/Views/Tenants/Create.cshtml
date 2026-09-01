@@ -52,26 +52,19 @@
                     <input type="file" name="bannerImage" accept=".jpg,.jpeg,.png,.gif,.webp"
                            class="w-full text-sm text-gray-600 file:mr-3 file:px-3 file:py-2 file:rounded-md file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
                     <span asp-validation-for="Tenant.BannerImagePath" class="text-xs text-red-500 mt-1 block"></span>
-                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB. Shown as the profile cover banner for this tenant.</p>
+                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 2 MB. Shown as the profile cover banner for this tenant.</p>
                 </div>
                 <div class="md:col-span-2">
                     <label asp-for="Tenant.LogoPath" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Logo</label>
                     <input type="file" name="logoImage" accept=".jpg,.jpeg,.png,.gif,.webp"
                            class="w-full text-sm text-gray-600 file:mr-3 file:px-3 file:py-2 file:rounded-md file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
                     <span asp-validation-for="Tenant.LogoPath" class="text-xs text-red-500 mt-1 block"></span>
-                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB. Shown as the organization logo on this tenant's profile.</p>
+                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 2 MB. Shown as the organization logo on this tenant's profile.</p>
                 </div>
                 <div>
                     <label asp-for="Tenant.TenantType" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Tenant Type</label>
                     <select asp-for="Tenant.TenantType" asp-items="Html.GetEnumSelectList<FWU.Exam.Management.Domain.Enums.TenantType>()" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" id="TenantTypeSelect"></select>
                     <span asp-validation-for="Tenant.TenantType" class="text-xs text-red-500 mt-1 block"></span>
-                </div>
-                <div id="FacultyField" style="display:none">
-                    <label asp-for="SelectedFacultyId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Faculty</label>
-                    <select asp-for="SelectedFacultyId" asp-items="Model.FacultyList" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">-- Select Faculty --</option>
-                    </select>
-                    <span asp-validation-for="SelectedFacultyId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <div class="flex items-center gap-2 mt-7">
@@ -144,8 +137,8 @@
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="~/lib/select2/css/select2.min.css" asp-append-version="true" rel="stylesheet" />
+    <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
     <style>
         .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
         .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
@@ -160,32 +153,8 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script>
-        function reinitSelect2($el) {
-            if ($el.data('select2')) $el.select2('destroy');
-            $el.select2({width:'resolve'});
-        }
-
         $(function () {
             $('.select2').select2({ width: 'resolve' });
-
-            function toggleFacultyField(show) {
-                var $field = $('#FacultyField');
-                var $faculty = $('#SelectedFacultyId');
-                if (show) {
-                    $field.show();
-                    reinitSelect2($faculty);
-                } else {
-                    $field.hide();
-                }
-            }
-
-            $('#TenantTypeSelect').on('change', function() {
-                toggleFacultyField(this.value === '2');
-            });
-
-            if ($('#TenantTypeSelect').val() === '2') {
-                toggleFacultyField(true);
-            }
 
             function togglePassword(inputId, iconId) {
                 var $input = $(inputId);

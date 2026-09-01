@@ -40,26 +40,17 @@
                     <span x-show="activeFilterCount > 0" x-text="activeFilterCount"
                           class="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-teal-500 rounded-full"></span>
                 </button>
-                <div class="relative">
-                    <button x-on:click="openExport = !openExport"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <i class="fas fa-download text-xs"></i> Export
-                    </button>
-                    <div x-show="openExport"
-                         x-on:click.away="openExport = false"
-                         x-transition
-                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                        <a href="javascript:void(0)" onclick="exportPdf()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <i class="fas fa-file-pdf text-red-600"></i> PDF
-                        </a>
-                        <a href="javascript:void(0)" onclick="exportExcel()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <i class="fas fa-file-excel text-green-600"></i> Excel
-                        </a>
-                        <a href="javascript:void(0)" onclick="exportCsv()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <i class="fas fa-file-csv text-blue-600"></i> CSV
-                        </a>
-                    </div>
-                </div>
+                @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+                {
+                    ButtonClass = "bg-teal-600 hover:bg-teal-700",
+                    ScopeLabel = " (All)",
+                    JavascriptCallbacks = new Dictionary<string, string>
+                    {
+                        ["csv"] = "exportCsv()",
+                        ["pdf"] = "exportPdf()",
+                        ["excel"] = "exportExcel()"
+                    }
+                })
             </div>
         </div>
 
@@ -116,6 +107,19 @@
                         @if (ViewBag.Levels is SelectList lList)
                         {
                             foreach (var item in lList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Program</label>
+                    <select id="filterProgram" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="">All Programs</option>
+                        @if (ViewBag.Programs is SelectList pList)
+                        {
+                            foreach (var item in pList)
                             {
                                 <option value="@item.Value">@item.Text</option>
                             }
@@ -212,8 +216,8 @@
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="~/lib/select2/css/select2.min.css" asp-append-version="true" rel="stylesheet" />
+    <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
     <style>
         .select2-container--default .select2-selection--single { height: 34px; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; padding: 0.125rem 0; }
         .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding-left: 0.5rem; color: #374151; }
@@ -234,8 +238,9 @@
             const filterFaculty = document.getElementById('filterFaculty');
             const filterCollege = document.getElementById('filterCollege');
             const filterLevel = document.getElementById('filterLevel');
+            const filterProgram = document.getElementById('filterProgram');
             const filterStatus = document.getElementById('filterStatus');
-            const filterSelects = [filterAcademicYear, filterFaculty, filterCollege, filterLevel, filterStatus];
+            const filterSelects = [filterAcademicYear, filterFaculty, filterCollege, filterLevel, filterProgram, filterStatus];
 
             let page = 1;
             let pageSize = parseInt(pageSizeSelect.value, 10);
@@ -261,6 +266,7 @@
                 if (filterFaculty.value) params.append('facultyId', filterFaculty.value);
                 if (filterCollege.value) params.append('collegeId', filterCollege.value);
                 if (filterLevel.value) params.append('levelId', filterLevel.value);
+                if (filterProgram.value) params.append('programId', filterProgram.value);
                 if (filterStatus.value) params.append('status', filterStatus.value);
                 return params.toString();
             };

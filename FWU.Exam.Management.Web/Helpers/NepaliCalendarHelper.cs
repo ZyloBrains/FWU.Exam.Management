@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Helpers;
 using NepDate;
 
 namespace FWU.Exam.Management.Web.Helpers;
@@ -34,20 +35,8 @@ public static class NepaliCalendarHelper
     }
 
     public static DateTime? BsToAd(int bsYear, int bsMonth, int bsDay)
-    {
-        try
-        {
-            return new NepaliDate(bsYear, bsMonth, bsDay).EnglishDate;
-        }
-        catch
-        {
-            return null;
-        }
-    }
+        => NepaliDateConverter.BsToAd(bsYear, bsMonth, bsDay);
 
     public static (int Year, int Month, int Day) AdToBs(DateTime adDate)
-    {
-        var nepaliDate = new NepaliDate(adDate);
-        return (nepaliDate.Year, nepaliDate.Month, nepaliDate.Day);
-    }
+        => NepaliDateConverter.AdToBs(adDate);
 }

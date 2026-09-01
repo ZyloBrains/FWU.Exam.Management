@@ -1,4 +1,6 @@
 @model FWU.Exam.Management.Domain.Entities.Exams.ExamSchedule
+@using FWU.Exam.Management.Application.DTOs
+@using FWU.Exam.Management.Domain.Enums
 
 @{
     ViewData["Title"] = "Exam Schedule Details";
@@ -41,7 +43,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AcademicYear!.AcademicYearName)</p>
+                    <p class="mt-1 text-gray-800">@(Model.SemesterInstance?.AcademicYear?.AcademicYearName ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Program</p>
@@ -49,7 +51,7 @@
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Semester</p>
-                    <p class="mt-1 text-gray-800">@(Model.Semester?.Name ?? "-")</p>
+                    <p class="mt-1 text-gray-800">@(Model.SemesterInstance?.Semester?.Name ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Type</p>
@@ -88,11 +90,11 @@
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Published Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.PublishedDate)</p>
+                    <p class="mt-1 text-gray-800">@(Model.PublishedDate?.ToString("yyyy-MM-dd") ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Extended Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExtendedDate)</p>
+                    <p class="mt-1 text-gray-800">@(Model.ExtendedDate?.ToString("yyyy-MM-dd") ?? "-")</p>
                 </div>
             </div>
         </div>
@@ -102,13 +104,9 @@
             <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Other Details</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">College Approval Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.CollegeApprovalDate)</p>
-                </div>
-                <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Admission Card Release Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AdmissionCardReleaseDate)</p>
-                </div>                
+                    <p class="mt-1 text-gray-800">@(Model.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? "-")</p>
+                </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Extended Date Charge</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExtendedDateCharge)</p>
@@ -186,208 +184,140 @@
 
             @{
                 var slots = ViewBag.ExamSlots as List<FWU.Exam.Management.Domain.Entities.Exams.ExamSlot> ?? new();
+                var offerings = ViewBag.SubjectOfferings as List<FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering> ?? new();
+                var slotsByOfferingId = ViewBag.ExistingSlotsByOfferingId as Dictionary<int, FWU.Exam.Management.Domain.Entities.Exams.ExamSlot> ?? new();
+                var examCenters = ViewBag.ExamCenters as List<SelectListItem> ?? new();
+                var batches = ViewBag.Batches as List<SelectListItem> ?? new();
             }
 
-            @if (slots.Any())
+            @if (offerings.Any())
             {
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead>
-                            <tr class="bg-gray-50 border-b">
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">S.N.</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Subject Code</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Subject Name</th>
-                                <th class="px-3 py-2 text-center font-semibold text-gray-600">Theory</th>
-                                <th class="px-3 py-2 text-center font-semibold text-gray-600">Practical</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Date</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Time</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Room</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Center</th>
-                                <th class="px-3 py-2 text-center font-semibold text-gray-600">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            @for (int i = 0; i < slots.Count; i++)
-                            {
-                                var slot = slots[i];
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-3 py-2 font-medium text-gray-700">@(i + 1)</td>
-                                    <td class="px-3 py-2 font-semibold text-gray-800">@(slot.SubjectOffering?.SubjectCatalog?.SubjectCode ?? "-")</td>
-                                    <td class="px-3 py-2 text-gray-700">@(slot.SubjectOffering?.SubjectCatalog?.SubjectName ?? "-")</td>
-                                    <td class="px-3 py-2 text-center">@(slot.SubjectOffering?.HasTheory == true ? "Y" : "\u2014")</td>
-                                    <td class="px-3 py-2 text-center">@(slot.SubjectOffering?.HasPractical == true ? "Y" : "\u2014")</td>
-                                    <td class="px-3 py-2 text-gray-700">@(slot.ExamDate ?? "-")</td>
-                                    <td class="px-3 py-2 text-gray-700">@slot.StartTime - @slot.EndTime</td>
-                                    <td class="px-3 py-2 text-gray-700">@(slot.RoomNumber ?? "-")</td>
-                                    <td class="px-3 py-2 text-gray-700">@(slot.ExamCenter?.Code ?? "-")</td>
-                                    <td class="px-3 py-2 text-center">
-                                        <form asp-action="DeleteExamSlot" method="post" class="inline" onsubmit="return confirm('Remove this subject?')">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@slot.Id" />
-                                            <input type="hidden" name="examScheduleId" value="@Model.Id" />
-                                            <button type="submit" class="text-red-500 hover:text-red-700 hover:bg-red-50 rounded p-1 transition" title="Remove">
-                                                <i class="fas fa-trash-alt text-xs"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-            else
-            {
-                <p class="text-gray-400 text-sm italic py-4 text-center">No subjects configured for this exam schedule yet.</p>
-            }
-
-            <!-- Bulk Add All Subjects -->
-            @{
-                var remainingCount = (int)(ViewBag.RemainingSubjectCount ?? 0);
-            }
-            <details class="mt-4 @(remainingCount == 0 ? "opacity-50 pointer-events-none" : "")">
-                <summary class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm select-none">
-                    <i class="fas fa-list-check text-xs"></i> Add All Subjects (@remainingCount)
-                </summary>
-                <div class="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <h3 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-layer-group mr-1 text-green-500"></i> Bulk Add: All Remaining Subjects</h3>
-                    <form asp-action="AddAllExamSlots" method="post" class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="examScheduleId" value="@Model.Id" />
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Exam Center *</label>
-                            <select name="examCenterId" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                                <option value="">-- Select Center --</option>
-                                @foreach (var item in (List<SelectListItem>)ViewBag.ExamCenters)
-                                {
-                                    <option value="@item.Value">@item.Text</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Batch *</label>
-                            <select name="batchId" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                                <option value="">-- Select Batch --</option>
-                                @foreach (var item in (List<SelectListItem>)ViewBag.Batches)
-                                {
-                                    <option value="@item.Value">@item.Text</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Exam Date (BS)</label>
-                            <input type="text" name="examDate" placeholder="YYYY-MM-DD" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500" />
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Start Time *</label>
-                            <input type="time" name="startTime" required value="@(Model.StartTime.ToString("HH:mm"))" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500" />
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">End Time *</label>
-                            <input type="time" name="endTime" required value="@(Model.EndTime.ToString("HH:mm"))" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500" />
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Room Number</label>
-                            <input type="text" name="roomNumber" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500" />
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Remarks</label>
-                            <input type="text" name="remarks" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500" />
-                        </div>
-
-                        <div class="md:col-span-4 flex justify-end items-center gap-3">
-                            <span class="text-xs text-gray-500">All remaining subjects for this academic year &amp; semester will be added with these details.</span>
-                            <button type="submit" class="px-5 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition shadow-md">
-                                <i class="fas fa-check mr-1"></i> Confirm Add All
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </details>
-
-            <!-- Add Subject Form -->
-            <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h3 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-plus-circle mr-1 text-green-500"></i> Add Subject</h3>
-                <form asp-action="AddExamSlot" method="post" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <form asp-action="SaveExamSlots" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="examScheduleId" value="@Model.Id" />
 
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Subject *</label>
-                        <select name="subjectOfferingId" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">-- Select Subject --</option>
-                            @foreach (var item in (List<SelectListItem>)ViewBag.SubjectOfferings)
+                    <div class="flex flex-wrap items-center gap-3 mb-3">
+                        <label class="text-xs font-medium text-gray-600">Batch (applies to all subjects)</label>
+                        <select name="batchId" class="w-48 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="0">-- Select Batch --</option>
+                            @foreach (var item in batches)
                             {
                                 <option value="@item.Value">@item.Text</option>
                             }
                         </select>
+                        <label class="text-xs font-medium text-gray-600 ml-2">Start Time</label>
+                        <input type="time" id="allStartTime" value="@Model.StartTime.ToString("HH:mm")" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <label class="text-xs font-medium text-gray-600 ml-2">End Time</label>
+                        <input type="time" id="allEndTime" value="@Model.EndTime.ToString("HH:mm")" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <span class="text-xs text-gray-500">(applies to all subjects)</span>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Exam Center *</label>
-                        <select name="examCenterId" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">-- Select Center --</option>
-                            @foreach (var item in (List<SelectListItem>)ViewBag.ExamCenters)
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        </select>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 border-b">
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-600">S.N.</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Subject</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Center</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Date (AD)</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-gray-600">Start</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-gray-600">End</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Remarks</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-gray-600">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @for (int i = 0; i < offerings.Count; i++)
+                                {
+                                    var offering = offerings[i];
+                                    var slot = slotsByOfferingId.TryGetValue(offering.Id, out var existingSlot) ? existingSlot : null;
+                                    <tr class="hover:bg-gray-50 align-top">
+                                        <td class="px-3 py-2 font-medium text-gray-700 whitespace-nowrap">@(i + 1)</td>
+                                        <td class="px-3 py-2">
+                                            <input type="hidden" name="subjectOfferingId" value="@offering.Id" />
+                                            <div class="font-semibold text-gray-800">@(offering.SubjectCatalog?.SubjectCode ?? "-") - @(offering.SubjectCatalog?.SubjectName ?? "-")</div>
+                                            <div class="text-xs text-gray-500 mt-0.5">
+                                                @if (offering.HasTheory) { <span class="mr-2"><i class="fas fa-book-open mr-1 text-indigo-400"></i>Theory</span> }
+                                                @if (offering.HasPractical) { <span><i class="fas fa-flask mr-1 text-green-500"></i>Practical</span> }
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <select name="examCenterId" class="w-36 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                                <option value="0">-- Select --</option>
+                                                @foreach (var item in examCenters)
+                                                {
+                                                    if (slot?.ExamCenterId.ToString() == item.Value)
+                                                    {
+                                                        <option value="@item.Value" selected>@item.Text</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@item.Value">@item.Text</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <input type="date" name="examDate" value="@(slot?.ExamDate)" min="@(Model.StartDate?.ToString("yyyy-MM-dd"))" max="@(Model.EndDate?.ToString("yyyy-MM-dd"))" class="w-36 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <input type="time" name="startTime" value="@(slot?.StartTime.ToString("HH:mm") ?? Model.StartTime.ToString("HH:mm"))" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <input type="time" name="endTime" value="@(slot?.EndTime.ToString("HH:mm") ?? Model.EndTime.ToString("HH:mm"))" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <input type="text" name="remarks" value="@(slot?.Remarks)" placeholder="Remarks" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                        </td>
+                                        <td class="px-3 py-2 text-center whitespace-nowrap">
+                                            @if (slot != null)
+                                            {
+                                                <button type="submit" form="deleteExamSlot-@slot.Id" onclick="return confirm('Remove this subject from the schedule?')" class="text-red-500 hover:text-red-700 hover:bg-red-50 rounded p-1 transition" title="Remove subject">
+                                                    <i class="fas fa-trash-alt text-xs"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-xs text-gray-300">-</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Batch *</label>
-                        <select name="batchId" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">-- Select Batch --</option>
-                            @foreach (var item in (List<SelectListItem>)ViewBag.Batches)
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Exam Date (BS)</label>
-                        <input type="text" name="examDate" placeholder="YYYY-MM-DD" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Start Time *</label>
-                        <input type="time" name="startTime" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">End Time *</label>
-                        <input type="time" name="endTime" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Room Number</label>
-                        <input type="text" name="roomNumber" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Remarks</label>
-                        <input type="text" name="remarks" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                    </div>
-
-                    <div class="md:col-span-4 flex justify-end">
-                        <button type="submit" class="px-5 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md">
-                            <i class="fas fa-plus mr-1"></i> Add Subject
+                    <div class="mt-4 flex items-center justify-between gap-3">
+                        <p class="text-xs text-gray-500">
+                            Pick the batch above (applies to all subjects) and an exam center per subject to schedule it; subjects without a center are left unscheduled. Times default to the schedule's start/end.
+                        </p>
+                        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md">
+                            <i class="fas fa-save mr-1"></i> Save All Subjects
                         </button>
                     </div>
                 </form>
-            </div>
+
+                @foreach (var slot in slots)
+                {
+                    <form id="deleteExamSlot-@slot.Id" asp-action="DeleteExamSlot" method="post" class="hidden">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@slot.Id" />
+                        <input type="hidden" name="examScheduleId" value="@Model.Id" />
+                    </form>
+                }
+            }
+            else
+            {
+                <p class="text-gray-400 text-sm italic py-4 text-center">No subjects found for this program, semester and curriculum version.</p>
+            }
         </div>
 
         <!-- Actions -->
         <div class="flex items-center gap-4 pt-6 mt-8 border-t border-gray-200">
+            <a asp-controller="PublishResults" asp-action="Preview" asp-area="Exams" asp-route-examScheduleId="@Model?.Id"
+               class="px-6 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition shadow-md">
+                <i class="fas fa-cloud-upload-alt mr-1"></i> Publish Results
+            </a>
             <a asp-action="Edit" asp-area="Exams" asp-route-id="@Model?.Id"
                class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
                 <i class="fas fa-edit mr-1"></i> Edit
@@ -404,4 +334,16 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        document.getElementById('allStartTime').addEventListener('change', function () {
+            document.querySelectorAll('input[name="startTime"]').forEach(function (input) {
+                input.value = this.value;
+            }, this);
+        });
+        document.getElementById('allEndTime').addEventListener('change', function () {
+            document.querySelectorAll('input[name="endTime"]').forEach(function (input) {
+                input.value = this.value;
+            }, this);
+        });
+    </script>
 }

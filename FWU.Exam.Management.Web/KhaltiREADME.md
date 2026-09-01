@@ -102,17 +102,9 @@ public class KhaltiLookupResponse
 
 ## 9. Logging
 
-All Khalti API calls are logged to:
-- `logs/info.log` — requests, responses, redirects
-- `logs/error.log` — API errors (HTTP 4xx/5xx)
-
-**File:** `Logging/FileLogger.cs` — custom `ILoggerProvider`, zero dependencies.
-
-Registered in `EntryPoint.cs:113`:
-```csharp
-var logDir = Path.Combine(builder.Environment.ContentRootPath, "logs");
-builder.Logging.AddFileLogger(logDir);
-```
+All Khalti API calls are logged via Serilog (configured in `EntryPoint.cs`) to:
+- Console
+- `logs/log-.txt` — daily rolling file (retained for 30 days)
 
 ## 10. Fee calculation formula
 

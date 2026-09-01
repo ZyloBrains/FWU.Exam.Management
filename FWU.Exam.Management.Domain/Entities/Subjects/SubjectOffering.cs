@@ -24,6 +24,12 @@ public class SubjectOffering : ITenantScoped
     [Display(Name = "Semester")]
     public int SemesterId { get; set; }
 
+    [Display(Name = "Curriculum Version")]
+    public int? CurriculumVersionId { get; set; }
+
+    [Display(Name = "Is Active")]
+    public bool IsActive { get; set; } = true;
+
     [Display(Name = "Is Compulsory")]
     public bool IsCompulsory { get; set; }
 
@@ -42,11 +48,11 @@ public class SubjectOffering : ITenantScoped
 
     [Range(0, float.MaxValue)]
     [Display(Name = "Theory Full Marks")]
-    public float TheoryFullMarks { get; set; }
+    public float? TheoryFullMarks { get; set; }
 
     [Range(0, float.MaxValue)]
     [Display(Name = "Theory Pass Marks")]
-    public float TheoryPassMarks { get; set; }
+    public float? TheoryPassMarks { get; set; }
 
     [Range(0, float.MaxValue)]
     [Display(Name = "Practical Full Marks")]
@@ -64,16 +70,9 @@ public class SubjectOffering : ITenantScoped
     [Display(Name = "Internal Theory Pass Marks")]
     public float? InternalTheoryPassMarks { get; set; }
 
-    [Range(0, float.MaxValue)]
-    [Display(Name = "Internal Practical Full Marks")]
-    public float? InternalPracticalFullMarks { get; set; }
-
-    [Range(0, float.MaxValue)]
-    [Display(Name = "Internal Practical Pass Marks")]
-    public float? InternalPracticalPassMarks { get; set; }
-
     public virtual SubjectCatalog? SubjectCatalog { get; set; }
     public virtual Program? Program { get; set; }
     public virtual Semester? Semester { get; set; }
+    public virtual CurriculumVersion? CurriculumVersion { get; set; }
     public virtual ICollection<ExamSlot> ExamSlots { get; set; } = [];
 }

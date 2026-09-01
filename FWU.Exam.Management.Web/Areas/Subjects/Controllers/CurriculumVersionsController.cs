@@ -17,13 +17,15 @@ namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 public class CurriculumVersionsController : Controller
 {
     private readonly ICurriculumVersionService _curriculumVersionService;
+    private readonly ISubjectOfferingService _subjectOfferingService;
 
-    public CurriculumVersionsController(ICurriculumVersionService curriculumVersionService)
+    public CurriculumVersionsController(ICurriculumVersionService curriculumVersionService, ISubjectOfferingService subjectOfferingService)
     {
         _curriculumVersionService = curriculumVersionService;
+        _subjectOfferingService = subjectOfferingService;
     }
 
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "id", string sortDir = "desc", int pageSize = 10)
     {
         var (items, totalCount) = await _curriculumVersionService.GetCurriculumVersionsAsync(page, pageSize, search, sort, sortDir);
 
@@ -39,7 +41,7 @@ public class CurriculumVersionsController : Controller
     }
 
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "id", string sortDir = "desc")
     {
         var items = await _curriculumVersionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -60,7 +62,7 @@ public class CurriculumVersionsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "id", string sortDir = "desc")
     {
         var items = await _curriculumVersionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -96,7 +98,7 @@ public class CurriculumVersionsController : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "id", string sortDir = "desc")
     {
         var (items, totalCount) = await _curriculumVersionService.GetCurriculumVersionsAsync(page, pageSize, search, sort, sortDir);
 
@@ -117,7 +119,56 @@ public class CurriculumVersionsController : Controller
         var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id.Value);
         if (curriculumVersion == null) return NotFound();
 
+        var offerings = await _subjectOfferingService.GetSubjectOfferingsByCurriculumVersionAsync(id.Value);
+        ViewBag.SubjectCount = offerings.Count;
+        ViewBag.SubjectOfferings = offerings;
+
         return View(curriculumVersion);
+    }
+
+    [HttpGet]
+    [RequirePermission("curriculumversions.create")]
+    public async Task<IActionResult> Copy(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id.Value);
+        if (curriculumVersion == null) return NotFound();
+
+        var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync();
+        ViewData["EffectiveAcademicYearId"] = new SelectList(academicYears, "Id", "AcademicYearName");
+        ViewData["SourceName"] = curriculumVersion.Name;
+        ViewData["SourceProgram"] = curriculumVersion.Program?.ProgramName ?? "-";
+
+        return View(curriculumVersion);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequirePermission("curriculumversions.create")]
+    public async Task<IActionResult> Copy(int id, int effectiveAcademicYearId, string name)
+    {
+        if (id <= 0 || effectiveAcademicYearId <= 0 || string.IsNullOrWhiteSpace(name))
+        {
+            ModelState.AddModelError("", "Please provide a version name and target academic year.");
+            var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id);
+            if (curriculumVersion == null) return NotFound();
+            var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync();
+            ViewData["EffectiveAcademicYearId"] = new SelectList(academicYears, "Id", "AcademicYearName", effectiveAcademicYearId);
+            ViewData["SourceName"] = curriculumVersion.Name;
+            ViewData["SourceProgram"] = curriculumVersion.Program?.ProgramName ?? "-";
+            return View(curriculumVersion);
+        }
+
+        var newVersion = await _curriculumVersionService.CopyCurriculumVersionAsync(id, effectiveAcademicYearId, name.Trim());
+        if (newVersion == null)
+        {
+            TempData["ErrorMessage"] = "Copy failed. Source curriculum version not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        TempData["SuccessMessage"] = $"Curriculum version \"{newVersion.Name}\" copied successfully.";
+        return RedirectToAction(nameof(Details), new { id = newVersion.Id });
     }
 
     [RequirePermission("curriculumversions.create")]
@@ -206,8 +257,11 @@ public class CurriculumVersionsController : Controller
     {
         try
         {
-            await _curriculumVersionService.DeleteCurriculumVersionAsync(id);
-            TempData["SuccessMessage"] = "Curriculum version deleted successfully!";
+            var (deleted, skipped) = await _curriculumVersionService.DeleteCurriculumVersionAsync(id);
+            if (deleted)
+                TempData["SuccessMessage"] = "Curriculum version deleted successfully!";
+            else
+                TempData["ErrorMessage"] = $"{skipped} subject offering(s) are still referenced by exam slots, exam results, or admin assignments and were not removed. The curriculum version was kept.";
             return RedirectToAction(nameof(Index));
         }
         catch (DbUpdateException)
@@ -226,7 +280,14 @@ public class CurriculumVersionsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {
-        try { await _curriculumVersionService.DeleteCurriculumVersionAsync(id); return Json(new { success = true, message = "Curriculum version deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        try
+        {
+            var (deleted, skipped) = await _curriculumVersionService.DeleteCurriculumVersionAsync(id);
+            return Json(deleted
+                ? new { success = true, message = "Curriculum version deleted successfully!" }
+                : new { success = false, message = $"{skipped} subject offering(s) are still referenced by exam slots, exam results, or admin assignments and were not removed. The curriculum version was kept." });
+        }
+        catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
     }
 
 }

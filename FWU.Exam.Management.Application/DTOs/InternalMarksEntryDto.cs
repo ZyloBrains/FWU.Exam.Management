@@ -29,23 +29,7 @@ public class InternalMarksSearchResultDto
     public bool HasInternal { get; set; }
     public float InternalTheoryFullMarks { get; set; }
     public float InternalTheoryPassMarks { get; set; }
-    public float InternalPracticalFullMarks { get; set; }
-    public float InternalPracticalPassMarks { get; set; }
     public List<InternalMarksStudentDto> Students { get; set; } = [];
 }
 
-public class InternalMarksSaveDto
-{
-    public int SubjectOfferingId { get; set; }
-    public int ExamScheduleId { get; set; }
-    public bool SubmitAll { get; set; }
-    public List<InternalMarksStudentSaveDto> Students { get; set; } = [];
-}
 
-public class InternalMarksStudentSaveDto
-{
-    public int ExamRegistrationId { get; set; }
-    public int? ExamSubjectResultId { get; set; }
-    public float? TheoryInternal { get; set; }
-    public float? PracticalInternal { get; set; }
-}

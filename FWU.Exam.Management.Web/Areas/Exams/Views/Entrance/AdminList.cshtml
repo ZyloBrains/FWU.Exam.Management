@@ -26,25 +26,18 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <div class="relative">
-                <button x-on:click="openExport = !openExport"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
-                    <i class="fas fa-download text-xs"></i> Export
-                </button>
-                <div x-show="openExport"
-                     x-on:click.away="openExport = false"
-                     x-transition
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                    <a asp-action="ExportToExcel"
-                           asp-route-search="@currentSearch"
-                           asp-route-status="@currentStatus"
-                           asp-route-programId="@ViewBag.ProgramId"
-                           asp-route-academicYearId="@ViewBag.AcademicYearId"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-excel text-green-600"></i> Excel (All)
-                    </a>
-                </div>
-            </div>
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["search"] = currentSearch,
+                    ["status"] = currentStatus,
+                    ["programId"] = ViewBag.ProgramId?.ToString() ?? "",
+                    ["academicYearId"] = ViewBag.AcademicYearId?.ToString() ?? ""
+                },
+                ButtonClass = "bg-green-600 hover:bg-green-700",
+                ScopeLabel = " (All)"
+            })
         </div>
     </div>
 
@@ -222,10 +215,32 @@
                            class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
                         <i class="fas fa-chevron-left text-xs"></i>
                     </a>
-                    @for (int i = 1; i <= totalPages; i++)
-                    {
-                        <a asp-action="AdminList" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-status="@currentStatus" asp-route-programId="@ViewBag.ProgramId" asp-route-academicYearId="@ViewBag.AcademicYearId" asp-route-pageSize="@pageSize"
-                               class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-indigo-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
+                    @{
+                        var startPage = Math.Max(1, currentPage - 2);
+                        var endPage = Math.Min(totalPages, currentPage + 2);
+                        if (startPage > 1)
+                        {
+                            <a asp-action="AdminList" asp-route-page="1" asp-route-search="@currentSearch" asp-route-status="@currentStatus" asp-route-programId="@ViewBag.ProgramId" asp-route-academicYearId="@ViewBag.AcademicYearId" asp-route-pageSize="@pageSize"
+                                   class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">1</a>
+                            if (startPage > 2)
+                            {
+                                <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                            }
+                        }
+                        for (int i = startPage; i <= endPage; i++)
+                        {
+                            <a asp-action="AdminList" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-status="@currentStatus" asp-route-programId="@ViewBag.ProgramId" asp-route-academicYearId="@ViewBag.AcademicYearId" asp-route-pageSize="@pageSize"
+                                   class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-indigo-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
+                        }
+                        if (endPage < totalPages)
+                        {
+                            if (endPage < totalPages - 1)
+                            {
+                                <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                            }
+                            <a asp-action="AdminList" asp-route-page="@totalPages" asp-route-search="@currentSearch" asp-route-status="@currentStatus" asp-route-programId="@ViewBag.ProgramId" asp-route-academicYearId="@ViewBag.AcademicYearId" asp-route-pageSize="@pageSize"
+                                   class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">@totalPages</a>
+                        }
                     }
                     <a asp-action="AdminList" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-status="@currentStatus" asp-route-programId="@ViewBag.ProgramId" asp-route-academicYearId="@ViewBag.AcademicYearId" asp-route-pageSize="@pageSize"
                            class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">
@@ -238,8 +253,8 @@
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="~/lib/select2/css/select2.min.css" asp-append-version="true" rel="stylesheet" />
+    <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
 
     <style>
         .select2-container--default .select2-selection--single {

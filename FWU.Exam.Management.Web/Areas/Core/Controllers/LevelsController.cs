@@ -106,16 +106,6 @@ public class LevelsController(ILevelService levelService) : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var level = await levelService.GetLevelByIdAsync(id.Value);
-        if (level == null) return NotFound();
-
-        return View(level);
-    }
-
     [RequirePermission("levels.create")]
     public IActionResult Create()
     {

@@ -34,45 +34,19 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <!-- Export dropdown -->
-            <div class="relative">
-                <button x-on:click="openExport = !openExport"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors shadow-sm">
-                    <i class="fas fa-download text-xs"></i> Export
-                </button>
-                <div x-show="openExport"
-                     x-on:click.away="openExport = false"
-                     x-transition
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                    <a asp-action="ExportToCsv" asp-area="Exams"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-csv text-blue-600"></i> CSV (Current Page)
-                    </a>
-                    <a asp-action="ExportToPdf" asp-area="Exams"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-pdf text-red-600"></i> PDF (Current Page)
-                    </a>
-                    <a asp-action="ExportToExcel" asp-area="Exams"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-excel text-green-600"></i> Excel (Current Page)
-                    </a>
-                </div>
-            </div>
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["page"] = currentPage.ToString(),
+                    ["pageSize"] = pageSize.ToString(),
+                    ["search"] = currentSearch,
+                    ["sort"] = currentSort,
+                    ["sortDir"] = currentSortDir
+                },
+                ButtonClass = "bg-rose-600 hover:bg-rose-700",
+                ScopeLabel = " (Current Page)"
+            })
             @if (HasPerm("examtypes.create"))
             {
                 <a asp-action="Create" asp-area="Exams" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
@@ -346,8 +320,8 @@
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="~/lib/select2/css/select2.min.css" asp-append-version="true" rel="stylesheet" />
+    <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
     <style>
         .select2-container--default .select2-selection--single { height: 34px; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; padding: 0.125rem 0; }
         .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding-left: 0.5rem; color: #374151; }

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -19,7 +20,8 @@ public class UserContextMiddleware(RequestDelegate next)
                 var userManager = context.RequestServices.GetRequiredService<UserManager<AppUser>>();
                 var dbContext = context.RequestServices.GetRequiredService<AppDbContext>();
                 var userContext = context.RequestServices.GetRequiredService<IUserContext>();
-
+                var tenantContext = context.RequestServices.GetRequiredService<ITenantContext>();
+                ;
                 var user = await dbContext.Users
                     .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == userId);
@@ -31,9 +33,9 @@ public class UserContextMiddleware(RequestDelegate next)
                     List<int> facultyCollegeIds = [];
                     if (user.FacultyId.HasValue)
                     {
-                        facultyCollegeIds = await dbContext.CollegePrograms
-                            .Where(cp => cp.Program != null && cp.Program.FacultyId == user.FacultyId)
-                            .Select(cp => cp.CollegeId)
+                        facultyCollegeIds = await dbContext.CollegeFaculties
+                            .Where(cf => cf.FacultyId == user.FacultyId)
+                            .Select(cf => cf.CollegeId)
                             .Distinct()
                             .ToListAsync();
                     }
@@ -44,6 +46,19 @@ public class UserContextMiddleware(RequestDelegate next)
                         collegeId: user.CollegeId,
                         facultyCollegeIds: facultyCollegeIds,
                         roles: (IReadOnlyList<string>)roles);
+
+                    var isCollegeAdmin = roles.Contains(Role.CollegeAdmin);
+                    List<int> collegeTenantIds = [];
+                    if (isCollegeAdmin && user.CollegeId.HasValue)
+                    {
+                        collegeTenantIds = await dbContext.CollegeFaculties
+                            .Where(cf => cf.CollegeId == user.CollegeId.Value)
+                            .Select(cf => cf.TenantId)
+                            .Distinct()
+                            .ToListAsync();
+                    }
+
+                    tenantContext.SetCollegeAdmin(isCollegeAdmin, user.CollegeId, collegeTenantIds);
                 }
             }
         }

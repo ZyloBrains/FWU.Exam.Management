@@ -26,6 +26,7 @@ public static class Permissions
     public const string GroupBanks = "banks";
     public const string GroupPaymentTypes = "paymenttypes";
     public const string GroupBillTitles = "billtitles";
+    public const string GroupPaymentVerification = "paymentverification";
     public const string GroupProvinces = "provinces";
     public const string GroupDistricts = "districts";
     public const string GroupLocalLevels = "locallevels";
@@ -53,6 +54,8 @@ public static class Permissions
     public const string GroupAdmitCards = "admitcards";
     public const string GroupRetotaling = "retotaling";
     public const string GroupMarksEntry = "marksentry";
+    public const string GroupTheoryMarks = "theorymarks";
+    public const string GroupPracticalMarks = "practicalmarks";
     public const string GroupReports = "reports";
     public const string GroupAuditLog = "auditlog";
     public const string GroupBackupRestore = "backuprestore";
@@ -192,6 +195,10 @@ public static class Permissions
     public const string BillTitlesEdit = "billtitles.edit";
     public const string BillTitlesDelete = "billtitles.delete";
 
+    // Payment Verification
+    public const string PaymentVerificationView = "paymentverification.view";
+    public const string PaymentVerificationExport = "paymentverification.export";
+
     // Provinces
     public const string ProvincesView = "provinces.view";
     public const string ProvincesCreate = "provinces.create";
@@ -325,8 +332,9 @@ public static class Permissions
     public const string ExamSubjectResultsEdit = "examsubjectresults.edit";
     public const string ExamSubjectResultsDelete = "examsubjectresults.delete";
 
-    // Result Records (read-only)
+    // Result Records
     public const string ResultRecordsView = "resultrecords.view";
+    public const string ResultRecordsManage = "resultrecords.manage";
 
     // Exam Centers
     public const string ExamCentersView = "examcenters.view";
@@ -361,6 +369,14 @@ public static class Permissions
     public const string MarksEntrySubmit = "marksentry.submit";
     public const string MarksEntryImport = "marksentry.import";
     public const string MarksEntryExport = "marksentry.export";
+
+    // Theory Marks Entry (Central / Faculty Admin)
+    public const string TheoryMarksView = "theorymarks.view";
+    public const string TheoryMarksSubmit = "theorymarks.submit";
+
+    // Practical Marks Entry (Central / Faculty Admin)
+    public const string PracticalMarksView = "practicalmarks.view";
+    public const string PracticalMarksSubmit = "practicalmarks.submit";
 
     // Reports
     public const string ReportsCollegePayments = "reports.collegepayments";
@@ -482,6 +498,9 @@ public static class Permissions
         (BillTitlesEdit, "Edit Bill Titles", GroupBillTitles, "Edit existing bill titles"),
         (BillTitlesDelete, "Delete Bill Titles", GroupBillTitles, "Delete bill titles"),
 
+        (PaymentVerificationView, "View Payment Verification", GroupPaymentVerification, "View student payment verification list"),
+        (PaymentVerificationExport, "Export Payment Verification", GroupPaymentVerification, "Export payment verification list"),
+
         (ProvincesView, "View Provinces", GroupProvinces, "View province list"),
         (ProvincesCreate, "Create Provinces", GroupProvinces, "Create new provinces"),
         (ProvincesEdit, "Edit Provinces", GroupProvinces, "Edit existing provinces"),
@@ -595,6 +614,7 @@ public static class Permissions
         (ExamSubjectResultsDelete, "Delete Subject Results", GroupExamSubjectResults, "Delete subject results"),
 
         (ResultRecordsView, "View Result Records", GroupResultRecords, "View published result records"),
+        (ResultRecordsManage, "Manage Result Records", GroupResultRecords, "Publish and manage result records"),
 
         (ExamCentersView, "View Exam Centers", GroupExamCenters, "View exam center list"),
         (ExamCentersCreate, "Create Exam Centers", GroupExamCenters, "Create new exam centers"),
@@ -635,6 +655,12 @@ public static class Permissions
         (MarksEntryImport, "Import Marks", GroupMarksEntry, "Import marks from Excel for assigned subjects"),
         (MarksEntryExport, "Export Marks", GroupMarksEntry, "Export marks to Excel for assigned subjects"),
 
+        (TheoryMarksView, "View Theory Marks Entry", GroupTheoryMarks, "View theory marks entry for exam schedule students"),
+        (TheoryMarksSubmit, "Submit Theory Marks", GroupTheoryMarks, "Submit theory marks for exam schedule students"),
+
+        (PracticalMarksView, "View Practical Marks Entry", GroupPracticalMarks, "View practical marks entry for exam schedule students"),
+        (PracticalMarksSubmit, "Submit Practical Marks", GroupPracticalMarks, "Submit practical marks for exam schedule students"),
+
         (AuditLogView, "View Audit Log", GroupAuditLog, "View audit trail and activity logs"),
 
         (BackupRestoreManage, "Manage Backup & Restore", GroupBackupRestore, "Backup and restore database"),
@@ -662,16 +688,19 @@ public static class Permissions
             SubjectOfferingsView, SubjectOfferingsCreate, SubjectOfferingsEdit, SubjectOfferingsDelete,
             CurriculumVersionsView,
 
-            ExamSchedulesView, ExamSchedulesCreate, ExamSchedulesEdit, ExamSchedulesDelete,
+            ExamSchedulesView, ExamSchedulesCreate, ExamSchedulesEdit,
             ExamTypesView, ExamTypesCreate, ExamTypesEdit,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
+            PaymentVerificationView, PaymentVerificationExport,
 
             GradingSchemesView, GradingSchemesCreate, GradingSchemesEdit,
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify, ExamRegistrationApprove,
             ExamSubjectResultsView, ExamSubjectResultsCreate, ExamSubjectResultsEdit,
-            ResultRecordsView,
+            ResultRecordsView, ResultRecordsManage,
 
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
+            TheoryMarksView, TheoryMarksSubmit,
+            PracticalMarksView, PracticalMarksSubmit,
 
             ExamCentersView, ExamCentersCreate, ExamCentersEdit, ExamCentersDelete,
             ExamCentersGenerateRollNumbers,
@@ -707,7 +736,6 @@ public static class Permissions
         [
             DashboardView,
 
-            CollegesView,
             ProgramsView,
             SubjectsView,
             SemestersView,
@@ -716,23 +744,23 @@ public static class Permissions
             ExamSchedulesView,
             ExamTypesView,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
+            PaymentVerificationView, PaymentVerificationExport,
 
             GradingSchemesView,
-            ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit,
+            ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify,
             ExamSubjectResultsView,
-            ResultRecordsView,
+            ResultRecordsView, ResultRecordsManage,
 
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
+            PracticalMarksView, PracticalMarksSubmit,
 
             ExamCentersView,
             AdmitCardsView, AdmitCardsDownload,
             RetotalingView,
 
-            StudentsView, StudentsCreate, StudentsEdit,
             StudentAdmissionsView, StudentAdmissionsCreate, StudentAdmissionsEdit,
 
             UsersView, UsersCreate, UsersEdit,
-            PermissionsManage,
 
             BanksView, BanksCreate, BanksEdit,
             PaymentTypesView, PaymentTypesCreate, PaymentTypesEdit, PaymentTypesDelete,

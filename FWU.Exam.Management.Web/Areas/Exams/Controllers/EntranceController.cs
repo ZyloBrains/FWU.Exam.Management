@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
@@ -5,19 +6,22 @@ using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper) : Controller
+public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper, IAuditLogWriter auditLogWriter, AppDbContext context) : Controller
 {
 
     // --- Public actions (no auth required) ---
@@ -191,6 +195,10 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             }
 
             await LogEsewaCallback(logId, response.TransactionCode, true, combinedData, "Payment verified via eSewa");
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentVerified,
+                $"Entrance exam fee payment verified via eSewa (Transaction {response.TransactionCode})",
+                new { gateway = "esewa", transactionCode = response.TransactionCode, transactionUuid = response.TransactionUuid, amount = response.TotalAmount, voucherId = voucher.Id, voucherNumber = voucher.VoucherNumber },
+                entityName: "EntranceExamApplication", entityId: voucher.Id.ToString());
 
             TempData["SuccessMessage"] = "Payment successful!";
             TempData["TransactionCode"] = response.TransactionCode;
@@ -271,7 +279,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         ViewBag.EntranceFee = voucher.Amount;
         ViewBag.SelectedProgram = schedule?.Program?.ProgramName;
         ViewBag.SelectedCollege = schedule?.College?.Name;
-        ViewBag.SelectedAcademicYear = schedule?.AcademicYear?.AcademicYearName;
+        ViewBag.SelectedAcademicYear = schedule?.SemesterInstance?.AcademicYear?.AcademicYearName;
 
         // Check for existing application linked to this voucher
         var existing = await service.GetApplicationByVoucherIdAsync(voucherId);
@@ -292,7 +300,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         {
             ApplicationVoucherId = voucherId,
             PaymentVerified = true,
-            AcademicYearId = schedule?.AcademicYearId ?? 0,
+            AcademicYearId = schedule?.SemesterInstance?.AcademicYearId ?? 0,
             CollegeId = schedule?.CollegeId ?? 0,
             ProgramId = schedule?.ProgramId ?? 0
         });
@@ -319,20 +327,36 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         if (ModelState.IsValid)
         {
             // Handle file uploads
-            application.PhotoPath = await fileUploadHelper.UploadAsync(PhotoFile, "entrance/photos");
-            application.DocumentsPath = await fileUploadHelper.UploadAsync(DocumentsFile, "entrance/documents");
-            application.VoucherPath = await fileUploadHelper.UploadAsync(VoucherFile, "entrance/vouchers");
+            try
+            {
+                application.PhotoPath = await fileUploadHelper.UploadAsync(PhotoFile, "entrance/photos", Helpers.FileUploadHelper.MaxPhotoSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
+                application.DocumentsPath = await fileUploadHelper.UploadAsync(DocumentsFile, "entrance/documents", Helpers.FileUploadHelper.MaxDocumentSizeBytes, Helpers.FileUploadHelper.DocumentAllowedExtensions);
+                application.VoucherPath = await fileUploadHelper.UploadAsync(VoucherFile, "entrance/vouchers", Helpers.FileUploadHelper.MaxDocumentSizeBytes, Helpers.FileUploadHelper.DocumentAllowedExtensions);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                await PopulateStepSelectListsAsync(selectLists);
+                ViewBag.VoucherId = voucherId;
+                return View(application);
+            }
 
             // Check if editing an existing application
             var existing = await service.GetApplicationByVoucherIdAsync(voucherId);
             if (existing != null && (existing.Status == ApplicationStatus.Submitted || existing.Status == ApplicationStatus.Rejected))
             {
                 await service.UpdateStepApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber, voucherId, existing.Id);
+                await auditLogWriter.LogAsync(ActivityTypes.EntranceUpdated,
+                    $"Entrance application {existing.Id} updated",
+                    new { applicationId = existing.Id, voucherId, name = $"{application.FirstName} {application.LastName}".Trim() }, entityName: "EntranceExamApplication", entityId: existing.Id.ToString());
                 TempData["SuccessMessage"] = "Application updated successfully.";
                 return RedirectToAction(nameof(Confirmation), new { id = existing.Id });
             }
 
             var id = await service.SubmitStepApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber, voucherId);
+            await auditLogWriter.LogAsync(ActivityTypes.EntranceSubmitted,
+                $"Entrance application {id} submitted",
+                new { applicationId = id, voucherId, name = $"{application.FirstName} {application.LastName}".Trim() }, entityName: "EntranceExamApplication", entityId: id.ToString());
             return RedirectToAction(nameof(Confirmation), new { id });
         }
 
@@ -342,7 +366,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var schedule = (await service.GetVoucherByIdAsync(voucherId))?.ExamSchedule;
         ViewBag.SelectedProgram = schedule?.Program?.ProgramName;
         ViewBag.SelectedCollege = schedule?.College?.Name;
-        ViewBag.SelectedAcademicYear = schedule?.AcademicYear?.AcademicYearName;
+        ViewBag.SelectedAcademicYear = schedule?.SemesterInstance?.AcademicYear?.AcademicYearName;
 
         return View(application);
     }
@@ -352,15 +376,14 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var errors = new List<string>();
         var allowedImageExts = new[] { ".jpg", ".jpeg", ".png" };
         var allowedDocExts = new[] { ".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx" };
-        var maxSize = 5 * 1024 * 1024; // 5MB
 
         if (photo != null && photo.Length > 0)
         {
             var ext = Path.GetExtension(photo.FileName).ToLowerInvariant();
             if (!allowedImageExts.Contains(ext))
                 errors.Add("Photo must be a JPG or PNG file.");
-            if (photo.Length > maxSize)
-                errors.Add("Photo must be less than 5MB.");
+            if (photo.Length > Helpers.FileUploadHelper.MaxPhotoSizeBytes)
+                errors.Add("Photo must be less than 500 KB.");
         }
 
         if (documents != null && documents.Length > 0)
@@ -368,8 +391,8 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             var ext = Path.GetExtension(documents.FileName).ToLowerInvariant();
             if (!allowedDocExts.Contains(ext))
                 errors.Add("Documents must be PDF, JPG, PNG, or DOC/DOCX file.");
-            if (documents.Length > maxSize)
-                errors.Add("Documents must be less than 5MB.");
+            if (documents.Length > Helpers.FileUploadHelper.MaxDocumentSizeBytes)
+                errors.Add("Documents must be less than 2MB.");
         }
 
         if (voucher != null && voucher.Length > 0)
@@ -377,8 +400,8 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             var ext = Path.GetExtension(voucher.FileName).ToLowerInvariant();
             if (!allowedDocExts.Contains(ext))
                 errors.Add("Voucher must be PDF, JPG, or DOC/DOCX file.");
-            if (voucher.Length > maxSize)
-                errors.Add("Voucher must be less than 5MB.");
+            if (voucher.Length > Helpers.FileUploadHelper.MaxDocumentSizeBytes)
+                errors.Add("Voucher must be less than 2MB.");
         }
 
         return errors;
@@ -477,6 +500,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     public async Task<IActionResult> Approve(int id)
     {
         await service.ReviewApplicationAsync(id, ApplicationStatus.Approved, null);
+        await auditLogWriter.LogAsync(ActivityTypes.EntranceApproved, $"Entrance application {id} approved", new { applicationId = id }, entityName: "EntranceExamApplication", entityId: id.ToString());
         TempData["SuccessMessage"] = "Application approved successfully.";
         return RedirectToAction(nameof(AdminList));
     }
@@ -487,6 +511,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     public async Task<IActionResult> Reject(int id, string remarks)
     {
         await service.ReviewApplicationAsync(id, ApplicationStatus.Rejected, remarks);
+        await auditLogWriter.LogAsync(ActivityTypes.EntranceRejected, $"Entrance application {id} rejected", new { applicationId = id, remarks }, entityName: "EntranceExamApplication", entityId: id.ToString());
         TempData["SuccessMessage"] = "Application rejected.";
         return RedirectToAction(nameof(AdminList));
     }
@@ -497,6 +522,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     public async Task<IActionResult> MarkUnderReview(int id)
     {
         await service.ReviewApplicationAsync(id, ApplicationStatus.UnderReview, null);
+        await auditLogWriter.LogAsync(ActivityTypes.EntranceUnderReview, $"Entrance application {id} marked as under review", new { applicationId = id }, entityName: "EntranceExamApplication", entityId: id.ToString());
         TempData["SuccessMessage"] = "Application marked as under review.";
         return RedirectToAction(nameof(AdminList));
     }
@@ -553,6 +579,39 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             $"EntranceApplications_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
     }
 
+    [HttpGet]
+    [RequirePermission("entrance.export")]
+    public async Task<IActionResult> ExportToCsv(string? search = null, string? status = null, int? programId = null, int? academicYearId = null)
+    {
+        ApplicationStatus? statusFilter = null;
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<ApplicationStatus>(status, out var parsedStatus))
+            statusFilter = parsedStatus;
+
+        var data = await service.GetAllApplicationsAsync(search, statusFilter, programId, academicYearId);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Application ID,Full Name,Email,Contact Number,Gender,Academic Year,College,Program,Status,Submitted Date");
+        foreach (var item in data)
+        {
+            sb.AppendLine($"{item.Id},{(item.FirstName + " " + item.LastName).Trim().EscapeCsv()},{(item.Email ?? "").EscapeCsv()},{(item.ContactNumber ?? "").EscapeCsv()},{(item.Gender?.GenderName ?? "").EscapeCsv()},{(item.AcademicYear?.AcademicYearName ?? "").EscapeCsv()},{(item.College?.Name ?? "").EscapeCsv()},{(item.Program?.ProgramName ?? "").EscapeCsv()},{(item.Status.ToString() ?? "").EscapeCsv()},{item.CreatedAt:yyyy-MM-dd HH:mm}");
+        }
+
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return File(csvBytes, "text/csv", $"EntranceApplications_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+    }
+
+    [HttpGet]
+    [RequirePermission("entrance.export")]
+    public async Task<IActionResult> ExportToPdf(string? search = null, string? status = null, int? programId = null, int? academicYearId = null)
+    {
+        ApplicationStatus? statusFilter = null;
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<ApplicationStatus>(status, out var parsedStatus))
+            statusFilter = parsedStatus;
+
+        var data = await service.GetAllApplicationsAsync(search, statusFilter, programId, academicYearId);
+        return View("PrintPdf", data);
+    }
+
     [HttpPost]
     [Authorize(Roles = Role.BackOfficeRoles)]
     [ValidateAntiForgeryToken]
@@ -561,6 +620,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         try
         {
             var admissionId = await service.ConvertToAdmissionAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.EntranceConvertedToAdmission, $"Entrance application {id} converted to admission {admissionId}", new { applicationId = id, admissionId }, entityName: "StudentAdmission", entityId: admissionId.ToString());
             TempData["SuccessMessage"] = "Application converted to student admission successfully!";
             return RedirectToAction("Details", "StudentAdmissions", new { area = "Students", id = admissionId });
         }
@@ -576,8 +636,6 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     [RequirePermission("examschedules.view")]
     public async Task<IActionResult> ManageSchedule(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
-        await examScheduleService.DeactivateExpiredSchedulesAsync();
-
         var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, "Entrance");
 
         ViewBag.TotalCount = totalCount;
@@ -611,17 +669,24 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     public async Task<IActionResult> CreateSchedule(ExamSchedule model)
     {
         ModelState.Remove(nameof(model.ExamTypeId));
-        ModelState.Remove(nameof(model.SemesterId));
+        ModelState.Remove(nameof(model.SemesterInstanceId));
         var sl = await examScheduleService.GetSelectListDataAsync();
 
         if (ModelState.IsValid)
         {
             model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
-            model.SemesterId = sl.Semesters.FirstOrDefault()?.Id ?? 1;
+            model.SemesterInstanceId = await context.SemesterInstances.AsNoTracking()
+                .Where(si => si.ProgramId == model.ProgramId && si.Semester != null)
+                .Include(si => si.Semester)
+                .OrderBy(si => si.Semester!.Number)
+                .Select(si => si.Id)
+                .FirstOrDefaultAsync();
+            if (model.SemesterInstanceId == 0) model.SemesterInstanceId = 1;
             model.ExamScheduleCode ??= $"ENT-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
             try
             {
                 await examScheduleService.CreateExamScheduleAsync(model);
+                await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleCreated, $"Entrance exam schedule created (Code {model.ExamScheduleCode})", new { scheduleId = model.Id, code = model.ExamScheduleCode, programId = model.ProgramId, semesterInstanceId = model.SemesterInstanceId, type = "Entrance" }, entityName: "ExamSchedule", entityId: model.Id.ToString());
                 TempData["SuccessMessage"] = "Entrance exam schedule created successfully!";
                 return RedirectToAction(nameof(ManageSchedule));
             }
@@ -655,16 +720,24 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         if (id != model.Id) return NotFound();
 
         ModelState.Remove(nameof(model.ExamTypeId));
-        ModelState.Remove(nameof(model.SemesterId));
+        ModelState.Remove(nameof(model.SemesterInstanceId));
         var sl = await examScheduleService.GetSelectListDataAsync();
 
         if (ModelState.IsValid)
         {
             model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
-            model.SemesterId = sl.Semesters.FirstOrDefault()?.Id ?? 1;
+            model.SemesterInstanceId = await context.SemesterInstances.AsNoTracking()
+                .Where(si => si.ProgramId == model.ProgramId && si.Semester != null)
+                .Include(si => si.Semester)
+                .OrderBy(si => si.Semester!.Number)
+                .Select(si => si.Id)
+                .FirstOrDefaultAsync();
+            if (model.SemesterInstanceId == 0) model.SemesterInstanceId = 1;
             try
             {
                 await examScheduleService.UpdateExamScheduleAsync(model);
+                await examScheduleService.DeactivateExpiredSchedulesAsync();
+                await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Entrance exam schedule {model.Id} updated", new { scheduleId = model.Id, code = model.ExamScheduleCode, programId = model.ProgramId, semesterInstanceId = model.SemesterInstanceId, type = "Entrance" }, entityName: "ExamSchedule", entityId: model.Id.ToString());
                 TempData["SuccessMessage"] = "Entrance exam schedule updated successfully!";
                 return RedirectToAction(nameof(ManageSchedule));
             }
@@ -696,6 +769,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         try
         {
             await examScheduleService.DeleteExamScheduleAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleDeleted, $"Entrance exam schedule {id} deleted", new { scheduleId = id, type = "Entrance" }, entityName: "ExamSchedule", entityId: id.ToString());
             return Json(new { success = true, message = "Entrance schedule deleted successfully!" });
         }
         catch (Exception ex)
@@ -707,7 +781,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     private void PopulateScheduleDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? model = null)
     {
         ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "Name", model?.ProgramId);
-        ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", model?.AcademicYearId);
+        ViewBag.SemesterInstanceId = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text", model?.SemesterInstanceId);
     }
 
     private async Task PopulateStepSelectListsAsync(EntranceExamApplicationSelectListsDto selectLists)

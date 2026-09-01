@@ -1,0 +1,140 @@
+@model PaymentVerificationListDto
+
+@{
+    ViewData["Title"] = "Verify Voucher";
+}
+
+<div class="space-y-6">
+    @await Html.PartialAsync("_AlertMessages")
+
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-money-check-dollar text-emerald-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-[#1a2639]">Verify Voucher</h1>
+                <p class="text-sm text-gray-500 mt-0.5">Payment details</p>
+            </div>
+        </div>
+        <a asp-action="Index" class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
+            <i class="fas fa-arrow-left text-xs"></i> Back to Payments
+        </a>
+    </div>
+
+    <!-- Voucher Card -->
+    <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-md p-5 sm:p-6 md:p-8">
+
+        <!-- Verified Badge (informational only) -->
+        <div class="inline-flex items-center gap-2 bg-sky-50 text-sky-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-5">
+            <i class="fas fa-receipt"></i> Payment Record Found
+        </div>
+
+        <!-- Detail Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+
+            <!-- Amount -->
+            <div>
+                <span class="text-xs font-medium text-[#7a8aa8] uppercase tracking-wider">Amount</span>
+                <p class="text-base font-semibold text-[#1a2639]">Rs. @Model.Amount.ToString("N2")</p>
+            </div>
+
+            <!-- Payment Gateway -->
+            <div>
+                <span class="text-xs font-medium text-[#7a8aa8] uppercase tracking-wider">Payment Gateway</span>
+                @if (!string.IsNullOrEmpty(Model.PaymentGateway))
+                {
+                    <p class="text-base font-semibold text-[#1a2639]">@Model.PaymentGateway</p>
+                }
+                else
+                {
+                    <p class="text-base text-[#b0bedb] font-medium">Offline / Bank Voucher</p>
+                }
+            </div>
+
+            <!-- Transaction Code -->
+            <div>
+                <span class="text-xs font-medium text-[#7a8aa8] uppercase tracking-wider">Transaction Code</span>
+                @if (!string.IsNullOrEmpty(Model.TransactionCode))
+                {
+                    <p class="text-base font-semibold text-indigo-700 font-mono break-all">@Model.TransactionCode</p>
+                }
+                else
+                {
+                    <p class="text-base text-[#b0bedb] font-medium">&mdash;</p>
+                }
+            </div>
+
+            <!-- Requested Time -->
+            <div>
+                <span class="text-xs font-medium text-[#7a8aa8] uppercase tracking-wider">Requested Time</span>
+                @if (Model.RequestedTime.HasValue)
+                {
+                    <p class="text-base font-semibold text-[#1a2639] text-sm sm:text-base">@Model.RequestedTime.Value.ToString("yyyy-MM-dd hh:mm:ss tt")</p>
+                }
+                else
+                {
+                    <p class="text-base text-[#b0bedb] font-medium">&mdash;</p>
+                }
+            </div>
+
+            <!-- Student Name -->
+            <div>
+                <span class="text-xs font-medium text-[#7a8aa8] uppercase tracking-wider">Student Name</span>
+                <p class="text-base font-semibold text-[#1a2639] uppercase">@Model.StudentName</p>
+            </div>
+
+            <!-- College -->
+            <div>
+                <span class="text-xs font-medium text-[#7a8aa8] uppercase tracking-wider">College</span>
+                @if (!string.IsNullOrEmpty(Model.College))
+                {
+                    <p class="text-base font-semibold text-[#1a2639] uppercase">@Model.College</p>
+                }
+                else
+                {
+                    <p class="text-base text-[#b0bedb] font-medium">&mdash;</p>
+                }
+            </div>
+
+            <!-- Roll No -->
+            <div>
+                <span class="text-xs font-medium text-[#7a8aa8] uppercase tracking-wider">Roll No</span>
+                @if (!string.IsNullOrEmpty(Model.RollNumber))
+                {
+                    <p class="text-base font-semibold text-[#1a2639]">@Model.RollNumber</p>
+                }
+                else
+                {
+                    <p class="text-base text-[#b0bedb] font-medium">&mdash;</p>
+                }
+            </div>
+
+            <!-- Contact No -->
+            <div>
+                <span class="text-xs font-medium text-[#7a8aa8] uppercase tracking-wider">Contact No</span>
+                <p class="text-base font-semibold text-[#1a2639]">@Model.ContactNumber</p>
+            </div>
+
+            <!-- Exam (full width) -->
+            <div class="sm:col-span-2">
+                <span class="text-xs font-medium text-[#7a8aa8] uppercase tracking-wider">Exam</span>
+                @if (!string.IsNullOrEmpty(Model.ExamName))
+                {
+                    <p class="text-base font-medium text-[#1a2639]">
+                        @Model.ExamName
+                        <span class="block font-normal text-[#7a8aa8] text-sm">
+                            @(string.Join(" · ", new[] { Model.Program, Model.AcademicYear }.Where(s => !string.IsNullOrEmpty(s))))
+                        </span>
+                    </p>
+                }
+                else
+                {
+                    <p class="text-base text-[#b0bedb] font-medium">&mdash;</p>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>

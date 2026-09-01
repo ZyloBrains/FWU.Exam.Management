@@ -38,6 +38,8 @@ public class ExamFormViewModel
     public bool HasPaid { get; set; }
     public bool HasAdmitCard { get; set; }
     public int? AdmitCardId { get; set; }
+    public bool IsRejected { get; set; }
+    public string? RejectionReason { get; set; }
     public string? EndDateBs { get; set; }
     public string? ExtendedDateBs { get; set; }
     public DateTime? AdmissionCardReleaseDate { get; set; }
@@ -46,6 +48,35 @@ public class ExamFormViewModel
 public class ExamFormsListViewModel
 {
     public List<ExamFormViewModel> ExamForms { get; set; } = new();
+}
+
+public class ReapplyExamViewModel
+{
+    public int ExamScheduleId { get; set; }
+    public string? ExamScheduleName { get; set; }
+    public string? SemesterName { get; set; }
+    public string? ExamTypeName { get; set; }
+    public string? EndDateBs { get; set; }
+    public decimal PaidAmount { get; set; }
+    public string? RejectionReason { get; set; }
+    public List<SubjectFeeDetail> Subjects { get; set; } = new();
+    public HashSet<int> PreSelectedSubjectIds { get; set; } = new();
+
+    // Schedule rates for the client-side charge-delta preview. The server
+    // recomputes everything authoritatively on submit.
+    public decimal ExamFee { get; set; }
+    public decimal PracticalFee { get; set; }
+
+    // True when an earlier top-up attempt was left unpaid and will be
+    // superseded by the next submission.
+    public bool HasUnpaidTopUp { get; set; }
+
+    // Partial (re-exam) schedules allow free per-leg choice; regular
+    // schedules lock every tick to the previously paid selection.
+    public bool IsPartialForm { get; set; }
+
+    // Gateways the reapply top-up flow can settle (eSewa / Khalti).
+    public List<PaymentTypeDetail> PaymentTypes { get; set; } = new();
 }
 
 public class SubjectFeeDetail
@@ -58,6 +89,15 @@ public class SubjectFeeDetail
     public decimal PracticalFee { get; set; }
     public bool IsSelected { get; set; }
     public bool IsFailed { get; set; }
+
+    // Per-leg failure/selection state (re-exam forms). A subject whose
+    // practical failed but theory passed shows FailedPractical=true and the
+    // student may re-register just that leg.
+    public bool FailedTheory { get; set; }
+    public bool FailedPractical { get; set; }
+    public bool SelectedTheory { get; set; }
+    public bool SelectedPractical { get; set; }
+
     public bool IsCompulsory { get; set; }
     public int SubjectTypeId { get; set; }
     public string? SubjectTypeName { get; set; }
@@ -83,6 +123,7 @@ public class ExamPaymentViewModel
     public string? ExamTypeName { get; set; }
     public decimal TotalExamFee { get; set; }
     public decimal TotalPracticalFee { get; set; }
+    public decimal ExtendedDateCharge { get; set; }
     public decimal GrandTotal { get; set; }
     public List<SubjectFeeDetail> Subjects { get; set; } = new();
     public bool HasESewa { get; set; }
@@ -98,6 +139,7 @@ public class MarksheetViewModel
     public string? RegistrationNumber { get; set; }
     public string? StudentName { get; set; }
     public string? Program { get; set; }
+    public string? Faculty { get; set; }
     public string? ExamSchedule { get; set; }
     public string? Semester { get; set; }
     public int? SemesterId { get; set; }
@@ -132,6 +174,10 @@ public class MarksheetSubjectViewModel
     public string? Grade { get; set; }
     public decimal? GradeValue { get; set; }
     public decimal? GradePoint { get; set; }
+    public string? TheoryGrade { get; set; }
+    public decimal? TheoryGradePoint { get; set; }
+    public string? PracticalGrade { get; set; }
+    public decimal? PracticalGradePoint { get; set; }
     public bool IsPassed { get; set; }
     public string? Status { get; set; }
 }

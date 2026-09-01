@@ -88,8 +88,8 @@ public class InternalMarksController(
             .AsNoTracking()
             .Where(ps => ps.ProgramId == programId && ps.IsActive
                       && ps.Semester != null)
-            .Select(ps => new { id = ps.Semester!.Id, name = ps.Semester.Name, year = ps.Semester.Year, number = ps.Semester.Number })
-            .OrderBy(s => s.year).ThenBy(s => s.number)
+            .Select(ps => new { id = ps.Semester!.Id, name = ps.Semester.Name, number = ps.Semester.Number })
+            .OrderBy(s => s.number)
             .ToListAsync();
 
         return Json(semesters);
@@ -101,7 +101,7 @@ public class InternalMarksController(
         var examTypeIds = await context.ExamSchedules
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(es => es.ProgramId == programId && es.SemesterId == semesterId && es.IsActive)
+            .Where(es => es.ProgramId == programId && es.SemesterInstance!.SemesterId == semesterId && es.IsActive)
             .Select(es => es.ExamTypeId)
             .Distinct()
             .ToListAsync();
@@ -136,8 +136,6 @@ public class InternalMarksController(
                 practicalPassMarks = so.PracticalPassMarks,
                 internalTheoryFullMarks = so.InternalTheoryFullMarks,
                 internalTheoryPassMarks = so.InternalTheoryPassMarks,
-                internalPracticalFullMarks = so.InternalPracticalFullMarks,
-                internalPracticalPassMarks = so.InternalPracticalPassMarks,
                 hasPractical = so.HasPractical
             })
             .OrderBy(s => s.code)
@@ -162,37 +160,37 @@ public class InternalMarksController(
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(es => es.ProgramId == programId
-                      && es.SemesterId == semesterId
+                      && es.SemesterInstance!.SemesterId == semesterId
                       && es.ExamTypeId == examTypeId
                       && (es.CollegeId == null || es.CollegeId == collegeId.Value)
                       && es.IsActive);
 
         var schedule = await baseQuery
-            .Where(es => currentAcademicYearId == 0 || es.AcademicYearId == currentAcademicYearId)
-            .OrderByDescending(es => es.AcademicYearId)
+            .Where(es => currentAcademicYearId == 0 || es.SemesterInstance!.AcademicYearId == currentAcademicYearId)
+            .OrderByDescending(es => es.SemesterInstance!.AcademicYearId)
             .Select(es => new
             {
                 found = true,
                 scheduleId = es.Id,
                 scheduleName = es.ExamScheduleName ?? "",
-                academicYearId = es.AcademicYearId,
-                academicYearName = es.AcademicYear!.AcademicYearName,
-                academicYearCode = es.AcademicYear.AcademicYearCode
+                academicYearId = es.SemesterInstance!.AcademicYearId,
+                academicYearName = es.SemesterInstance.AcademicYear!.AcademicYearName,
+                academicYearCode = es.SemesterInstance.AcademicYear.AcademicYearCode
             })
             .FirstOrDefaultAsync();
 
         if (schedule == null)
         {
             schedule = await baseQuery
-                .OrderByDescending(es => es.AcademicYearId)
+                .OrderByDescending(es => es.SemesterInstance!.AcademicYearId)
                 .Select(es => new
                 {
                     found = true,
                     scheduleId = es.Id,
                     scheduleName = es.ExamScheduleName ?? "",
-                    academicYearId = es.AcademicYearId,
-                    academicYearName = es.AcademicYear!.AcademicYearName,
-                    academicYearCode = es.AcademicYear.AcademicYearCode
+                    academicYearId = es.SemesterInstance!.AcademicYearId,
+                    academicYearName = es.SemesterInstance.AcademicYear!.AcademicYearName,
+                    academicYearCode = es.SemesterInstance.AcademicYear.AcademicYearCode
                 })
                 .FirstOrDefaultAsync();
         }
@@ -226,7 +224,8 @@ public class InternalMarksController(
         var examSchedule = await context.ExamSchedules
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Include(es => es.AcademicYear)
+            .Include(es => es.SemesterInstance)
+                .ThenInclude(si => si!.AcademicYear)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
 
         if (subjectOffering == null || examSchedule == null)
@@ -336,7 +335,7 @@ public class InternalMarksController(
             SubjectOfferingId = subjectOfferingId,
             ExamScheduleId = examScheduleId,
             AcademicYearId = academicYearId,
-            AcademicYearDisplay = $"{examSchedule.AcademicYear?.AcademicYearCode} ( {examSchedule.AcademicYear?.AcademicYearName} )",
+            AcademicYearDisplay = $"{examSchedule.SemesterInstance?.AcademicYear?.AcademicYearCode} ( {examSchedule.SemesterInstance?.AcademicYear?.AcademicYearName} )",
             ExamScheduleDisplay = examSchedule.ExamScheduleName ?? "",
             CollegeDisplay = $"{college?.Name} ( {college?.Code} )",
             SubjectName = subjectOffering.SubjectCatalog?.SubjectName ?? "",
@@ -345,8 +344,6 @@ public class InternalMarksController(
             HasInternal = subjectOffering.HasInternal,
             InternalTheoryFullMarks = subjectOffering.InternalTheoryFullMarks ?? 0,
             InternalTheoryPassMarks = subjectOffering.InternalTheoryPassMarks ?? 0,
-            InternalPracticalFullMarks = subjectOffering.InternalPracticalFullMarks ?? 0,
-            InternalPracticalPassMarks = subjectOffering.InternalPracticalPassMarks ?? 0,
             Students = students
         };
 

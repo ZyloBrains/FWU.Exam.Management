@@ -1,7 +1,14 @@
 @model IEnumerable<AdmitCard>
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "Admit Cards";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
     var totalCount = ViewBag.TotalCount ?? Model.Count();
     var currentPage = ViewBag.CurrentPage ?? 1;
     var totalPages = ViewBag.TotalPages ?? 1;
@@ -9,6 +16,9 @@
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "Id";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentScheduleId = (ViewData["ExamScheduleId"] is SelectList scheduleSelectList && scheduleSelectList.SelectedValue != null)
+        ? scheduleSelectList.SelectedValue.ToString() ?? ""
+        : "";
 }
 
 <div class="space-y-6">
@@ -24,15 +34,28 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            @if (ViewBag.HasPermission ?? true)
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
             {
-                <a asp-action="ExportToCsv" asp-area="Exams" asp-route-search="@currentSearch"
-                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
-                    <i class="fas fa-file-excel"></i> Export CSV
-                </a>
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["search"] = currentSearch,
+                    ["examScheduleId"] = currentScheduleId
+                },
+                ButtonClass = "bg-green-600 hover:bg-green-700",
+                ScopeLabel = " (All)"
+            })
+            @if (HasPerm("admitcards.generate"))
+            {
                 <a asp-action="Generate" asp-area="Exams"
                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                     <i class="fas fa-plus text-xs"></i> Generate Cards
+                </a>
+            }
+            @if (HasPerm("admitcards.download"))
+            {
+                <a asp-action="PrintAll" asp-area="Exams" asp-route-examScheduleId="@currentScheduleId"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
+                    <i class="fas fa-print text-xs"></i> Download All (PDF)
                 </a>
             }
         </div>
@@ -123,9 +146,12 @@
                                 <a asp-action="Download" asp-area="Exams" asp-route-id="@item.Id" class="p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Download">
                                     <i class="fas fa-download text-xs"></i>
                                 </a>
-                                <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
-                                    <i class="fas fa-trash text-xs"></i>
-                                </a>
+                                @if (HasPerm("admitcards.delete"))
+                                {
+                                    <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                        <i class="fas fa-trash text-xs"></i>
+                                    </a>
+                                }
                             </div>
                         </td>
                     </tr>
@@ -184,9 +210,12 @@
                         <a asp-action="Download" asp-area="Exams" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100">
                             <i class="fas fa-download mr-1"></i> Download
                         </a>
-                        <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
-                            <i class="fas fa-trash mr-1"></i> Delete
-                        </a>
+                        @if (HasPerm("admitcards.delete"))
+                        {
+                            <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                                <i class="fas fa-trash mr-1"></i> Delete
+                            </a>
+                        }
                     </div>
                 </div>
             }
@@ -231,8 +260,8 @@
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="~/lib/select2/css/select2.min.css" asp-append-version="true" rel="stylesheet" />
+    <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
     <style>
         .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
         .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }

@@ -1,3 +1,5 @@
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Interceptor;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -19,6 +21,7 @@ public sealed class TestDb : IDisposable
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(_connection)
+            .AddInterceptors(new TenantSaveChangesInterceptor(tenant, NullLogger<TenantSaveChangesInterceptor>.Instance))
             .Options;
 
         Context = new AppDbContext(options, NullLogger<AppDbContext>.Instance, tenant);

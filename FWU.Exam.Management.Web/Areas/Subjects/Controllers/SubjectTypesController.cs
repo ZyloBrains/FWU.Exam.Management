@@ -111,16 +111,6 @@ public class SubjectTypesController : Controller
         return View("PrintPdf", items);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var subjectType = await _subjectTypeService.GetSubjectTypeByIdAsync(id.Value);
-        if (subjectType == null) return NotFound();
-
-        return View(subjectType);
-    }
-
     [RequirePermission("subjecttypes.create")]
     public IActionResult Create()
     {

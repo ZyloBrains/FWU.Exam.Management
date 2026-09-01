@@ -18,8 +18,8 @@ public class SemesterEnrollment : ITenantScoped
     public int StudentAdmissionId { get; set; }
 
     [Range(1, int.MaxValue)]
-    [Display(Name = "Semester")]
-    public int SemesterId { get; set; }
+    [Display(Name = "Semester Instance")]
+    public int SemesterInstanceId { get; set; }
 
     [Display(Name = "Enrollment Status")]
     public StudentEnrollmentStatus EnrollmentStatus { get; set; }
@@ -66,6 +66,6 @@ public class SemesterEnrollment : ITenantScoped
     public ResultStatus ResultStatus { get; set; }
 
     public virtual StudentAdmission? StudentAdmission { get; set; }
-    public virtual Semester? Semester { get; set; }
+    public virtual SemesterInstance? SemesterInstance { get; set; }
     public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; } = [];
 }

@@ -1,11 +1,13 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-public class TestGumpNowEmailController(IGumpNowEmailService gumpNowEmailService) : Controller
+public class TestGumpNowEmailController(IGumpNowEmailService gumpNowEmailService, IAuditLogWriter auditLogWriter) : Controller
 {
     public IActionResult Index()
     {
@@ -34,6 +36,7 @@ public class TestGumpNowEmailController(IGumpNowEmailService gumpNowEmailService
                 var context = ParseContextVariables(model.ContextVariables ?? "");
                 await gumpNowEmailService.SendEmailAsync(model.ToEmail, model.Subject, model.TemplateId!, context);
             }
+            await auditLogWriter.LogAsync(ActivityTypes.TestEmailSent, $"Test GumpNow email sent to {model.ToEmail}", new { to = model.ToEmail, subject = model.Subject, sendMode = model.SendMode });
             TempData["Success"] = "GumpNow email sent successfully!";
         }
         catch (Exception ex)

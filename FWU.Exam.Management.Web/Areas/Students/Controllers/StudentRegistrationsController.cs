@@ -7,6 +7,7 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
@@ -15,12 +16,14 @@ using FWU.Exam.Management.Web.Helpers;
 using Microsoft.Data.SqlClient;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
 [Authorize(Roles = Role.BackOfficeRoles)]
-public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context, IFileUploadHelper fileUploadHelper, IUserContext userContext) : Controller
+[RequirePermission("students.view")]
+public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context, IFileUploadHelper fileUploadHelper, IUserContext userContext, ITenantContext tenantContext) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
     {
@@ -51,9 +54,9 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     {
         ViewBag.AcademicYears = new SelectList(await context.AcademicYears.AsNoTracking().OrderBy(a => a.AcademicYearName).ToListAsync(), "AcademicYearName", "AcademicYearName");
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().OrderBy(f => f.Name).ToListAsync(), "Id", "Name");
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().OrderBy(c => c.Name).ToListAsync(), "Id", "Name");
+        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ApplyScope(userContext).OrderBy(c => c.Name).ToListAsync(), "Id", "Name");
         ViewBag.Levels = new SelectList(await context.Levels.AsNoTracking().OrderBy(l => l.LevelName).ToListAsync(), "Id", "LevelName");
-        ViewBag.Programs = new SelectList(await context.Programs.AsNoTracking().OrderBy(p => p.ProgramName).ToListAsync(), "Id", "ProgramName");
+        ViewBag.Programs = new SelectList(await context.Programs.AsNoTracking().ApplyTenantScope(tenantContext).OrderBy(p => p.ProgramName).ToListAsync(), "Id", "ProgramName");
         return View();
     }
 
@@ -834,7 +837,14 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
             var file = files.FirstOrDefault(f => f.Name == $"Qualifications.DocumentFile_{i}");
             if (file != null && file.Length > 0)
             {
-                q.DocumentPath = await fileUploadHelper.UploadAsync(file, "documents");
+                try
+                {
+                    q.DocumentPath = await fileUploadHelper.UploadAsync(file, "documents", Helpers.FileUploadHelper.MaxDocumentSizeBytes, Helpers.FileUploadHelper.DocumentAllowedExtensions);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    TempData["ErrorMessage"] = $"Qualification document was not saved: {ex.Message}";
+                }
             }
 
             qualifications.Add(q);

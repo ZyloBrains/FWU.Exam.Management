@@ -3,16 +3,19 @@
 #nullable disable
 
 using System.ComponentModel.DataAnnotations;
+using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account.Manage;
 
 public class DeletePersonalDataModel(
     UserManager<AppUser> userManager,
     SignInManager<AppUser> signInManager,
+    AppDbContext context,
     ILogger<DeletePersonalDataModel> logger) : PageModel
 {
 
@@ -73,6 +76,14 @@ public class DeletePersonalDataModel(
                 return Page();
             }
         }
+
+        var linkedAdmissions = await context.StudentAdmissions
+            .Where(sa => sa.AppUserId == user.Id)
+            .ToListAsync();
+        foreach (var admission in linkedAdmissions)
+            admission.AppUserId = null;
+        if (linkedAdmissions.Count > 0)
+            await context.SaveChangesAsync();
 
         var result = await userManager.DeleteAsync(user);
         var userId = await userManager.GetUserIdAsync(user);

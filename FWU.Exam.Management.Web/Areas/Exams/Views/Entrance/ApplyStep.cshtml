@@ -544,10 +544,10 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Passport Size Photo</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Profile Photo</label>
                                 <input type="file" name="PhotoFile" accept=".jpg,.jpeg,.png" id="PhotoFile"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
-                                <p class="text-xs text-gray-400 mt-1">Format: .jpg, .jpeg, .png (max 5MB)</p>
+                                <p class="text-xs text-gray-400 mt-1">Format: .jpg, .jpeg, .png (max 500 KB). Standard passport photo: 35 x 45 mm, recent color photo on a plain white background.</p>
                                 <p id="PhotoFileError" class="text-xs text-red-500 mt-1 hidden"></p>
                                 @if (!string.IsNullOrEmpty(Model.PhotoPath))
                                 {
@@ -558,7 +558,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Upload Documents (Transcript, Character, TC, Citizenship)</label>
                                 <input type="file" name="DocumentsFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple id="DocumentsFile"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
-                                <p class="text-xs text-gray-400 mt-1">Format: .pdf, .jpg, .png, .doc, .docx (max 5MB)</p>
+                                <p class="text-xs text-gray-400 mt-1">Format: .pdf, .jpg, .png, .doc, .docx (max 2 MB)</p>
                                 <p id="DocumentsFileError" class="text-xs text-red-500 mt-1 hidden"></p>
                                 @if (!string.IsNullOrEmpty(Model.DocumentsPath))
                                 {
@@ -569,7 +569,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Upload Bank Voucher</label>
                                 <input type="file" name="VoucherFile" accept=".pdf,.jpg,.jpeg,.doc,.docx" id="VoucherFile"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
-                                <p class="text-xs text-gray-400 mt-1">File name should be Student Name with Symbol No. Format: .pdf, .jpg, .doc (max 5MB)</p>
+                                <p class="text-xs text-gray-400 mt-1">File name should be Student Name with Symbol No. Format: .pdf, .jpg, .doc (max 2 MB)</p>
                                 <p id="VoucherFileError" class="text-xs text-red-500 mt-1 hidden"></p>
                                 @if (!string.IsNullOrEmpty(Model.VoucherPath))
                                 {
@@ -771,7 +771,7 @@
             }
 
             // File validation
-            function validateFile(input, allowedExts, maxSizeMB, errorEl) {
+            function validateFile(input, allowedExts, maxBytes, sizeLabel, errorEl) {
                 if (!input.files.length) return true;
                 var file = input.files[0];
                 var ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
@@ -779,8 +779,8 @@
                     $(errorEl).text('Invalid file type. Allowed: ' + allowedExts.join(', ')).removeClass('hidden');
                     return false;
                 }
-                if (file.size > maxSizeMB * 1024 * 1024) {
-                    $(errorEl).text('File must be less than ' + maxSizeMB + 'MB.').removeClass('hidden');
+                if (file.size > maxBytes) {
+                    $(errorEl).text('File must be less than ' + sizeLabel + '.').removeClass('hidden');
                     return false;
                 }
                 $(errorEl).addClass('hidden');
@@ -788,13 +788,13 @@
             }
 
             $('#PhotoFile').change(function () {
-                validateFile(this, ['.jpg', '.jpeg', '.png'], 5, '#PhotoFileError');
+                validateFile(this, ['.jpg', '.jpeg', '.png'], 500 * 1024, '500 KB', '#PhotoFileError');
             });
             $('#DocumentsFile').change(function () {
-                validateFile(this, ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'], 5, '#DocumentsFileError');
+                validateFile(this, ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'], 2 * 1024 * 1024, '2 MB', '#DocumentsFileError');
             });
             $('#VoucherFile').change(function () {
-                validateFile(this, ['.pdf', '.jpg', '.jpeg', '.doc', '.docx'], 5, '#VoucherFileError');
+                validateFile(this, ['.pdf', '.jpg', '.jpeg', '.doc', '.docx'], 2 * 1024 * 1024, '2 MB', '#VoucherFileError');
             });
 
             $('#nextBtn').click(function () {
@@ -816,13 +816,13 @@
                 // Validate files before submit
                 var ok = true;
                 if ($('#PhotoFile')[0].files.length) {
-                    ok = validateFile($('#PhotoFile')[0], ['.jpg', '.jpeg', '.png'], 5, '#PhotoFileError') && ok;
+                    ok = validateFile($('#PhotoFile')[0], ['.jpg', '.jpeg', '.png'], 500 * 1024, '500 KB', '#PhotoFileError') && ok;
                 }
                 if ($('#DocumentsFile')[0].files.length) {
-                    ok = validateFile($('#DocumentsFile')[0], ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'], 5, '#DocumentsFileError') && ok;
+                    ok = validateFile($('#DocumentsFile')[0], ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'], 2 * 1024 * 1024, '2 MB', '#DocumentsFileError') && ok;
                 }
                 if ($('#VoucherFile')[0].files.length) {
-                    ok = validateFile($('#VoucherFile')[0], ['.pdf', '.jpg', '.jpeg', '.doc', '.docx'], 5, '#VoucherFileError') && ok;
+                    ok = validateFile($('#VoucherFile')[0], ['.pdf', '.jpg', '.jpeg', '.doc', '.docx'], 2 * 1024 * 1024, '2 MB', '#VoucherFileError') && ok;
                 }
                 if (!ok) {
                     e.preventDefault();

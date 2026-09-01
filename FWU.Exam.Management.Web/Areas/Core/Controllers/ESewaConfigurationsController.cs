@@ -3,6 +3,8 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Extensions;
 
@@ -13,7 +15,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("esewa.view")]
-public class ESewaConfigurationsController(AppDbContext context) : Controller
+public class ESewaConfigurationsController(AppDbContext context, IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "ProductCode", string sortDir = "asc", int pageSize = 10)
     {
@@ -164,17 +166,6 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var eSewaConfiguration = await context.ESewaConfigurations
-            .FirstOrDefaultAsync(m => m.Id == id);
-        if (eSewaConfiguration == null) return NotFound();
-
-        return View(eSewaConfiguration);
-    }
-
     [RequirePermission("esewa.create")]
     public IActionResult Create()
     {
@@ -190,6 +181,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         {
             context.Add(eSewaConfiguration);
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"eSewa payment gateway configuration created (id {eSewaConfiguration.Id})", new { gateway = "esewa", id = eSewaConfiguration.Id, productCode = eSewaConfiguration.ProductCode }, entityName: "ESewaConfiguration", entityId: eSewaConfiguration.Id.ToString());
             TempData["SuccessMessage"] = "eSewa configuration created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -229,6 +221,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
                     return NotFound();
                 throw;
             }
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"eSewa payment gateway configuration {eSewaConfiguration.Id} updated", new { gateway = "esewa", id = eSewaConfiguration.Id, productCode = eSewaConfiguration.ProductCode }, entityName: "ESewaConfiguration", entityId: eSewaConfiguration.Id.ToString());
             TempData["SuccessMessage"] = "eSewa configuration updated successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -261,6 +254,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
             }
 
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"eSewa payment gateway configuration {id} deleted", new { gateway = "esewa", id }, entityName: "ESewaConfiguration", entityId: id.ToString());
             TempData["SuccessMessage"] = "eSewa configuration deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -285,7 +279,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {
-        try { var entity = await context.ESewaConfigurations.FindAsync(id); if (entity != null) { context.ESewaConfigurations.Remove(entity); await context.SaveChangesAsync(); } return Json(new { success = true, message = "eSewa configuration deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        try { var entity = await context.ESewaConfigurations.FindAsync(id); if (entity != null) { context.ESewaConfigurations.Remove(entity); await context.SaveChangesAsync(); await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"eSewa payment gateway configuration {id} deleted", new { gateway = "esewa", id }, entityName: "ESewaConfiguration", entityId: id.ToString()); } return Json(new { success = true, message = "eSewa configuration deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
     }
 
 }

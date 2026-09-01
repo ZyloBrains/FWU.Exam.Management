@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@(ViewData["Title"] ?? "FWU Examination System")</title>
+    <link rel="icon" type="image/png" href="~/images/fwu-logo-nobg-64x64.png">
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" asp-append-version="true">
+    <link href="~/lib/fonts/poppins.css" asp-append-version="true" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
+    <script defer src="~/lib/alpinejs/cdn.min.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+
+<body class="bg-gray-50 text-gray-800 font-poppins antialiased">
+    @RenderBody()
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

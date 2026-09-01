@@ -85,7 +85,16 @@ public class SubjectCatalogService : ISubjectCatalogService
     {
         return await _context.SubjectCatalogs
             .Where(s => s.SubjectCode != null)
-            .Select(s => new SubjectCatalog { Id = s.Id, SubjectCode = s.SubjectCode, SubjectName = s.SubjectName })
+            .Select(s => new SubjectCatalog
+            {
+                Id = s.Id,
+                SubjectCode = s.SubjectCode,
+                SubjectName = s.SubjectName,
+                ShortName = s.ShortName,
+                CreditHours = s.CreditHours,
+                SubjectTypeId = s.SubjectTypeId,
+                IsActive = s.IsActive
+            })
             .AsNoTracking()
             .ToListAsync();
     }

@@ -17,18 +17,11 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(e => new GradingScheme
-            {
-                Id = e.Id,
-                Name = e.Name,
-                ProgramId = e.ProgramId,
-                AcademicYearId = e.AcademicYearId,
-                Description = e.Description,
-                IsActive = e.IsActive,
-                Program = e.Program,
-                AcademicYear = e.AcademicYear,
-                GradeDefinitions = e.GradeDefinitions
-            })
+            .Include(e => e.ProgramAssignments)
+                .ThenInclude(gsp => gsp.Program)
+            .Include(e => e.ProgramAssignments)
+                .ThenInclude(gsp => gsp.AcademicYear)
+            .Include(e => e.GradeDefinitions)
             .ToListAsync();
 
         return (items, totalCount);
@@ -38,18 +31,11 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
     {
         var query = BuildQuery(search, "Id", "asc");
         return await query
-            .Select(e => new GradingScheme
-            {
-                Id = e.Id,
-                Name = e.Name,
-                ProgramId = e.ProgramId,
-                AcademicYearId = e.AcademicYearId,
-                Description = e.Description,
-                IsActive = e.IsActive,
-                Program = e.Program,
-                AcademicYear = e.AcademicYear,
-                GradeDefinitions = e.GradeDefinitions
-            })
+            .Include(e => e.ProgramAssignments)
+                .ThenInclude(gsp => gsp.Program)
+            .Include(e => e.ProgramAssignments)
+                .ThenInclude(gsp => gsp.AcademicYear)
+            .Include(e => e.GradeDefinitions)
             .ToListAsync();
     }
 
@@ -57,29 +43,42 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
     {
         return await context.GradingSchemes
             .AsNoTracking()
-            .Include(e => e.Program)
-            .Include(e => e.AcademicYear)
+            .Include(e => e.ProgramAssignments)
+                .ThenInclude(gsp => gsp.Program)
+            .Include(e => e.ProgramAssignments)
+                .ThenInclude(gsp => gsp.AcademicYear)
             .Include(e => e.GradeDefinitions)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
-    public async Task CreateGradingSchemeAsync(GradingScheme gradingScheme)
+    public async Task CreateGradingSchemeAsync(GradingScheme gradingScheme, List<int> programIds, Dictionary<int, int?> programAcademicYears)
     {
         context.GradingSchemes.Add(gradingScheme);
         await context.SaveChangesAsync();
+
+        foreach (var programId in programIds)
+        {
+            context.GradingSchemePrograms.Add(new GradingSchemeProgram
+            {
+                GradingSchemeId = gradingScheme.Id,
+                ProgramId = programId,
+                AcademicYearId = programAcademicYears.TryGetValue(programId, out var ayId) ? ayId : null,
+                IsActive = true
+            });
+        }
+        await context.SaveChangesAsync();
     }
 
-    public async Task UpdateGradingSchemeAsync(GradingScheme gradingScheme)
+    public async Task UpdateGradingSchemeAsync(GradingScheme gradingScheme, List<int> programIds, Dictionary<int, int?> programAcademicYears)
     {
         var existing = await context.GradingSchemes
             .Include(e => e.GradeDefinitions)
+            .Include(e => e.ProgramAssignments)
             .FirstOrDefaultAsync(e => e.Id == gradingScheme.Id);
 
         if (existing == null) return;
 
         existing.Name = gradingScheme.Name;
-        existing.ProgramId = gradingScheme.ProgramId;
-        existing.AcademicYearId = gradingScheme.AcademicYearId;
         existing.Description = gradingScheme.Description;
         existing.IsActive = gradingScheme.IsActive;
 
@@ -121,6 +120,35 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
             }
         }
 
+        var existingAssignments = existing.ProgramAssignments?.ToList() ?? [];
+        var incomingProgramIds = programIds.ToHashSet();
+
+        var assignmentsToRemove = existingAssignments
+            .Where(a => !incomingProgramIds.Contains(a.ProgramId))
+            .ToList();
+        foreach (var a in assignmentsToRemove)
+            context.GradingSchemePrograms.Remove(a);
+
+        foreach (var programId in programIds)
+        {
+            var existingAssignment = existingAssignments.FirstOrDefault(a => a.ProgramId == programId);
+            if (existingAssignment != null)
+            {
+                existingAssignment.AcademicYearId = programAcademicYears.TryGetValue(programId, out var ayId) ? ayId : null;
+                existingAssignment.IsActive = true;
+            }
+            else
+            {
+                context.GradingSchemePrograms.Add(new GradingSchemeProgram
+                {
+                    GradingSchemeId = existing.Id,
+                    ProgramId = programId,
+                    AcademicYearId = programAcademicYears.TryGetValue(programId, out var newAyId) ? newAyId : null,
+                    IsActive = true
+                });
+            }
+        }
+
         await context.SaveChangesAsync();
     }
 
@@ -128,6 +156,7 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
     {
         var gradingScheme = await context.GradingSchemes
             .Include(e => e.GradeDefinitions)
+            .Include(e => e.ProgramAssignments)
             .FirstOrDefaultAsync(e => e.Id == id);
 
         if (gradingScheme != null)
@@ -164,27 +193,17 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
     {
         var query = context.GradingSchemes.AsNoTracking();
 
-        if (!userContext.IsSuperAdmin)
-        {
-            if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
-                query = query.Where(e => e.Program != null && e.Program.FacultyId == userContext.FacultyId.Value);
-        }
-
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(e =>
                 (e.Name != null && e.Name.Contains(search)) ||
-                (e.Description != null && e.Description.Contains(search)) ||
-                (e.Program != null && e.Program.ProgramName != null && e.Program.ProgramName.Contains(search)));
+                (e.Description != null && e.Description.Contains(search)));
         }
 
         var descending = sortDir.Equals("desc", StringComparison.OrdinalIgnoreCase);
         return sort.ToLower() switch
         {
             "name" => descending ? query.OrderByDescending(e => e.Name) : query.OrderBy(e => e.Name),
-            "program" => descending
-                ? query.OrderByDescending(e => e.Program != null ? e.Program.ProgramName : string.Empty)
-                : query.OrderBy(e => e.Program != null ? e.Program.ProgramName : string.Empty),
             "isactive" => descending ? query.OrderByDescending(e => e.IsActive) : query.OrderBy(e => e.IsActive),
             _ => descending ? query.OrderByDescending(e => e.Id) : query.OrderBy(e => e.Id)
         };

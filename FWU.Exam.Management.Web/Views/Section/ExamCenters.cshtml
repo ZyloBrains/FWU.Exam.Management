@@ -1,0 +1,73 @@
+@inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
+
+@{
+    ViewData["Title"] = "Exam Centers";
+
+    var sectionUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
+    var isSuperAdmin = sectionUser != null && await UserManager.IsInRoleAsync(sectionUser, Role.SuperAdmin);
+    var sectionPermissions = sectionUser != null
+        ? await PermissionService.GetUserPermissionsAsync(sectionUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => isSuperAdmin || sectionPermissions.Contains(permission);
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-map-marker-alt text-indigo-600"></i>
+        </div>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Exam Centers</h1>
+            <p class="text-xs sm:text-sm text-gray-500">Manage examination centers and distribution</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        @if (HasPerm("examcenters.view"))
+        {
+        <a asp-area="Exams" asp-controller="ExamCenters" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
+                    <i class="fas fa-map-marker-alt text-teal-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Exam Centers</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage examination centers</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("examcenters.view"))
+        {
+        <a asp-area="Exams" asp-controller="SymbolNumberGeneration" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-violet-100 rounded-lg flex items-center justify-center group-hover:bg-violet-200 transition-colors">
+                    <i class="fas fa-hashtag text-violet-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Symbol Number Generation</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Generate symbol numbers for exams</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("examcenters.view"))
+        {
+        <a asp-area="Exams" asp-controller="ExamCenterDistribution" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                    <i class="fas fa-people-arrows text-orange-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Center Distribution</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage center distribution</p>
+                </div>
+            </div>
+        </a>
+        }
+    </div>
+</div>

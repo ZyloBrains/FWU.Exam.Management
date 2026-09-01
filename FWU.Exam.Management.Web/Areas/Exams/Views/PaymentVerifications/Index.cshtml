@@ -1,0 +1,246 @@
+@model IEnumerable<PaymentVerificationListDto>
+
+@{
+    ViewData["Title"] = "Payment Verification";
+    var totalCount = ViewBag.TotalCount ?? Model.Count();
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var pageSize = ViewBag.PageSize ?? 10;
+    var currentSearch = ViewBag.Search as string ?? "";
+    var currentFromDate = ViewBag.FromDate as string ?? "";
+    var currentToDate = ViewBag.ToDate as string ?? "";
+}
+
+<div class="space-y-6">
+    @await Html.PartialAsync("_AlertMessages")
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-money-check-dollar text-emerald-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Payment Verification</h1>
+                <p class="text-sm text-gray-500 mt-0.5">
+                    Student exam fee payments &mdash; <span class="font-semibold text-gray-700">@totalCount</span> total records
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["search"] = currentSearch,
+                    ["fromDate"] = currentFromDate,
+                    ["toDate"] = currentToDate
+                },
+                ButtonClass = "bg-green-600 hover:bg-green-700",
+                ScopeLabel = " (All)"
+            })
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <form method="get" asp-action="Index" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
+            <div class="relative sm:col-span-2">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" name="search" value="@currentSearch"
+                       placeholder="Search voucher no., student name or contact..."
+                       class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <label class="relative block">
+                <span class="sr-only">Voucher date from</span>
+                <i class="fas fa-calendar-day absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="date" name="fromDate" value="@currentFromDate" title="Voucher date from"
+                       class="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </label>
+            <label class="relative block">
+                <span class="sr-only">Voucher date to</span>
+                <i class="fas fa-calendar-day absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="date" name="toDate" value="@currentToDate" title="Voucher date to"
+                       class="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </label>
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors whitespace-nowrap">
+                    <i class="fas fa-filter mr-1"></i> Filter
+                </button>
+                @if (!string.IsNullOrEmpty(currentSearch) || !string.IsNullOrEmpty(currentFromDate) || !string.IsNullOrEmpty(currentToDate))
+                {
+                    <a asp-action="Index" class="inline-flex items-center justify-center px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200" title="Clear filters">
+                        <i class="fas fa-times text-xs"></i>
+                    </a>
+                }
+            </div>
+        </form>
+    </div>
+
+    <!-- Desktop table -->
+    <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Voucher No.</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Amount</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Transaction Code</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Gateway</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Voucher Date</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Exam</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @foreach (var item in Model)
+                {
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3">
+                            <span class="font-medium text-gray-800 font-mono text-xs">@item.VoucherNumber</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-gray-800">@item.StudentName</div>
+                            <div class="text-xs text-gray-500">@item.ContactNumber</div>
+                        </td>
+                        <td class="px-4 py-3 text-right font-semibold text-gray-800 whitespace-nowrap">Rs. @item.Amount.ToString("N2")</td>
+                        <td class="px-4 py-3">
+                            @if (!string.IsNullOrEmpty(item.TransactionCode))
+                            {
+                                <span class="inline-block px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-mono text-xs">@item.TransactionCode</span>
+                            }
+                            else
+                            {
+                                <span class="text-gray-400 text-xs italic">offline / N/A</span>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-gray-600">@(item.PaymentGateway ?? "-")</td>
+                        <td class="px-4 py-3 text-gray-600 whitespace-nowrap">@item.VoucherDate?.ToString("MMM dd, yyyy")</td>
+                        <td class="px-4 py-3">
+                            @if (!string.IsNullOrEmpty(item.ExamName))
+                            {
+                                <div class="text-gray-700">@item.ExamName</div>
+                                var subLine = string.Join(" · ", new[] { item.Program, item.AcademicYear }.Where(s => !string.IsNullOrEmpty(s)));
+                                if (!string.IsNullOrEmpty(subLine))
+                                {
+                                    <div class="text-xs text-gray-500">@subLine</div>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-gray-400 text-xs italic">&mdash;</span>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                            <a asp-action="Details" asp-route-voucherNo="@item.VoucherNumber" class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md inline-block" title="View Payment">
+                                <i class="fas fa-eye text-xs"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (!Model.Any())
+        {
+            <div class="text-center py-12 text-gray-500">
+                <i class="fas fa-money-check-dollar text-4xl mb-3 opacity-50"></i>
+                <p>No payments found.</p>
+            </div>
+        }
+    </div>
+
+    <!-- Mobile card layout -->
+    <div class="lg:hidden space-y-3">
+        @foreach (var item in Model)
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <div class="mb-3">
+                    <h3 class="font-semibold text-gray-800 text-sm">@item.StudentName</h3>
+                    <p class="text-xs text-gray-500 font-mono">@item.VoucherNumber</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
+                    <div class="text-gray-500">Exam</div>
+                    <div class="text-gray-800">
+                        @(string.IsNullOrEmpty(item.ExamName) ? "-" : item.ExamName)
+                        @{ var mSub = string.Join(" · ", new[] { item.Program, item.AcademicYear }.Where(s => !string.IsNullOrEmpty(s))); }
+                        @if (!string.IsNullOrEmpty(mSub))
+                        {
+                            <span class="block text-xs text-gray-500">@mSub</span>
+                        }
+                    </div>
+                    <div class="text-gray-500">Amount</div>
+                    <div class="text-gray-800 font-semibold">Rs. @item.Amount.ToString("N2")</div>
+                    <div class="text-gray-500">Transaction Code</div>
+                    <div class="text-gray-800 font-mono text-xs break-all">@(item.TransactionCode ?? "N/A")</div>
+                    <div class="text-gray-500">Voucher Date</div>
+                    <div class="text-gray-800">@item.VoucherDate?.ToString("MMM dd, yyyy")</div>
+                    <div class="text-gray-500">Contact</div>
+                    <div class="text-gray-800">@item.ContactNumber</div>
+                </div>
+                <div class="pt-3">
+                    <a asp-action="Details" asp-route-voucherNo="@item.VoucherNumber" class="w-full block text-center py-2 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100">
+                        View Details
+                    </a>
+                </div>
+            </div>
+        }
+        @if (!Model.Any())
+        {
+            <div class="text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-500">
+                <i class="fas fa-money-check-dollar text-4xl mb-3 opacity-50"></i>
+                <p>No payments found.</p>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1)
+    {
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Showing <span class="font-medium">@(((currentPage - 1) * pageSize) + 1)</span>
+                    to <span class="font-medium">@(Math.Min(currentPage * pageSize, totalCount))</span>
+                    of <span class="font-medium">@totalCount</span> results
+                </p>
+            </div>
+            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-fromDate="@currentFromDate" asp-route-toDate="@currentToDate" asp-route-pageSize="@pageSize"
+                   class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
+                    <i class="fas fa-chevron-left text-xs"></i>
+                </a>
+                @{
+                    var startPage = Math.Max(1, currentPage - 2);
+                    var endPage = Math.Min(totalPages, currentPage + 2);
+                    if (startPage > 1)
+                    {
+                        <a asp-action="Index" asp-route-page="1" asp-route-search="@currentSearch" asp-route-fromDate="@currentFromDate" asp-route-toDate="@currentToDate" asp-route-pageSize="@pageSize"
+                           class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">1</a>
+                        if (startPage > 2)
+                        {
+                            <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                        }
+                    }
+                    for (int i = startPage; i <= endPage; i++)
+                    {
+                        <a asp-action="Index" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-fromDate="@currentFromDate" asp-route-toDate="@currentToDate" asp-route-pageSize="@pageSize"
+                           class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-emerald-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
+                    }
+                    if (endPage < totalPages)
+                    {
+                        if (endPage < totalPages - 1)
+                        {
+                            <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                        }
+                        <a asp-action="Index" asp-route-page="@totalPages" asp-route-search="@currentSearch" asp-route-fromDate="@currentFromDate" asp-route-toDate="@currentToDate" asp-route-pageSize="@pageSize"
+                           class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">@totalPages</a>
+                    }
+                }
+                <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-fromDate="@currentFromDate" asp-route-toDate="@currentToDate" asp-route-pageSize="@pageSize"
+                   class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </a>
+            </nav>
+        </div>
+    }
+</div>
