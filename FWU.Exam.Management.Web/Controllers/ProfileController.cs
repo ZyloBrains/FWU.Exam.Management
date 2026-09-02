@@ -9,11 +9,13 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using System.Text;
 using FWU.Exam.Management.Web.Helpers;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
@@ -24,6 +26,7 @@ public class ProfileController(
     AppDbContext context,
     IStudentDashboardService studentDashboardService,
     IFileUploadHelper fileUploadHelper,
+    INotificationService notificationService,
     ILogger<ProfileController> logger) : Controller
 {
     public async Task<IActionResult> Index()
@@ -154,6 +157,71 @@ public class ProfileController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendEmailVerification()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var email = await userManager.GetEmailAsync(user);
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            TempData["ErrorMessage"] = "No email address found on your account. Add an email to receive a verification link.";
+            return RedirectToAction(nameof(Edit));
+        }
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        {
+            TempData["ErrorMessage"] = "The email on your account is not a valid email address. Update it before requesting verification.";
+            return RedirectToAction(nameof(Edit));
+        }
+
+        if (await userManager.IsEmailConfirmedAsync(user))
+        {
+            TempData["InfoMessage"] = "Your email is already verified.";
+            return RedirectToAction(nameof(Edit));
+        }
+
+        try
+        {
+            var userId = await userManager.GetUserIdAsync(user);
+            var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = Url.Action(
+                "ConfirmEmail",
+                "Account",
+                new { area = "Identity", userId = userId, code = code },
+                protocol: Request.Scheme);
+
+            var context = new Dictionary<string, string>
+            {
+                ["UserName"] = user.FullName ?? email,
+                ["CallbackUrl"] = callbackUrl ?? string.Empty
+            };
+
+            var result = await notificationService.SendAsync(email, null, "confirm_email", context);
+
+            if (!result.EmailSent || !string.IsNullOrWhiteSpace(result.EmailError))
+            {
+                logger.LogWarning("Verification email to {Email} did not send. EmailError={EmailError}", email, result.EmailError);
+                TempData["ErrorMessage"] = string.IsNullOrWhiteSpace(result.EmailError)
+                    ? "The verification email could not be sent. Please try again later."
+                    : $"The verification email could not be sent: {result.EmailError}";
+                return RedirectToAction(nameof(Edit));
+            }
+
+            TempData["SuccessMessage"] = "Verification email sent. Please check your inbox.";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to resend verification email to {Email}", email);
+            TempData["ErrorMessage"] = "Failed to send the verification email. Please try again later.";
+        }
+
+        return RedirectToAction(nameof(Edit));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateProfile(
         string? fullName,
         string? designation,
@@ -230,14 +298,24 @@ public class ProfileController(
 
             if (errors.Count == 0 && !string.Equals(trimmedEmail, user.Email, StringComparison.OrdinalIgnoreCase))
             {
-                var normalized = userManager.NormalizeEmail(trimmedEmail);
-                var emailTaken = await context.Users.AnyAsync(u => u.NormalizedEmail == normalized && u.Id != user.Id);
-                if (emailTaken)
-                    errors.Add("That email address is already in use by another account.");
+                var currentEmailValid = !string.IsNullOrWhiteSpace(user.Email)
+                    && System.Text.RegularExpressions.Regex.IsMatch(user.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+
+                if (currentEmailValid && await userManager.IsEmailConfirmedAsync(user))
+                {
+                    errors.Add("Your email is already verified and cannot be changed. Contact the administrator to update it.");
+                }
                 else
                 {
-                    user.Email = trimmedEmail;
-                    user.EmailConfirmed = false;
+                    var normalized = userManager.NormalizeEmail(trimmedEmail);
+                    var emailTaken = await context.Users.AnyAsync(u => u.NormalizedEmail == normalized && u.Id != user.Id);
+                    if (emailTaken)
+                        errors.Add("That email address is already in use by another account.");
+                    else
+                    {
+                        user.Email = trimmedEmail;
+                        user.EmailConfirmed = false;
+                    }
                 }
             }
         }
