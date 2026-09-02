@@ -152,6 +152,7 @@ public class TheoryMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var schedule = await ScopedScheduleQuery(effectiveCollege)
+            .Include(es => es.SemesterInstance)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
@@ -226,6 +227,7 @@ public class TheoryMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var schedule = await ScopedScheduleQuery(effectiveCollege)
+            .Include(es => es.SemesterInstance)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
@@ -301,7 +303,8 @@ public class TheoryMarksService(
         var result = new BulkSaveResult { Success = true };
         var effectiveCollege = GetEffectiveCollegeId(dto.CollegeId);
 
-        var schedule = await ScopedScheduleQuery(effectiveCollege)
+var schedule = await ScopedScheduleQuery(effectiveCollege)
+            .Include(es => es.SemesterInstance)
             .FirstOrDefaultAsync(es => es.Id == dto.ExamScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
