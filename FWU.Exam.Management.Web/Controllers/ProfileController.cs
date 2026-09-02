@@ -82,6 +82,25 @@ public class ProfileController(
             CanUploadSignature = baseVm.CanUploadSignature,
         };
 
+        vm.Provinces = await context.Provinces
+            .AsNoTracking()
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.ProvinceName)
+            .Select(p => new DropdownItem { Id = p.Id, Name = p.ProvinceName })
+            .ToListAsync();
+        vm.Districts = await context.Districts
+            .AsNoTracking()
+            .Where(d => d.IsActive)
+            .OrderBy(d => d.DistrictName)
+            .Select(d => new DropdownItem { Id = d.Id, Name = d.DistrictName, ParentId = d.ProvinceId })
+            .ToListAsync();
+        vm.LocalLevels = await context.LocalLevels
+            .AsNoTracking()
+            .Where(l => l.IsActive)
+            .OrderBy(l => l.LocalLevelName)
+            .Select(l => new DropdownItem { Id = l.Id, Name = l.LocalLevelName, ParentId = l.DistrictId })
+            .ToListAsync();
+
         if (isStudent)
         {
             var registration = await studentDashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
@@ -103,24 +122,6 @@ public class ProfileController(
                 vm.RegistrationEthnicityId = registration.EthnicityId;
             }
 
-            vm.Provinces = await context.Provinces
-                .AsNoTracking()
-                .Where(p => p.IsActive)
-                .OrderBy(p => p.ProvinceName)
-                .Select(p => new DropdownItem { Id = p.Id, Name = p.ProvinceName })
-                .ToListAsync();
-            vm.Districts = await context.Districts
-                .AsNoTracking()
-                .Where(d => d.IsActive)
-                .OrderBy(d => d.DistrictName)
-                .Select(d => new DropdownItem { Id = d.Id, Name = d.DistrictName, ParentId = d.ProvinceId })
-                .ToListAsync();
-            vm.LocalLevels = await context.LocalLevels
-                .AsNoTracking()
-                .Where(l => l.IsActive)
-                .OrderBy(l => l.LocalLevelName)
-                .Select(l => new DropdownItem { Id = l.Id, Name = l.LocalLevelName, ParentId = l.DistrictId })
-                .ToListAsync();
             vm.Genders = await context.Genders
                 .AsNoTracking()
                 .Where(g => g.IsActive)
@@ -134,6 +135,19 @@ public class ProfileController(
                 .Select(e => new DropdownItem { Id = e.Id, Name = e.EthnicityName })
                 .ToListAsync();
         }
+        else if (user.CollegeId.HasValue)
+        {
+            var college = await context.Colleges
+                .AsNoTracking()
+                .Include(c => c.Address).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
+                .FirstOrDefaultAsync(c => c.Id == user.CollegeId.Value);
+            if (college?.Address != null)
+            {
+                vm.PermanentLocalLevelId = college.Address.LocalLevelId;
+                vm.PermanentDistrictId = college.Address.LocalLevel?.DistrictId;
+                vm.PermanentProvinceId = college.Address.LocalLevel?.District?.ProvinceId;
+            }
+        }
 
         return View("EditProfile", vm);
     }
@@ -143,6 +157,7 @@ public class ProfileController(
     public async Task<IActionResult> UpdateProfile(
         string? fullName,
         string? designation,
+        string? email,
         string? phoneNumber,
         IFormFile? photo,
         IFormFile? signature,
@@ -199,6 +214,32 @@ public class ProfileController(
         else
         {
             user.PhoneNumber = null;
+        }
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            errors.Add("Email is required.");
+        }
+        else
+        {
+            var trimmedEmail = email.Trim();
+            if (trimmedEmail.Length > 50)
+                errors.Add("Email cannot exceed 50 characters.");
+            else if (!System.Text.RegularExpressions.Regex.IsMatch(trimmedEmail, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                errors.Add("Please enter a valid email address.");
+
+            if (errors.Count == 0 && !string.Equals(trimmedEmail, user.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                var normalized = userManager.NormalizeEmail(trimmedEmail);
+                var emailTaken = await context.Users.AnyAsync(u => u.NormalizedEmail == normalized && u.Id != user.Id);
+                if (emailTaken)
+                    errors.Add("That email address is already in use by another account.");
+                else
+                {
+                    user.Email = trimmedEmail;
+                    user.EmailConfirmed = false;
+                }
+            }
         }
 
         if (isStudent)
@@ -263,6 +304,7 @@ public class ProfileController(
             if (user.Email != null && user.Email != registration.Email)
             {
                 var emailTaken = await context.StudentRegistrations
+                    .IgnoreQueryFilters()
                     .AnyAsync(sr => sr.Id != registration.Id && sr.Email == user.Email);
                 if (!emailTaken)
                 {
@@ -350,7 +392,84 @@ public class ProfileController(
                 registration.EthnicityId = ethnicityId.Value;
             }
 
-            await context.SaveChangesAsync();
+                try
+                {
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateException)
+                {
+                    errors.Add("That email address is already in use by another student account.");
+                    return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
+                }
+            }
+
+        if (!isStudent && user.CollegeId.HasValue && localLevelId is > 0)
+        {
+            var localLevel = await context.LocalLevels
+                .AsNoTracking()
+                .FirstOrDefaultAsync(l => l.Id == localLevelId.Value && l.IsActive);
+            if (localLevel == null)
+            {
+                errors.Add("The selected local level is not valid.");
+                return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
+            }
+
+            if (districtId is > 0 && localLevel.DistrictId != districtId.Value)
+            {
+                errors.Add("The selected local level does not belong to the selected district.");
+                return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
+            }
+
+            if (provinceId is > 0)
+            {
+                var district = await context.Districts
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.Id == districtId.Value && d.IsActive);
+                if (district == null || district.ProvinceId != provinceId.Value)
+                {
+                    errors.Add("The selected district does not belong to the selected province.");
+                    return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
+                }
+            }
+
+            var college = await context.Colleges
+                .AsTracking()
+                .FirstOrDefaultAsync(c => c.Id == user.CollegeId.Value);
+            if (college != null)
+            {
+                if (college.AddressId.HasValue)
+                {
+                    var address = await context.Addresses.FindAsync(college.AddressId.Value);
+                    if (address != null)
+                    {
+                        address.LocalLevelId = localLevelId.Value;
+                    }
+                    else
+                    {
+                        var newAddress = new Address { LocalLevelId = localLevelId.Value, IsActive = true };
+                        context.Addresses.Add(newAddress);
+                        await context.SaveChangesAsync();
+                        college.AddressId = newAddress.Id;
+                    }
+                }
+                else
+                {
+                    var newAddress = new Address { LocalLevelId = localLevelId.Value, IsActive = true };
+                    context.Addresses.Add(newAddress);
+                    await context.SaveChangesAsync();
+                    college.AddressId = newAddress.Id;
+                }
+
+                try
+                {
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateException)
+                {
+                    errors.Add("Unable to save the college address. Please try again.");
+                    return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
+                }
+            }
         }
 
         if (isAjax)

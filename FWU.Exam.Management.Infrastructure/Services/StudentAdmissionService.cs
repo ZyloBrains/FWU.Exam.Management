@@ -63,7 +63,32 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
 
     public async Task UpdateAdmissionAsync(StudentAdmission admission)
     {
-        context.StudentAdmissions.Update(admission);
+        var existing = await context.StudentAdmissions
+            .AsTracking()
+            .FirstOrDefaultAsync(sa => sa.Id == admission.Id);
+        if (existing == null) return;
+
+        existing.ProgramsId = admission.ProgramsId;
+        existing.CollegeId = admission.CollegeId;
+        existing.AcademicYearId = admission.AcademicYearId;
+        existing.AdmissionDate = admission.AdmissionDate;
+        existing.CheckedBy = admission.CheckedBy;
+        existing.IsCompleted = admission.IsCompleted;
+        existing.IsActive = admission.IsActive;
+        existing.CollegeRollNumber = admission.CollegeRollNumber;
+        existing.FirstName = admission.FirstName;
+        existing.MiddleName = admission.MiddleName;
+        existing.LastName = admission.LastName;
+        existing.NepaliName = admission.NepaliName;
+        existing.DateOfBirthBS = admission.DateOfBirthBS;
+        existing.DateOfBirthAD = admission.DateOfBirthAD;
+        existing.GenderId = admission.GenderId;
+        existing.ContactNumber = admission.ContactNumber;
+        existing.Phone = admission.Phone;
+        existing.Email = admission.Email;
+        existing.HasFeeExemption = admission.HasFeeExemption;
+        existing.AppUserId = admission.AppUserId;
+
         await context.SaveChangesAsync();
     }
 

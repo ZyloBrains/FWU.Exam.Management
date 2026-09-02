@@ -144,59 +144,66 @@
                             <input name="phoneNumber" id="phoneNumber" value="@Model.PhoneNumber" maxlength="15" inputmode="tel"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors" />
                         </div>
-                        @if (!isStudent)
-                        {
-                            <div></div>
-                        }
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                            <input name="email" id="email" type="email" value="@Model.Email" maxlength="50" required
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors" />
+                        </div>
                     </div>
                 </div>
 
-                @if (isStudent)
-                {
-                    <script type="application/json" id="edit-profile-data">@Html.Raw(profileDataJson)</script>
+                <script type="application/json" id="edit-profile-data">@Html.Raw(profileDataJson)</script>
 
-                    <div class="border-t border-gray-100 pt-6"
-                         x-data="editProfileDropdowns()">
-                        <h2 class="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-1">
-                            <span class="w-6 h-6 rounded-lg bg-gradient-to-br from-admin-blue to-admin-blue-dark flex items-center justify-center shrink-0">
-                                <i class="fas fa-user-check text-white text-xs"></i>
-                            </span>
-                            Mandatory Details
+                <div class="border-t border-gray-100 pt-6"
+                     x-data="editProfileDropdowns()">
+                    <h2 class="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-1">
+                        <span class="w-6 h-6 rounded-lg bg-gradient-to-br from-admin-blue to-admin-blue-dark flex items-center justify-center shrink-0">
+                            <i class="fas fa-location-dot text-white text-xs"></i>
+                        </span>
+                        @(isStudent ? "Mandatory Details" : "Address")
+                        @if (isStudent)
+                        {
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-red-50 text-red-600 border border-red-200">Required</span>
-                        </h2>
+                        }
+                    </h2>
+                    @if (isStudent)
+                    {
                         <p class="text-xs text-amber-600 mb-4 ml-8">These fields are required on your exam forms and admit cards.</p>
+                    }
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div>
-                                <label for="provinceId" class="block text-sm font-medium text-gray-700 mb-1">Province <span class="text-red-500">*</span></label>
-                                <select id="provinceId" name="provinceId" x-model="provinceId" x-on:change="districtId = 0; localLevelId = 0;"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
-                                    <option value="0">Select Province</option>
-                                    <template x-for="p in provinces" :key="p.id">
-                                        <option :value="p.id" x-text="p.name"></option>
-                                    </template>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="districtId" class="block text-sm font-medium text-gray-700 mb-1">District <span class="text-red-500">*</span></label>
-                                <select id="districtId" name="districtId" x-model="districtId" x-on:change="localLevelId = 0;"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
-                                    <option value="0">Select District</option>
-                                    <template x-for="d in filteredDistricts" :key="d.id">
-                                        <option :value="d.id" x-text="d.name"></option>
-                                    </template>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="localLevelId" class="block text-sm font-medium text-gray-700 mb-1">Local Level <span class="text-red-500">*</span></label>
-                                <select id="localLevelId" name="localLevelId" x-model="localLevelId"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
-                                    <option value="0">Select Local Level</option>
-                                    <template x-for="l in filteredLocalLevels" :key="l.id">
-                                        <option :value="l.id" x-text="l.name"></option>
-                                    </template>
-                                </select>
-                            </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                            <label for="provinceId" class="block text-sm font-medium text-gray-700 mb-1">Province <span class="text-red-500">*</span></label>
+                            <select id="provinceId" name="provinceId" x-model="provinceId" x-on:change="districtId = 0; localLevelId = 0;"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
+                                <option value="0">Select Province</option>
+                                <template x-for="p in provinces" :key="p.id">
+                                    <option :value="p.id" x-text="p.name"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="districtId" class="block text-sm font-medium text-gray-700 mb-1">District <span class="text-red-500">*</span></label>
+                            <select id="districtId" name="districtId" x-model="districtId" x-on:change="localLevelId = 0;"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
+                                <option value="0">Select District</option>
+                                <template x-for="d in filteredDistricts" :key="d.id">
+                                    <option :value="d.id" x-text="d.name"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="localLevelId" class="block text-sm font-medium text-gray-700 mb-1">Local Level <span class="text-red-500">*</span></label>
+                            <select id="localLevelId" name="localLevelId" x-model="localLevelId"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
+                                <option value="0">Select Local Level</option>
+                                <template x-for="l in filteredLocalLevels" :key="l.id">
+                                    <option :value="l.id" x-text="l.name"></option>
+                                </template>
+                            </select>
+                        </div>
+                        @if (isStudent)
+                        {
                             <div>
                                 <label for="genderId" class="block text-sm font-medium text-gray-700 mb-1">Gender <span class="text-red-500">*</span></label>
                                 <select id="genderId" name="genderId" x-model="genderId"
@@ -217,9 +224,9 @@
                                     </template>
                                 </select>
                             </div>
-                        </div>
+                        }
                     </div>
-                }
+                </div>
             </div>
 
             <div class="px-5 sm:px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row justify-end gap-3">
@@ -237,30 +244,44 @@
 </div>
 
 @section Scripts {
-    @if (isStudent)
-    {
-        <script>
-            function editProfileDropdowns() {
-                var data = JSON.parse(document.getElementById('edit-profile-data').textContent || '{}');
-                return {
-                    provinces: data.provinces || [],
-                    districts: data.districts || [],
-                    localLevels: data.localLevels || [],
-                    genders: data.genders || [],
-                    ethnicities: data.ethnicities || [],
-                    provinceId: Number(data.provinceId) || 0,
-                    districtId: Number(data.districtId) || 0,
-                    localLevelId: Number(data.localLevelId) || 0,
-                    genderId: Number(data.genderId) || 0,
-                    ethnicityId: Number(data.ethnicityId) || 0,
-                    get filteredDistricts() {
-                        return this.districts.filter(function (d) { return d.provinceId == this.provinceId; }.bind(this));
-                    },
-                    get filteredLocalLevels() {
-                        return this.localLevels.filter(function (l) { return l.districtId == this.districtId; }.bind(this));
-                    }
-                };
-            }
-        </script>
-    }
+    <script>
+        function editProfileDropdowns() {
+            var data = JSON.parse(document.getElementById('edit-profile-data').textContent || '{}');
+            return {
+                provinces: data.provinces || [],
+                districts: data.districts || [],
+                localLevels: data.localLevels || [],
+                genders: data.genders || [],
+                ethnicities: data.ethnicities || [],
+                provinceId: Number(data.provinceId) || 0,
+                districtId: Number(data.districtId) || 0,
+                localLevelId: Number(data.localLevelId) || 0,
+                genderId: Number(data.genderId) || 0,
+                ethnicityId: Number(data.ethnicityId) || 0,
+                get filteredDistricts() {
+                    return this.districts.filter(function (d) { return d.provinceId == this.provinceId; }.bind(this));
+                },
+                get filteredLocalLevels() {
+                    return this.localLevels.filter(function (l) { return l.districtId == this.districtId; }.bind(this));
+                },
+                init() {
+                    var self = this;
+                    var apply = function () {
+                        self.provinceId = Number(data.provinceId) || 0;
+                        self.districtId = Number(data.districtId) || 0;
+                        self.localLevelId = Number(data.localLevelId) || 0;
+                        self.genderId = Number(data.genderId) || 0;
+                        self.ethnicityId = Number(data.ethnicityId) || 0;
+                        ['provinceId', 'districtId', 'localLevelId', 'genderId', 'ethnicityId'].forEach(function (id) {
+                            var el = document.getElementById(id);
+                            if (el) el.value = String(data[id] || 0);
+                        });
+                    };
+                    this.$nextTick(function () {
+                        setTimeout(apply, 0);
+                    });
+                }
+            };
+        }
+    </script>
 }

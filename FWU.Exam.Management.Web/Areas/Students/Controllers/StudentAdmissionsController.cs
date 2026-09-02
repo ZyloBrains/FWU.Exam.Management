@@ -91,6 +91,8 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     [RequirePermission("studentadmissions.create")]
     public async Task<IActionResult> Create(int? studentRegistrationId = null)
     {
+        var admission = new StudentAdmission();
+
         if (!userContext.IsSuperAdmin && userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
         {
             ViewBag.CollegeId = new SelectList(await context.Colleges.Where(c => c.Id == userContext.CollegeId.Value).ToListAsync(), "Id", "Name", userContext.CollegeId.Value);
@@ -101,23 +103,42 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
             ViewBag.CollegeId = new SelectList(colleges.Select(c => new { c.Id, c.Name }), "Id", "Name");
         }
 
+        ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName");
+        ViewBag.AcademicYearId = new SelectList(await context.AcademicYears.AsNoTracking().OrderBy(ay => ay.AcademicYearName).ToListAsync(), "Id", "AcademicYearName");
         ViewBag.ProgramsId = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
         ViewBag.StudentRegistrationId = studentRegistrationId;
-        ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName");
 
         if (studentRegistrationId.HasValue)
         {
             var reg = await context.StudentRegistrations
                 .AsNoTracking()
                 .Include(r => r.Program)
+                .Include(r => r.College)
+                .Include(r => r.AcademicYear)
                 .FirstOrDefaultAsync(r => r.Id == studentRegistrationId.Value);
             if (reg != null)
             {
+                admission.CollegeId = reg.CollegeId;
+                if (reg.ProgramId.HasValue) admission.ProgramsId = reg.ProgramId.Value;
+                admission.AcademicYearId = reg.AcademicYearId;
+                admission.FirstName = reg.FirstName;
+                admission.MiddleName = reg.MiddleName;
+                admission.LastName = reg.LastName;
+                admission.NepaliName = reg.NepaliName;
+                admission.DateOfBirthBS = reg.DateOfBirthBS;
+                admission.DateOfBirthAD = reg.DateOfBirthAD;
+                admission.GenderId = reg.GenderId;
+                admission.ContactNumber = reg.ContactNumber;
+                admission.Phone = reg.Phone;
+                admission.Email = reg.Email;
+                admission.CollegeRollNumber = reg.RegistrationNumber;
+
                 ViewBag.SelectedStudent = reg;
+                ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(reg.CollegeId), "Id", "ProgramName", reg.ProgramId);
             }
         }
 
-        return View();
+        return View(admission);
     }
 
     [HttpPost]
@@ -166,6 +187,11 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
                 {
                     admission.CollegeId = reg.CollegeId;
                 }
+
+                if (admission.AcademicYearId == 0)
+                {
+                    admission.AcademicYearId = reg.AcademicYearId;
+                }
             }
         }
 
@@ -201,6 +227,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(admission.CollegeId), "Id", "ProgramName", admission.ProgramsId);
         ViewBag.StudentRegistrationId = studentRegistrationId;
         ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName", admission.GenderId);
+        ViewBag.AcademicYearId = new SelectList(await context.AcademicYears.AsNoTracking().OrderBy(ay => ay.AcademicYearName).ToListAsync(), "Id", "AcademicYearName", admission.AcademicYearId);
         return View(admission);
     }
 
@@ -216,6 +243,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         ViewBag.CollegeId = new SelectList(colleges.Select(c => new { c.Id, c.Name }), "Id", "Name", admission.CollegeId);
         ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(admission.CollegeId), "Id", "ProgramName", admission.ProgramsId);
         ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName", admission.GenderId);
+        ViewBag.AcademicYearId = new SelectList(await context.AcademicYears.AsNoTracking().OrderBy(ay => ay.AcademicYearName).ToListAsync(), "Id", "AcademicYearName", admission.AcademicYearId);
         return View(admission);
     }
 
@@ -246,6 +274,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         ViewBag.CollegeId = new SelectList(colleges.Select(c => new { c.Id, c.Name }), "Id", "Name", admission.CollegeId);
         ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(admission.CollegeId), "Id", "ProgramName", admission.ProgramsId);
         ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName", admission.GenderId);
+        ViewBag.AcademicYearId = new SelectList(await context.AcademicYears.AsNoTracking().OrderBy(ay => ay.AcademicYearName).ToListAsync(), "Id", "AcademicYearName", admission.AcademicYearId);
         return View(admission);
     }
 
@@ -368,17 +397,30 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     }
 
     [HttpGet]
-    public async Task<JsonResult> SearchStudents(string search, int collegeId)
+    public async Task<JsonResult> SearchStudents(string search, int? collegeId)
     {
         if (string.IsNullOrWhiteSpace(search) || search.Length < 2)
             return Json(new List<object>());
 
         var lowerSearch = search.ToLower();
-        var students = await context.StudentRegistrations
+
+        var query = context.StudentRegistrations
             .AsNoTracking()
             .Include(s => s.Program)
-            .Where(s => s.CollegeId == collegeId && s.IsActive)
-            .Where(s => s.StudentAdmissionId == null)
+            .Include(s => s.College)
+            .Where(s => s.IsActive)
+            .Where(s => s.StudentAdmissionId == null);
+
+        if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+        {
+            query = query.Where(s => s.CollegeId == userContext.CollegeId.Value);
+        }
+        else if (collegeId.HasValue)
+        {
+            query = query.Where(s => s.CollegeId == collegeId.Value);
+        }
+
+        var students = await query
             .Where(s => (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(lowerSearch))
                      || (s.FirstName != null && s.FirstName.ToLower().Contains(lowerSearch))
                      || (s.LastName != null && s.LastName.ToLower().Contains(lowerSearch))
@@ -388,10 +430,23 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
             .Select(s => new
             {
                 s.Id,
-                RegistrationNumber = s.RegistrationNumber ?? "",
-                FullName = (s.FirstName + " " + s.LastName).Trim(),
-                Email = s.Email ?? "",
-                Program = s.Program != null ? s.Program.ProgramName : ""
+                s.RegistrationNumber,
+                s.FirstName,
+                s.MiddleName,
+                s.LastName,
+                s.NepaliName,
+                s.DateOfBirthBS,
+                s.DateOfBirthAD,
+                s.GenderId,
+                s.ContactNumber,
+                s.Phone,
+                s.Email,
+                s.CollegeId,
+                s.ProgramId,
+                s.AcademicYearId,
+                CollegeName = s.College != null ? s.College.Name : "",
+                ProgramName = s.Program != null ? s.Program.ProgramName : "",
+                FullName = (s.FirstName + " " + s.LastName).Trim()
             })
             .ToListAsync();
 
