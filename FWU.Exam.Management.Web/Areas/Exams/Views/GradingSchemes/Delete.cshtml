@@ -36,12 +36,14 @@
                         <p class="text-gray-800 font-medium">@Model.Name</p>
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Program</p>
-                        <p class="text-gray-800 font-medium">@Model.Program?.ProgramName</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Year</p>
-                        <p class="text-gray-800 font-medium">@Model.AcademicYear?.AcademicYearName</p>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Programs</p>
+                        <p class="text-gray-800 font-medium">
+                            @{
+                                var delPrograms = Model.ProgramAssignments?.Select(gsp => gsp.Program?.ProgramName ?? "") ?? Enumerable.Empty<string>();
+                                var delProgramList = string.Join(", ", delPrograms.Where(p => !string.IsNullOrEmpty(p)));
+                            }
+                            @(string.IsNullOrEmpty(delProgramList) ? "-" : delProgramList)
+                        </p>
                     </div>
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</p>

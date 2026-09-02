@@ -18,12 +18,13 @@ public class CollegeAdminMarksController(
             Mode = MarksEntryMode.Internal,
             Title = "Internal Marks Entry",
             Subtitle = "Select the exam schedule and subject, then enter internal marks step by step.",
-            Icon = "fa-pen-alt",
+            Icon = "pen-alt",
             ControllerBase = "CollegeAdminMarks",
             SaveAction = "SaveInternalMarks",
             IsSuperAdmin = page.IsSuperAdmin,
             IsFacultyAdmin = page.IsFacultyAdmin,
             IsCollegeAdmin = page.IsCollegeAdmin,
+            CollegeId = page.CollegeId,
             Faculties = page.Faculties,
             Colleges = page.Colleges
         };

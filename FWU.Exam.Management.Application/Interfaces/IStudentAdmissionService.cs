@@ -6,8 +6,8 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface IStudentAdmissionService
 {
-    Task<(List<StudentAdmission> Items, int TotalCount)> GetAdmissionsAsync(int page, int pageSize, string? search, string sort, string sortDir);
-    Task<List<StudentAdmission>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir);
+    Task<(List<StudentAdmission> Items, int TotalCount)> GetAdmissionsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? programId = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null);
+    Task<List<StudentAdmission>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? programId = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null);
     Task<StudentAdmission?> GetAdmissionByIdAsync(int id);
     Task<int> CreateAdmissionAsync(StudentAdmission admission);
     Task UpdateAdmissionAsync(StudentAdmission admission);

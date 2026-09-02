@@ -27,9 +27,9 @@ public class ExamRegistrationsController(
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null, int? collegeId = null)
     {
-        var (items, totalCount) = await examRegistrationService.GetExamRegistrationsAsync(page, pageSize, search, sort, sortDir, examScheduleId);
+        var (items, totalCount) = await examRegistrationService.GetExamRegistrationsAsync(page, pageSize, search, sort, sortDir, examScheduleId, collegeId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -39,8 +39,10 @@ public class ExamRegistrationsController(
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
         ViewBag.ExamScheduleId = examScheduleId;
+        ViewBag.CollegeId = collegeId;
 
         ViewData["ExamScheduleId"] = new SelectList(context.ExamSchedules.AsNoTracking().Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
+        ViewData["CollegeId"] = new SelectList(await examRegistrationService.GetFilterCollegesAsync(), "Id", "Name", collegeId);
 
         return View(items);
     }
@@ -296,37 +298,37 @@ public class ExamRegistrationsController(
         return View(examRegistration);
     }
 
-    public async Task<IActionResult> ExportToCsv(string? search = null)
+    public async Task<IActionResult> ExportToCsv(string? search = null, int? collegeId = null)
     {
-        var items = await examRegistrationService.GetFilteredItemsAsync(search);
+        var items = await examRegistrationService.GetFilteredItemsAsync(search, collegeId);
 
         var sb = new StringBuilder();
-        sb.AppendLine("ID,Exam Schedule,College,Roll Number,Status,Registration Date,Fee,Is Active");
+        sb.AppendLine("ID,Student Name,Registration Number,Exam Schedule,College,Status,Registration Date,Fee");
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{item.Id},{(item.ExamSchedule?.ExamScheduleName ?? "").EscapeCsv()},{(item.College?.Name ?? "").EscapeCsv()},{(item.ExamRollNumber ?? "").EscapeCsv()},{item.Status},{item.RegistrationDate?.ToString("yyyy-MM-dd")},{item.FeeEnclosed},{(item.IsActive ? "Yes" : "No")}");
+            sb.AppendLine($"{item.Id},{(item.ApplicationVoucher?.StudentName ?? "").EscapeCsv()},{(item.ApplicationVoucher?.StudentRegistration?.RegistrationNumber ?? "").EscapeCsv()},{(item.ExamSchedule?.ExamScheduleName ?? "").EscapeCsv()},{(item.College?.Name ?? "").EscapeCsv()},{item.Status},{item.RegistrationDate?.ToString("yyyy-MM-dd")},{item.FeeEnclosed}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
         return File(csvBytes, "text/csv", "ExamRegistrations.csv");
     }
 
-    public async Task<IActionResult> ExportToPdf(string? search = null)
+    public async Task<IActionResult> ExportToPdf(string? search = null, int? collegeId = null)
     {
-        var items = await examRegistrationService.GetFilteredItemsAsync(search);
+        var items = await examRegistrationService.GetFilteredItemsAsync(search, collegeId);
         return View("PrintPdf", items);
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(string? search = null)
+    public async Task<IActionResult> ExportToExcel(string? search = null, int? collegeId = null)
     {
-        var items = await examRegistrationService.GetFilteredItemsAsync(search);
+        var items = await examRegistrationService.GetFilteredItemsAsync(search, collegeId);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("ExamRegistrations");
 
-        var headers = new[] { "ID", "Exam Schedule", "College", "Roll Number", "Status", "Registration Date", "Fee", "Is Active" };
+        var headers = new[] { "ID", "Student Name", "Registration Number", "Exam Schedule", "College", "Status", "Registration Date", "Fee" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(1, i + 1);
@@ -339,13 +341,13 @@ public class ExamRegistrationsController(
         foreach (var item in items)
         {
             worksheet.Cell(row, 1).Value = item.Id;
-            worksheet.Cell(row, 2).Value = item.ExamSchedule?.ExamScheduleName ?? "";
-            worksheet.Cell(row, 3).Value = item.College?.Name ?? "";
-            worksheet.Cell(row, 4).Value = item.ExamRollNumber ?? "";
-            worksheet.Cell(row, 5).Value = item.Status.ToString();
-            worksheet.Cell(row, 6).Value = item.RegistrationDate?.ToString("yyyy-MM-dd") ?? "";
-            worksheet.Cell(row, 7).Value = item.FeeEnclosed;
-            worksheet.Cell(row, 8).Value = item.IsActive ? "Yes" : "No";
+            worksheet.Cell(row, 2).Value = item.ApplicationVoucher?.StudentName ?? "";
+            worksheet.Cell(row, 3).Value = item.ApplicationVoucher?.StudentRegistration?.RegistrationNumber ?? "";
+            worksheet.Cell(row, 4).Value = item.ExamSchedule?.ExamScheduleName ?? "";
+            worksheet.Cell(row, 5).Value = item.College?.Name ?? "";
+            worksheet.Cell(row, 6).Value = item.Status.ToString();
+            worksheet.Cell(row, 7).Value = item.RegistrationDate?.ToString("yyyy-MM-dd") ?? "";
+            worksheet.Cell(row, 8).Value = item.FeeEnclosed;
             row++;
         }
 

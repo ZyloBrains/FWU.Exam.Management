@@ -35,7 +35,8 @@ public class StudentDashboardController(
     ILogger<StudentDashboardController> logger,
     FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper,
     AppDbContext context,
-    IAuditLogWriter auditLogWriter)
+    IAuditLogWriter auditLogWriter,
+    IGradeCalculationService gradeCalculationService)
     : Controller
 {
     public IActionResult Profile()
@@ -2107,31 +2108,9 @@ public class StudentDashboardController(
 
         if (programId.HasValue)
         {
-            var scheme = await context.GradingSchemes
-                .AsNoTracking()
-                .Include(gs => gs.GradeDefinitions)
-                .Where(gs => gs.ProgramId == programId.Value && gs.IsActive)
-                .OrderByDescending(gs => gs.GradeGroupId.HasValue)
-                .ThenBy(gs => gs.Id)
-                .FirstOrDefaultAsync();
+            var scheme = gradeCalculationService.ResolveSchemeForProgram(programId.Value);
 
-            if (scheme?.GradeGroupId.HasValue == true)
-            {
-                var gradePoints = await context.GradePoints
-                    .AsNoTracking()
-                    .Where(gp => gp.GradeGroupId == scheme.GradeGroupId.Value)
-                    .ToListAsync();
-
-                foreach (var gp in gradePoints.OrderByDescending(gp => gp.GradePointValue))
-                {
-                    var letter = gp.Grade?.Trim().ToUpperInvariant();
-                    if (!string.IsNullOrEmpty(letter))
-                    {
-                        map.TryAdd(letter, gp.GradePointValue);
-                    }
-                }
-            }
-            else if (scheme?.GradeDefinitions != null)
+            if (scheme?.GradeDefinitions != null)
             {
                 foreach (var gd in scheme.GradeDefinitions.OrderBy(gd => gd.DisplayOrder))
                 {

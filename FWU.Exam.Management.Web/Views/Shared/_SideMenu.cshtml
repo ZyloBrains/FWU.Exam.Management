@@ -54,6 +54,83 @@
     var sideMenuRoles = sideMenuUser != null ? await UserManager.GetRolesAsync(sideMenuUser) : new List<string>();
 
     bool ItemVisible(MenuItem item) => item.Permissions.Length == 0 || item.Permissions.Any(HasPerm);
+    // Active state detection for sections
+    var isUserActive = IsActive(controllerName: "User") || IsActive(page: "/Account/ForgotPassword") ||
+                       IsActive(controllerName: "Role") || IsActive(controllerName: "RolePermissionManager", areaName: "Admin") ||
+                       IsActive(controllerName: "ManagePermissions", areaName: "Admin") ||
+                       IsActive(controllerName: "Section", actionName: "UserManagement");
+    var isAcademicActive = IsActive(controllerName: "Faculty", areaName: "Core") ||
+                            IsActive(controllerName: "Programs", areaName: "Core") ||
+                            IsActive(controllerName: "Semesters", areaName: "Core") ||
+                            IsActive(controllerName: "SubjectCatalogs", areaName: "Subjects") ||
+                            IsActive(controllerName: "SubjectTypes", areaName: "Subjects") ||
+                            IsActive(controllerName: "SubjectOfferings", areaName: "Subjects") ||
+                            IsActive(controllerName: "CurriculumVersions", areaName: "Subjects") ||
+                            IsActive(controllerName: "AcademicYears", areaName: "Core") ||
+                            IsActive(controllerName: "Section", actionName: "AcademicSetup");
+    var isCollegeActive = IsActive(controllerName: "Colleges", areaName: "Colleges") ||
+                           IsActive(controllerName: "CollegeTypes", areaName: "Colleges") ||
+                           IsActive(controllerName: "CollegePrograms", areaName: "Colleges") ||
+                           IsActive(controllerName: "Section", actionName: "Colleges");
+    var isRegActive = IsActive(controllerName: "StudentRegistrations", areaName: "Students") ||
+                      IsActive(controllerName: "StudentCategories") ||
+                      IsActive(controllerName: "StudentAdmissions", areaName: "Students") ||
+                      IsActive(controllerName: "SemesterEnrollments", areaName: "Students") ||
+                      IsActive(controllerName: "Section", actionName: "Registration");
+    var isExamActive = IsActive(controllerName: "Entrance", areaName: "Exams") ||
+                        IsActive(controllerName: "ExamSchedules", areaName: "Exams") ||
+                        IsActive(controllerName: "ExamTypes", areaName: "Exams") ||
+                        IsActive(controllerName: "GradingSchemes", areaName: "Exams") ||
+                        IsActive(controllerName: "ExamRegistrations", areaName: "Exams") ||
+                        IsActive(controllerName: "ExamSubjectResults", areaName: "Exams") ||
+                        IsActive(controllerName: "ResultRecords", areaName: "Exams") ||
+                        IsActive(controllerName: "ExamCenters", areaName: "Exams") ||
+                        IsActive(controllerName: "ExamCenterDistribution", areaName: "Exams") ||
+                        IsActive(controllerName: "AdmitCards", areaName: "Exams") ||
+                        IsActive(controllerName: "RetotalRequests", areaName: "Exams") ||
+                        IsActive(controllerName: "CollegeAdminMarks", areaName: "Exams") ||
+                        IsActive(controllerName: "InternalMarks", areaName: "Exams") ||
+                        IsActive(controllerName: "Section", actionName: "Examination");
+    var isResultActive = IsActive(controllerName: "ExamSubjectResults", areaName: "Exams") ||
+                          IsActive(controllerName: "ResultRecords", areaName: "Exams") ||
+                          IsActive(controllerName: "RetotalRequests", areaName: "Exams") ||
+                          IsActive(controllerName: "Section", actionName: "Results");
+    var isPayActive = IsActive(controllerName: "Banks", areaName: "Payments") ||
+                      IsActive(controllerName: "PaymentTypes", areaName: "Payments") ||
+                      IsActive(controllerName: "BillTitles", areaName: "Payments") ||
+                      IsActive(controllerName: "Section", actionName: "Payments");
+    var isLocActive = IsActive(controllerName: "Provinces", areaName: "Location") ||
+                      IsActive(controllerName: "Districts", areaName: "Location") ||
+                      IsActive(controllerName: "LocalLevels", areaName: "Location") ||
+                      IsActive(controllerName: "Section", actionName: "Location");
+    var isStudentActive = IsActive(controllerName: "StudentDashboard", areaName: "Students") ||
+                           IsActive(controllerName: "Section", actionName: "StudentPortal");
+    var isConfigActive = IsActive(controllerName: "Tenants") ||
+                          IsActive(controllerName: "SmtpConfigurations", areaName: "Core") ||
+                          IsActive(controllerName: "TestEmail", areaName: "Core") ||
+                          IsActive(controllerName: "GumpNowEmailConfigurations", areaName: "Core") ||
+                          IsActive(controllerName: "TestGumpNowEmail", areaName: "Core") ||
+                          IsActive(controllerName: "ESewaConfigurations", areaName: "Core") ||
+                          IsActive(controllerName: "KhaltiConfigurations", areaName: "Core") ||
+                          IsActive(controllerName: "ConnectIPSConfigurations", areaName: "Core") ||
+                           IsActive(controllerName: "SmsConfigurations", areaName: "Core") ||
+                           IsActive(controllerName: "TestGumpNowSms", areaName: "Core") ||
+                           IsActive(controllerName: "Notices", areaName: "Core") ||
+                           IsActive(controllerName: "AuditLog", areaName: "Core") ||
+                           IsActive(controllerName: "BackupRestore", areaName: "Core") ||
+                           IsActive(controllerName: "Section", actionName: "SystemConfig");
+    var isReportActive = IsActive(controllerName: "Reports", areaName: "Reports") ||
+                         IsActive(controllerName: "Section", actionName: "Reports");
+    var isCoreActive = IsActive(controllerName: "Programs", areaName: "Core") ||
+                       IsActive(controllerName: "AcademicYears", areaName: "Core") ||
+                       IsActive(controllerName: "Levels", areaName: "Core") ||
+                       IsActive(controllerName: "Genders", areaName: "Core") ||
+                       IsActive(controllerName: "Ethnicities", areaName: "Core") ||
+                       IsActive(controllerName: "Boards", areaName: "Core") ||
+                       IsActive(controllerName: "Countries", areaName: "Core") ||
+                       IsActive(controllerName: "Provinces", areaName: "Location") ||
+                       IsActive(controllerName: "Districts", areaName: "Location") ||
+                       IsActive(controllerName: "LocalLevels", areaName: "Location");
 
     bool SectionVisible(MenuSection section)
     {
@@ -104,7 +181,6 @@
         }
     }
 }
-
 <ul class="space-y-1.5 px-3 font-poppins">
     @foreach (var menuSection in visibleSections)
     {

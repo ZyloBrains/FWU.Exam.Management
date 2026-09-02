@@ -33,6 +33,7 @@ public class PracticalMarksService(
         }
         else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
         {
+            vm.CollegeId = userContext.CollegeId.Value;
             vm.Colleges = await GetCollegesAsync(null);
         }
 
@@ -167,6 +168,7 @@ public class PracticalMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var schedule = await ScopedScheduleQuery(effectiveCollege)
+            .Include(es => es.SemesterInstance)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
@@ -245,6 +247,7 @@ public class PracticalMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var schedule = await ScopedScheduleQuery(effectiveCollege)
+            .Include(es => es.SemesterInstance)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
@@ -320,7 +323,8 @@ public class PracticalMarksService(
         var result = new BulkSaveResult { Success = true };
         var effectiveCollege = GetEffectiveCollegeId(dto.CollegeId);
 
-        var schedule = await ScopedScheduleQuery(effectiveCollege)
+var schedule = await ScopedScheduleQuery(effectiveCollege)
+            .Include(es => es.SemesterInstance)
             .FirstOrDefaultAsync(es => es.Id == dto.ExamScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 

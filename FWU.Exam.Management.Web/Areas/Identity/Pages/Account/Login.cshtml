@@ -225,7 +225,7 @@
                             <span asp-validation-for="Input.Password" class="text-danger small"></span>
                         </div>
 
-                        <!-- Remember Me & Forgot Password -->
+                        <!-- Remember Me & Forgot Password & Resend Verification -->
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" asp-for="Input.RememberMe" />
@@ -233,10 +233,12 @@
                                     @Html.DisplayNameFor(m => m.Input.RememberMe)
                                 </label>
                             </div>
-                            <a id="forgot-password" asp-page="./ForgotPassword"
-                               class="small text-primary text-decoration-none">
-                                Forgot password?
-                            </a>
+                            <div class="d-flex flex-column gap-1 text-end">
+                                <a id="forgot-password" asp-page="./ForgotPassword"
+                                   class="small text-primary text-decoration-none">
+                                    Forgot password?
+                                </a>
+                            </div>
                         </div>
 
                         <!-- Login Button -->

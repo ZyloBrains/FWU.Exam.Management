@@ -32,7 +32,7 @@
                     @(Model?.CollegeRollNumber?.FirstOrDefault() ?? 'A')
                 </div>
                 <div>
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">@(Model?.College?.Name ?? "Admission Record")</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">@(string.Join(" ", new[] { Model?.FirstName, Model?.MiddleName, Model?.LastName }.Where(p => !string.IsNullOrWhiteSpace(p))))</h2>
                     <div class="mt-1 flex items-center gap-2 text-xs sm:text-sm text-gray-500">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                         @(Model?.Program?.ProgramName ?? "No program assigned")
@@ -107,6 +107,13 @@
                         <dt class="text-xs sm:text-sm font-medium text-gray-500">Has Fee Exemption</dt>
                         <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.HasFeeExemption == true ? "Yes" : "No")</dd>
                     </div>
+                    @if (!string.IsNullOrWhiteSpace(Model?.Email))
+                    {
+                        <div class="sm:col-span-1">
+                            <dt class="text-xs sm:text-sm font-medium text-gray-500">Email</dt>
+                            <dd class="mt-1 text-xs sm:text-sm text-gray-900">@Model.Email</dd>
+                        </div>
+                    }
                     <div class="sm:col-span-1">
                         <dt class="text-xs sm:text-sm font-medium text-gray-500">App User ID</dt>
                         <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.AppUserId ?? "-")</dd>

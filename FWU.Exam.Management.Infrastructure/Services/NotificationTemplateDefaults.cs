@@ -34,14 +34,14 @@ public static class NotificationTemplateDefaults
             </p>
             <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
                 <tr>
-                    <td align="center" style="background:#2980b9;border-radius:6px;">
+                    <td align="center" style="background:#072C82;border-radius:6px;">
                         <a href="{{CallbackUrl}}" style="display:inline-block;padding:12px 32px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:500;">Reset Password</a>
                     </td>
                 </tr>
             </table>
             <p style="color:#888;line-height:1.6;margin:20px 0 0;font-size:12px;">
                 If the button above does not work, copy and paste this link:<br>
-                <a href="{{CallbackUrl}}" style="color:#2980b9;word-break:break-all;">{{CallbackUrl}}</a>
+                <a href="{{CallbackUrl}}" style="color:#072C82;word-break:break-all;">{{CallbackUrl}}</a>
             </p>
             <p style="color:#888;line-height:1.6;margin:12px 0 0;font-size:12px;">
                 This link will expire after a limited time. If you did not request a password reset, please ignore this email.
@@ -61,14 +61,14 @@ public static class NotificationTemplateDefaults
             </p>
             <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
                 <tr>
-                    <td align="center" style="background:#2980b9;border-radius:6px;">
+                    <td align="center" style="background:#072C82;border-radius:6px;">
                         <a href="{{CallbackUrl}}" style="display:inline-block;padding:12px 32px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:500;">Confirm Email Address</a>
                     </td>
                 </tr>
             </table>
             <p style="color:#888;line-height:1.6;margin:20px 0 0;font-size:12px;">
                 If the button above does not work, copy and paste the following link into your browser:<br>
-                <a href="{{CallbackUrl}}" style="color:#2980b9;word-break:break-all;">{{CallbackUrl}}</a>
+                <a href="{{CallbackUrl}}" style="color:#072C82;word-break:break-all;">{{CallbackUrl}}</a>
             </p>
             <p style="color:#888;line-height:1.6;margin:12px 0 0;font-size:12px;">
                 This link will expire after a limited time. If you did not create this account, please ignore this email.
@@ -88,14 +88,14 @@ public static class NotificationTemplateDefaults
             </p>
             <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
                 <tr>
-                    <td align="center" style="background:#2980b9;border-radius:6px;">
+                    <td align="center" style="background:#072C82;border-radius:6px;">
                         <a href="{{CallbackUrl}}" style="display:inline-block;padding:12px 32px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:500;">Confirm Email Change</a>
                     </td>
                 </tr>
             </table>
             <p style="color:#888;line-height:1.6;margin:20px 0 0;font-size:12px;">
                 If the button above does not work, copy and paste this link:<br>
-                <a href="{{CallbackUrl}}" style="color:#2980b9;word-break:break-all;">{{CallbackUrl}}</a>
+                <a href="{{CallbackUrl}}" style="color:#072C82;word-break:break-all;">{{CallbackUrl}}</a>
             </p>
             <p style="color:#888;line-height:1.6;margin:12px 0 0;font-size:12px;">
                 This link will expire after a limited time. If you did not request this change, please ignore this email.
@@ -148,21 +148,21 @@ public static class NotificationTemplateDefaults
                 <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">College:</strong> <span style="color:#555;font-size:13px;">{{College}}</span></td></tr>
                 <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Program:</strong> <span style="color:#555;font-size:13px;">{{Program}}</span></td></tr>
             </table>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eaf2f8;border-radius:8px;padding:16px 20px;margin:20px 0;border-left:4px solid #2980b9;">
-                <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Username:</strong> <span style="color:#2980b9;font-size:13px;">{{RegistrationNumber}}</span></td></tr>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eaf2f8;border-radius:8px;padding:16px 20px;margin:20px 0;border-left:4px solid #072C82;">
+                <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Username:</strong> <span style="color:#072C82;font-size:13px;">{{RegistrationNumber}}</span></td></tr>
                 <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Email:</strong> <span style="color:#555;font-size:13px;">{{Email}}</span></td></tr>
                 <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Password:</strong> <span style="color:#555;font-size:13px;">{{Password}}</span></td></tr>
             </table>
             <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
                 <tr>
-                    <td align="center" style="background:#2980b9;border-radius:6px;">
+                    <td align="center" style="background:#072C82;border-radius:6px;">
                         <a href="{{LoginUrl}}" style="display:inline-block;padding:12px 32px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:500;">Login to Your Account</a>
                     </td>
                 </tr>
             </table>
             <p style="color:#888;line-height:1.6;margin:0 0 12px;font-size:12px;">
                 If the button above does not work, copy and paste the following link into your browser:<br>
-                <a href="{{LoginUrl}}" style="color:#2980b9;word-break:break-all;">{{LoginUrl}}</a>
+                <a href="{{LoginUrl}}" style="color:#072C82;word-break:break-all;">{{LoginUrl}}</a>
             </p>
             <p style="color:#555;line-height:1.6;margin:0 0 12px;font-size:13px;">
                 You can sign in using your email address <strong>{{Email}}</strong> or your registration number <strong>{{RegistrationNumber}}</strong> along with the password above.
@@ -284,3 +284,4 @@ public static class NotificationTemplateDefaults
     public static TemplateDefinition? Get(string code, NotificationChannel channel)
         => All.FirstOrDefault(t => t.Code == code && t.Channel == channel);
 }
+
