@@ -1,0 +1,74 @@
+@{
+    var success = (TempData["SuccessMessage"] as string) ?? (TempData["Success"] as string);
+    var info = TempData["InfoMessage"] as string;
+    var error = (TempData["ErrorMessage"] as string) ?? (TempData["Error"] as string);
+}
+
+@if (!string.IsNullOrEmpty(success) || !string.IsNullOrEmpty(info) || !string.IsNullOrEmpty(error))
+{
+    <div class="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm" id="global-toast-container">
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="toast-item flex items-start gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 shadow-lg text-sm text-red-700" data-toast-type="error">
+                <i class="fas fa-circle-exclamation mt-0.5 shrink-0"></i>
+                <span class="flex-1 font-medium whitespace-pre-line">@error</span>
+                <button type="button" class="toast-close shrink-0 text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(info))
+        {
+            <div class="toast-item flex items-start gap-3 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 shadow-lg text-sm text-blue-700" data-toast-type="info">
+                <i class="fas fa-circle-info mt-0.5 shrink-0"></i>
+                <span class="flex-1 font-medium whitespace-pre-line">@info</span>
+                <button type="button" class="toast-close shrink-0 text-blue-400 hover:text-blue-600"><i class="fas fa-times"></i></button>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(success))
+        {
+            <div class="toast-item flex items-start gap-3 rounded-lg bg-green-50 border border-green-200 px-4 py-3 shadow-lg text-sm text-green-700" data-toast-type="success">
+                <i class="fas fa-circle-check mt-0.5 shrink-0"></i>
+                <span class="flex-1 font-medium whitespace-pre-line">@success</span>
+                <button type="button" class="toast-close shrink-0 text-green-400 hover:text-green-600"><i class="fas fa-times"></i></button>
+            </div>
+        }
+    </div>
+}
+
+<style>
+    .toast-item {
+        transform: translateX(110%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        opacity: 0;
+    }
+    .toast-item.toast-visible {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    .toast-item.toast-hiding {
+        transform: translateX(110%);
+        opacity: 0;
+    }
+</style>
+
+<script>
+    (function () {
+        var items = document.querySelectorAll('#global-toast-container .toast-item');
+        if (!items.length) return;
+        items.forEach(function (el) {
+            setTimeout(function () { el.classList.add('toast-visible'); }, 30);
+        });
+        function dismiss(el) {
+            if (!el) return;
+            el.classList.add('toast-hiding');
+            el.classList.remove('toast-visible');
+            setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+        }
+        items.forEach(function (el) {
+            var btn = el.querySelector('.toast-close');
+            if (btn) btn.addEventListener('click', function () { dismiss(el); });
+            var isError = el.getAttribute('data-toast-type') === 'error';
+            var delay = isError ? 6000 : 4000;
+            setTimeout(function () { dismiss(el); }, delay);
+        });
+    })();
+</script>

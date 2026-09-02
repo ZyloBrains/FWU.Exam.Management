@@ -45,9 +45,9 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return new List<int>();
     }
 
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "AdmissionDate", string sortDir = "desc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "AdmissionDate", string sortDir = "desc", int pageSize = 10, int? collegeId = null, int? programId = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
     {
-        var (items, totalCount) = await admissionService.GetAdmissionsAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await admissionService.GetAdmissionsAsync(page, pageSize, search, sort, sortDir, collegeId, programId, fromDate, toDate, status);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -56,6 +56,24 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
+        ViewBag.CollegeId = collegeId;
+        ViewBag.ProgramId = programId;
+        ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
+        ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+        ViewBag.Status = status;
+
+        var colleges = await admissionService.GetCollegeSelectListAsync();
+        ViewBag.Colleges = new SelectList(colleges.Select(c => new { c.Id, c.Name }), "Id", "Name", collegeId);
+
+        if (collegeId.HasValue)
+        {
+            var programs = await admissionService.GetCollegeProgramsAsync(collegeId.Value);
+            ViewBag.Programs = new SelectList(programs, "Id", "ProgramName", programId);
+        }
+        else
+        {
+            ViewBag.Programs = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
+        }
 
         return View(items);
     }
@@ -73,6 +91,8 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     [RequirePermission("studentadmissions.create")]
     public async Task<IActionResult> Create(int? studentRegistrationId = null)
     {
+        var admission = new StudentAdmission();
+
         if (!userContext.IsSuperAdmin && userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
         {
             ViewBag.CollegeId = new SelectList(await context.Colleges.Where(c => c.Id == userContext.CollegeId.Value).ToListAsync(), "Id", "Name", userContext.CollegeId.Value);
@@ -83,23 +103,42 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
             ViewBag.CollegeId = new SelectList(colleges.Select(c => new { c.Id, c.Name }), "Id", "Name");
         }
 
+        ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName");
+        ViewBag.AcademicYearId = new SelectList(await context.AcademicYears.AsNoTracking().OrderBy(ay => ay.AcademicYearName).ToListAsync(), "Id", "AcademicYearName");
         ViewBag.ProgramsId = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
         ViewBag.StudentRegistrationId = studentRegistrationId;
-        ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName");
 
         if (studentRegistrationId.HasValue)
         {
             var reg = await context.StudentRegistrations
                 .AsNoTracking()
                 .Include(r => r.Program)
+                .Include(r => r.College)
+                .Include(r => r.AcademicYear)
                 .FirstOrDefaultAsync(r => r.Id == studentRegistrationId.Value);
             if (reg != null)
             {
+                admission.CollegeId = reg.CollegeId;
+                if (reg.ProgramId.HasValue) admission.ProgramsId = reg.ProgramId.Value;
+                admission.AcademicYearId = reg.AcademicYearId;
+                admission.FirstName = reg.FirstName;
+                admission.MiddleName = reg.MiddleName;
+                admission.LastName = reg.LastName;
+                admission.NepaliName = reg.NepaliName;
+                admission.DateOfBirthBS = reg.DateOfBirthBS;
+                admission.DateOfBirthAD = reg.DateOfBirthAD;
+                admission.GenderId = reg.GenderId;
+                admission.ContactNumber = reg.ContactNumber;
+                admission.Phone = reg.Phone;
+                admission.Email = reg.Email;
+                admission.CollegeRollNumber = reg.RegistrationNumber;
+
                 ViewBag.SelectedStudent = reg;
+                ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(reg.CollegeId), "Id", "ProgramName", reg.ProgramId);
             }
         }
 
-        return View();
+        return View(admission);
     }
 
     [HttpPost]
@@ -148,6 +187,11 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
                 {
                     admission.CollegeId = reg.CollegeId;
                 }
+
+                if (admission.AcademicYearId == 0)
+                {
+                    admission.AcademicYearId = reg.AcademicYearId;
+                }
             }
         }
 
@@ -183,6 +227,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(admission.CollegeId), "Id", "ProgramName", admission.ProgramsId);
         ViewBag.StudentRegistrationId = studentRegistrationId;
         ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName", admission.GenderId);
+        ViewBag.AcademicYearId = new SelectList(await context.AcademicYears.AsNoTracking().OrderBy(ay => ay.AcademicYearName).ToListAsync(), "Id", "AcademicYearName", admission.AcademicYearId);
         return View(admission);
     }
 
@@ -198,6 +243,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         ViewBag.CollegeId = new SelectList(colleges.Select(c => new { c.Id, c.Name }), "Id", "Name", admission.CollegeId);
         ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(admission.CollegeId), "Id", "ProgramName", admission.ProgramsId);
         ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName", admission.GenderId);
+        ViewBag.AcademicYearId = new SelectList(await context.AcademicYears.AsNoTracking().OrderBy(ay => ay.AcademicYearName).ToListAsync(), "Id", "AcademicYearName", admission.AcademicYearId);
         return View(admission);
     }
 
@@ -228,6 +274,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         ViewBag.CollegeId = new SelectList(colleges.Select(c => new { c.Id, c.Name }), "Id", "Name", admission.CollegeId);
         ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(admission.CollegeId), "Id", "ProgramName", admission.ProgramsId);
         ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName", admission.GenderId);
+        ViewBag.AcademicYearId = new SelectList(await context.AcademicYears.AsNoTracking().OrderBy(ay => ay.AcademicYearName).ToListAsync(), "Id", "AcademicYearName", admission.AcademicYearId);
         return View(admission);
     }
 
@@ -266,17 +313,19 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     }
 
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "AdmissionDate", string sortDir = "desc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "AdmissionDate", string sortDir = "desc", int? collegeId = null, int? programId = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
     {
-        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeId, programId, fromDate, toDate, status);
 
         var sb = new StringBuilder();
-        sb.AppendLine("S.N.,College Roll No.,College,Program,Admission Date,Status,Active");
+        sb.AppendLine("S.N.,Student Name,College Roll No.,College,Program,Admission Date,Status,Active");
 
         int sn = 1;
         foreach (var a in items)
         {
+            var studentName = string.Join(" ", new[] { a.FirstName, a.MiddleName, a.LastName }.Where(p => !string.IsNullOrWhiteSpace(p)));
             sb.AppendLine($"{sn++}," +
+                          $"{(studentName).EscapeCsv()}," +
                           $"{a.CollegeRollNumber.EscapeCsv()}," +
                           $"{a.College?.Name.EscapeCsv()}," +
                           $"{a.Program?.ProgramName.EscapeCsv()}," +
@@ -290,13 +339,13 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "AdmissionDate", string sortDir = "desc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "AdmissionDate", string sortDir = "desc", int? collegeId = null, int? programId = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
     {
-        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeId, programId, fromDate, toDate, status);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
-        ViewBag.TotalCount = (await admissionService.GetAdmissionsAsync(page, pageSize, search, sort, sortDir)).TotalCount;
+        ViewBag.TotalCount = (await admissionService.GetAdmissionsAsync(page, pageSize, search, sort, sortDir, collegeId, programId, fromDate, toDate, status)).TotalCount;
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
@@ -305,14 +354,14 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "AdmissionDate", string sortDir = "desc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "AdmissionDate", string sortDir = "desc", int? collegeId = null, int? programId = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
     {
-        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeId, programId, fromDate, toDate, status);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("StudentAdmissions");
 
-        var headers = new[] { "S.N.", "College Roll No.", "College", "Program", "Admission Date", "Status", "Active" };
+        var headers = new[] { "S.N.", "Student Name", "College Roll No.", "College", "Program", "Admission Date", "Status", "Active" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(1, i + 1);
@@ -325,13 +374,15 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         int sn = 1;
         foreach (var a in items)
         {
+            var studentName = string.Join(" ", new[] { a.FirstName, a.MiddleName, a.LastName }.Where(p => !string.IsNullOrWhiteSpace(p)));
             worksheet.Cell(row, 1).Value = sn++;
-            worksheet.Cell(row, 2).Value = a.CollegeRollNumber ?? "";
-            worksheet.Cell(row, 3).Value = a.College?.Name ?? "";
-            worksheet.Cell(row, 4).Value = a.Program?.ProgramName ?? "";
-            worksheet.Cell(row, 5).Value = a.AdmissionDate.ToString("yyyy-MM-dd");
-            worksheet.Cell(row, 6).Value = a.IsCompleted ? "Completed" : "Pending";
-            worksheet.Cell(row, 7).Value = a.IsActive ? "Active" : "Inactive";
+            worksheet.Cell(row, 2).Value = studentName;
+            worksheet.Cell(row, 3).Value = a.CollegeRollNumber ?? "";
+            worksheet.Cell(row, 4).Value = a.College?.Name ?? "";
+            worksheet.Cell(row, 5).Value = a.Program?.ProgramName ?? "";
+            worksheet.Cell(row, 6).Value = a.AdmissionDate.ToString("yyyy-MM-dd");
+            worksheet.Cell(row, 7).Value = a.IsCompleted ? "Completed" : "Pending";
+            worksheet.Cell(row, 8).Value = a.IsActive ? "Active" : "Inactive";
             row++;
         }
 
@@ -346,17 +397,30 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     }
 
     [HttpGet]
-    public async Task<JsonResult> SearchStudents(string search, int collegeId)
+    public async Task<JsonResult> SearchStudents(string search, int? collegeId)
     {
         if (string.IsNullOrWhiteSpace(search) || search.Length < 2)
             return Json(new List<object>());
 
         var lowerSearch = search.ToLower();
-        var students = await context.StudentRegistrations
+
+        var query = context.StudentRegistrations
             .AsNoTracking()
             .Include(s => s.Program)
-            .Where(s => s.CollegeId == collegeId && s.IsActive)
-            .Where(s => s.StudentAdmissionId == null)
+            .Include(s => s.College)
+            .Where(s => s.IsActive)
+            .Where(s => s.StudentAdmissionId == null);
+
+        if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+        {
+            query = query.Where(s => s.CollegeId == userContext.CollegeId.Value);
+        }
+        else if (collegeId.HasValue)
+        {
+            query = query.Where(s => s.CollegeId == collegeId.Value);
+        }
+
+        var students = await query
             .Where(s => (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(lowerSearch))
                      || (s.FirstName != null && s.FirstName.ToLower().Contains(lowerSearch))
                      || (s.LastName != null && s.LastName.ToLower().Contains(lowerSearch))
@@ -366,10 +430,23 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
             .Select(s => new
             {
                 s.Id,
-                RegistrationNumber = s.RegistrationNumber ?? "",
-                FullName = (s.FirstName + " " + s.LastName).Trim(),
-                Email = s.Email ?? "",
-                Program = s.Program != null ? s.Program.ProgramName : ""
+                s.RegistrationNumber,
+                s.FirstName,
+                s.MiddleName,
+                s.LastName,
+                s.NepaliName,
+                s.DateOfBirthBS,
+                s.DateOfBirthAD,
+                s.GenderId,
+                s.ContactNumber,
+                s.Phone,
+                s.Email,
+                s.CollegeId,
+                s.ProgramId,
+                s.AcademicYearId,
+                CollegeName = s.College != null ? s.College.Name : "",
+                ProgramName = s.Program != null ? s.Program.ProgramName : "",
+                FullName = (s.FirstName + " " + s.LastName).Trim()
             })
             .ToListAsync();
 
