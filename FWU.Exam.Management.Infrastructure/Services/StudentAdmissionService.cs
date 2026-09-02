@@ -13,9 +13,9 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> userManager, IUserContext userContext, ISemesterEnrollmentService semesterEnrollmentService) : IStudentAdmissionService
 {
-    public async Task<(List<StudentAdmission> Items, int TotalCount)> GetAdmissionsAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<(List<StudentAdmission> Items, int TotalCount)> GetAdmissionsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? programId = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
     {
-        var query = BuildQuery(search);
+        var query = BuildQuery(search, collegeId, programId, fromDate, toDate, status);
 
         var totalCount = await query.CountAsync();
 
@@ -31,9 +31,9 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
         return (items, totalCount);
     }
 
-    public async Task<List<StudentAdmission>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<List<StudentAdmission>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? programId = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
     {
-        var query = BuildQuery(search);
+        var query = BuildQuery(search, collegeId, programId, fromDate, toDate, status);
 
         query = sortDir.ToLower() == "desc"
             ? query.OrderByDescending(GetSortProperty(sort))
@@ -153,7 +153,7 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
         return user?.Id;
     }
 
-    private IQueryable<StudentAdmission> BuildQuery(string? search)
+    private IQueryable<StudentAdmission> BuildQuery(string? search, int? collegeId = null, int? programId = null, DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
     {
         var query = context.StudentAdmissions
             .Include(sa => sa.College)
@@ -166,12 +166,40 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
                 query = query.Where(sa => sa.CollegeId == userContext.CollegeId.Value);
         }
 
+        if (collegeId.HasValue)
+            query = query.Where(sa => sa.CollegeId == collegeId.Value);
+
+        if (programId.HasValue)
+            query = query.Where(sa => sa.ProgramsId == programId.Value);
+
+        if (fromDate.HasValue)
+            query = query.Where(sa => sa.AdmissionDate >= fromDate.Value);
+
+        if (toDate.HasValue)
+            query = query.Where(sa => sa.AdmissionDate <= toDate.Value.Date.AddDays(1).AddTicks(-1));
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            status = status.Trim();
+            if (status.Equals("Completed", StringComparison.OrdinalIgnoreCase))
+                query = query.Where(sa => sa.IsCompleted);
+            else if (status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                query = query.Where(sa => !sa.IsCompleted);
+            else if (status.Equals("Active", StringComparison.OrdinalIgnoreCase))
+                query = query.Where(sa => sa.IsActive);
+            else if (status.Equals("Inactive", StringComparison.OrdinalIgnoreCase))
+                query = query.Where(sa => !sa.IsActive);
+        }
+
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(sa =>
                 (sa.CollegeRollNumber ?? "").Contains(search) ||
                 sa.College!.Name.Contains(search) ||
-                sa.Program!.ProgramName.Contains(search));
+                sa.Program!.ProgramName.Contains(search) ||
+                sa.FirstName.Contains(search) ||
+                (sa.MiddleName != null && sa.MiddleName.Contains(search)) ||
+                sa.LastName.Contains(search));
         }
 
         return query;
