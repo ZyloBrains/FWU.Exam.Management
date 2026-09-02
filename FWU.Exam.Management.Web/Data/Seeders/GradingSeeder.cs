@@ -180,7 +180,7 @@ public static class GradingSeeder
         // keeps only its FWU scheme.
         var legacySchemes = await context.GradingSchemes
             .Where(s => s.Name == "CBCS Standard (4.0)"
-                || s.Name.StartsWith("TU ", StringComparison.OrdinalIgnoreCase))
+                || EF.Functions.Like(s.Name, "TU %"))
             .ToListAsync();
 
         if (legacySchemes.Count > 0)
