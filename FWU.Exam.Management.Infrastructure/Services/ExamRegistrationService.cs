@@ -15,69 +15,39 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class ExamRegistrationService(AppDbContext context, IUserContext userContext) : IExamRegistrationService
 {
-    public async Task<(List<ExamRegistration> Items, int TotalCount)> GetExamRegistrationsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null)
+    public async Task<(List<ExamRegistration> Items, int TotalCount)> GetExamRegistrationsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null, int? collegeId = null)
     {
-        var query = BuildQuery(search, sort, sortDir, examScheduleId);
+        var query = BuildQuery(search, sort, sortDir, examScheduleId, collegeId);
         query = query.ApplyScope(userContext);
 
         var totalCount = await query.CountAsync();
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(e => new ExamRegistration
-            {
-                Id = e.Id,
-                ExamScheduleId = e.ExamScheduleId,
-                CollegeId = e.CollegeId,
-                AcademicYearId = e.AcademicYearId,
-                ExamCenterId = e.ExamCenterId,
-                ProgramsId = e.ProgramsId,
-                ExamRollNumber = e.ExamRollNumber,
-                FeeEnclosed = e.FeeEnclosed,
-                AttendancePercentage = e.AttendancePercentage,
-                RegistrationDate = e.RegistrationDate,
-                Status = e.Status,
-                Sgpa = e.Sgpa,
-                Remarks = e.Remarks,
-                IsActive = e.IsActive,
-                RollNumberIndex = e.RollNumberIndex,
-                IsAppliedByStudent = e.IsAppliedByStudent,
-                ExamSchedule = e.ExamSchedule,
-                College = e.College,
-                ExamCenter = e.ExamCenter,
-                AcademicYear = e.AcademicYear,
-                Program = e.Program
-            })
+            .Include(e => e.ExamSchedule)
+            .Include(e => e.College)
+            .Include(e => e.ExamCenter)
+            .Include(e => e.AcademicYear)
+            .Include(e => e.Program)
+            .Include(e => e.ApplicationVoucher)
+                .ThenInclude(v => v!.StudentRegistration)
             .ToListAsync();
 
         return (items, totalCount);
     }
 
-    public async Task<List<ExamRegistration>> GetFilteredItemsAsync(string? search)
+    public async Task<List<ExamRegistration>> GetFilteredItemsAsync(string? search, int? collegeId = null)
     {
-        var query = BuildQuery(search, "Id", "asc", null);
+        var query = BuildQuery(search, "Id", "asc", null, collegeId);
         query = query.ApplyScope(userContext);
         return await query
-            .Select(e => new ExamRegistration
-            {
-                Id = e.Id,
-                ExamScheduleId = e.ExamScheduleId,
-                CollegeId = e.CollegeId,
-                AcademicYearId = e.AcademicYearId,
-                ExamCenterId = e.ExamCenterId,
-                ProgramsId = e.ProgramsId,
-                ExamRollNumber = e.ExamRollNumber,
-                FeeEnclosed = e.FeeEnclosed,
-                RegistrationDate = e.RegistrationDate,
-                Status = e.Status,
-                Sgpa = e.Sgpa,
-                Remarks = e.Remarks,
-                IsActive = e.IsActive,
-                ExamSchedule = e.ExamSchedule,
-                College = e.College,
-                AcademicYear = e.AcademicYear,
-                Program = e.Program
-            })
+            .Include(e => e.ExamSchedule)
+            .Include(e => e.College)
+            .Include(e => e.ExamCenter)
+            .Include(e => e.AcademicYear)
+            .Include(e => e.Program)
+            .Include(e => e.ApplicationVoucher)
+                .ThenInclude(v => v!.StudentRegistration)
             .ToListAsync();
     }
 
@@ -215,12 +185,15 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         };
     }
 
-    private IQueryable<ExamRegistration> BuildQuery(string? search, string sort, string sortDir, int? examScheduleId = null)
+    private IQueryable<ExamRegistration> BuildQuery(string? search, string sort, string sortDir, int? examScheduleId = null, int? collegeId = null)
     {
         var query = context.ExamRegistrations.AsNoTracking();
 
         if (examScheduleId.HasValue)
             query = query.Where(e => e.ExamScheduleId == examScheduleId.Value);
+
+        if (collegeId.HasValue)
+            query = query.Where(e => e.CollegeId == collegeId.Value);
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -229,7 +202,9 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 (e.Remarks != null && e.Remarks.Contains(search)) ||
                 (e.Sgpa != null && e.Sgpa.Contains(search)) ||
                 (e.ExamSchedule != null && e.ExamSchedule.ExamScheduleName != null && e.ExamSchedule.ExamScheduleName.Contains(search)) ||
-                (e.College != null && e.College.Name != null && e.College.Name.Contains(search)));
+                (e.College != null && e.College.Name != null && e.College.Name.Contains(search)) ||
+                (e.ApplicationVoucher != null && e.ApplicationVoucher.StudentName != null && e.ApplicationVoucher.StudentName.Contains(search)) ||
+                (e.ApplicationVoucher != null && e.ApplicationVoucher.StudentRegistration != null && e.ApplicationVoucher.StudentRegistration.RegistrationNumber != null && e.ApplicationVoucher.StudentRegistration.RegistrationNumber.Contains(search)));
         }
 
         var descending = sortDir.Equals("desc", StringComparison.OrdinalIgnoreCase);
@@ -787,6 +762,15 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
     // source of truth and the stored flag is only a fast path.
     private static bool IsReExamForm(ExamRegistration er) =>
         er.IsSupplementary || StudentDashboardService.IsReExamTypeStatic(er.ExamSchedule?.ExamType?.Name);
+
+    public async Task<List<SelectOption>> GetFilterCollegesAsync()
+    {
+        return await context.Colleges
+            .AsNoTracking()
+            .ApplyScope(userContext)
+            .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
+            .ToListAsync();
+    }
 
     public async Task<List<SelectOption>> GetFilterAcademicYearsAsync()
     {

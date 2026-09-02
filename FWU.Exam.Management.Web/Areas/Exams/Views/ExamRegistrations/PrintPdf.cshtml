@@ -11,11 +11,11 @@
 <body>
     <h2>Exam Registrations Report</h2>
     <table>
-        <thead><tr><th>#</th><th>Roll Number</th><th>Schedule</th><th>College</th><th>Status</th><th>Fee</th><th>Date</th></tr></thead>
+        <thead><tr><th>#</th><th>Student Name</th><th>Registration No.</th><th>Schedule</th><th>College</th><th>Status</th><th>Fee</th><th>Date</th></tr></thead>
         <tbody>
             @{ var c = 1; }
             @foreach (var item in Model) {
-                <tr><td>@c</td><td>@(item.ExamRollNumber ?? "-")</td><td>@item.ExamSchedule?.ExamScheduleName</td><td>@item.College?.Name</td><td>@item.Status</td><td>@item.FeeEnclosed?.ToString("N2")</td><td>@item.RegistrationDate?.ToString("yyyy-MM-dd")</td></tr>
+                <tr><td>@c</td><td>@(item.ApplicationVoucher?.StudentName ?? "-")</td><td>@(item.ApplicationVoucher?.StudentRegistration?.RegistrationNumber ?? "-")</td><td>@item.ExamSchedule?.ExamScheduleName</td><td>@item.College?.Name</td><td>@item.Status</td><td>@item.FeeEnclosed?.ToString("N2")</td><td>@item.RegistrationDate?.ToString("yyyy-MM-dd")</td></tr>
                 c++;
             }
         </tbody>
