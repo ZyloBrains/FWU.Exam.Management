@@ -1,6 +1,7 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using FWU.Exam.Management.Domain.Entities
+@using FWU.Exam.Management.Domain.Entities.Students
 @using FWU.Exam.Management.Web.Helpers
 @inject SignInManager<AppUser> SignInManager
 @inject UserManager<AppUser> UserManager
@@ -115,8 +116,39 @@
     @{
         var appUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
         var displayName = appUser != null ? (appUser.UserName ?? appUser.Email ?? "User") : "Guest";
+
+        string? resolvedStudentFullName = null;
+        if (appUser != null)
+        {
+            var admission = await DbContext.Set<StudentAdmission>()
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(sa => sa.AppUserId == appUser.Id);
+            if (admission != null)
+            {
+                resolvedStudentFullName = admission.FirstName
+                    + (admission.MiddleName != null ? " " + admission.MiddleName : "")
+                    + " " + admission.LastName;
+            }
+            else
+            {
+                var registration = await DbContext.Set<StudentRegistration>()
+                    .AsNoTracking()
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(s =>
+                        (s.RegistrationNumber != null && s.RegistrationNumber == appUser.UserName)
+                        || (s.Email != null && s.Email == appUser.Email));
+                if (registration != null)
+                {
+                    resolvedStudentFullName = registration.FirstName
+                        + (registration.MiddleName != null ? " " + registration.MiddleName : "")
+                        + " " + registration.LastName;
+                }
+            }
+        }
+
         var userDisplayName = appUser != null
-            ? (appUser.FullName ?? appUser.UserName ?? appUser.Email ?? "User")
+            ? (resolvedStudentFullName ?? appUser.FullName ?? appUser.UserName ?? appUser.Email ?? "User")
             : "Guest";
         var roleLabel = "Guest";
         var sidebarLogoPath = "~/images/oce.png";

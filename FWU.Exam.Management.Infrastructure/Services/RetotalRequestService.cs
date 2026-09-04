@@ -169,7 +169,7 @@ public class RetotalRequestService(AppDbContext context, IUserContext userContex
         return new RetotalRequestSelectListsDto
         {
             ExamSchedules = examSchedules.Select(es => new SelectOption { Id = es.Id, Name = es.ExamScheduleName }).ToList(),
-            Students = students.Select(s => new SelectOption { Id = s.Id, Name = s.FirstName.GetFullName(s.LastName) }).ToList(),
+            Students = students.Select(s => new SelectOption { Id = s.Id, Name = s.FirstName.GetFullName(s.MiddleName, s.LastName) }).ToList(),
             Subjects = subjects.Select(s => new SelectOption { Id = s.Id, Name = s.SubjectName }).ToList()
         };
     }
@@ -186,7 +186,8 @@ public class RetotalRequestService(AppDbContext context, IUserContext userContex
             query = query.Where(r =>
                 (r.Reason != null && r.Reason.Contains(search)) ||
                 (r.ExamSubjectResult != null && r.ExamSubjectResult.GradeLetter != null && r.ExamSubjectResult.GradeLetter.Contains(search)) ||
-                (r.StudentRegistration != null && r.StudentRegistration.FirstName != null && r.StudentRegistration.FirstName.Contains(search)));
+                (r.StudentRegistration != null && r.StudentRegistration.RegistrationNumber != null && r.StudentRegistration.RegistrationNumber.Contains(search)) ||
+                (r.StudentRegistration != null && (r.StudentRegistration.FirstName + (r.StudentRegistration.MiddleName != null ? " " + r.StudentRegistration.MiddleName : "") + (r.StudentRegistration.LastName != null ? " " + r.StudentRegistration.LastName : "")).Contains(search)));
         }
 
         var descending = sortDir.Equals("desc", StringComparison.OrdinalIgnoreCase);

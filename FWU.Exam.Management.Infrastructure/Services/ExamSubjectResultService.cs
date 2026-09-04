@@ -236,7 +236,10 @@ public class ExamSubjectResultService(AppDbContext context, IUserContext userCon
                 (er.SymbolNumber != null && er.SymbolNumber.Contains(search)) ||
                 (er.ExamSchedule != null && er.ExamSchedule.ExamScheduleName != null && er.ExamSchedule.ExamScheduleName.Contains(search)) ||
                 (er.College != null && er.College.Name != null && er.College.Name.Contains(search)) ||
-                (er.Program != null && er.Program.ProgramName != null && er.Program.ProgramName.Contains(search)));
+                (er.Program != null && er.Program.ProgramName != null && er.Program.ProgramName.Contains(search)) ||
+                (er.ApplicationVoucher != null && er.ApplicationVoucher.StudentName != null && er.ApplicationVoucher.StudentName.Contains(search)) ||
+                (er.SemesterEnrollment != null && er.SemesterEnrollment.StudentAdmission != null &&
+                    (er.SemesterEnrollment.StudentAdmission.FirstName + (er.SemesterEnrollment.StudentAdmission.MiddleName != null ? " " + er.SemesterEnrollment.StudentAdmission.MiddleName : "") + (er.SemesterEnrollment.StudentAdmission.LastName != null ? " " + er.SemesterEnrollment.StudentAdmission.LastName : "")).Contains(search)));
         }
 
         registrationsQuery = registrationsQuery.OrderByDescending(er => er.Id);

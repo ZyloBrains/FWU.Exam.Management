@@ -268,7 +268,7 @@ public class PublishResultsService(
     {
         var admission = reg.SemesterEnrollment?.StudentAdmission;
         if (admission != null)
-            return admission.FirstName.GetFullName(admission.LastName);
+            return admission.FirstName.GetFullName(admission.MiddleName, admission.LastName);
 
         if (reg.ApplicationVoucher?.StudentName is { Length: > 0 } voucherName)
             return voucherName;

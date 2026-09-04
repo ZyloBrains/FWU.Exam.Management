@@ -244,7 +244,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         {
             query = query.Where(er =>
                 (er.ExamRollNumber != null && er.ExamRollNumber.Contains(search)) ||
-                (er.Remarks != null && er.Remarks.Contains(search)));
+                (er.Remarks != null && er.Remarks.Contains(search)) ||
+                (er.ApplicationVoucher != null && er.ApplicationVoucher.StudentRegistration != null && er.ApplicationVoucher.StudentRegistration.RegistrationNumber != null && er.ApplicationVoucher.StudentRegistration.RegistrationNumber.Contains(search)));
         }
 
         var pendingBySchedule = await scopedQuery
@@ -270,6 +271,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             .Include(er => er.College)
             .Include(er => er.Program)
             .Include(er => er.AcademicYear)
+            .Include(er => er.ApplicationVoucher)
+                .ThenInclude(v => v!.StudentRegistration)
             .OrderByDescending(er => er.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

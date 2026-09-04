@@ -8,6 +8,7 @@ public class PaymentVerificationListDto
     public int Id { get; set; }
     public string VoucherNumber { get; set; } = string.Empty;
     public string StudentName { get; set; } = string.Empty;
+    public string? RegistrationNumber { get; set; }
     public decimal Amount { get; set; }
     public DateTime? VoucherDate { get; set; }
     public string ContactNumber { get; set; } = string.Empty;

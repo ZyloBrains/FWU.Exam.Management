@@ -140,7 +140,7 @@ public class RetotalRequestsController(
 
         foreach (var item in items)
         {
-            var studentName = item.StudentRegistration != null ? item.StudentRegistration.FirstName.GetFullName(item.StudentRegistration.LastName) : "";
+            var studentName = item.StudentRegistration != null ? item.StudentRegistration.FirstName.GetFullName(item.StudentRegistration.MiddleName, item.StudentRegistration.LastName) : "";
             var subjectName = item.ExamSubjectResult?.SubjectOffering?.SubjectCatalog?.SubjectName ?? "";
             var reviewedDateStr = item.ReviewedDate?.ToString("yyyy-MM-dd") ?? "";
             sb.AppendLine($"{item.Id},{studentName.EscapeCsv()},{subjectName.EscapeCsv()},{item.Status},{item.RequestedDate:yyyy-MM-dd},{item.FeePaid},{(item.ReviewedByUsername ?? "").EscapeCsv()},{reviewedDateStr}");
@@ -178,7 +178,7 @@ public class RetotalRequestsController(
         int row = 2;
         foreach (var item in items)
         {
-            var studentName = item.StudentRegistration != null ? item.StudentRegistration.FirstName.GetFullName(item.StudentRegistration.LastName) : "";
+            var studentName = item.StudentRegistration != null ? item.StudentRegistration.FirstName.GetFullName(item.StudentRegistration.MiddleName, item.StudentRegistration.LastName) : "";
             var subjectName = item.ExamSubjectResult?.SubjectOffering?.SubjectCatalog?.SubjectName ?? "";
             worksheet.Cell(row, 1).Value = item.Id;
             worksheet.Cell(row, 2).Value = studentName;
