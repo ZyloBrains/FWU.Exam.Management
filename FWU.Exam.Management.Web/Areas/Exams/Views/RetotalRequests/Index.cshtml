@@ -84,7 +84,7 @@
                         <td class="px-4 py-3 text-gray-500">@serial</td>
                         <td class="px-4 py-3">
                             <div class="font-medium text-gray-800">
-                                @(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.LastName}" : "-")
+                                     @(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.MiddleName} {item.StudentRegistration.LastName}".Trim() : "-")
                             </div>
                         </td>
                         <td class="px-4 py-3 text-gray-600">
@@ -147,7 +147,7 @@
                             </div>
                             <div>
                                 <h3 class="font-semibold text-gray-800 text-sm">
-                                    @(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.LastName}" : "-")
+                                @(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.MiddleName} {item.StudentRegistration.LastName}".Trim() : "-")
                                 </h3>
                                 <p class="text-xs text-gray-500">@(item.ExamSubjectResult?.SubjectOffering?.SubjectCatalog?.SubjectName ?? "-")</p>
                             </div>

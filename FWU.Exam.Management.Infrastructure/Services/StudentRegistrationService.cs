@@ -309,8 +309,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             var lowerSearchTerm = searchTerm.ToLower();
             query = query.Where(s =>
                 (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(lowerSearchTerm)) ||
-                (s.FirstName != null && s.FirstName.ToLower().Contains(lowerSearchTerm)) ||
-                (s.LastName != null && s.LastName.ToLower().Contains(lowerSearchTerm)) ||
+                ((s.FirstName + (s.MiddleName != null ? " " + s.MiddleName : "") + (s.LastName != null ? " " + s.LastName : "")).ToLower().Contains(lowerSearchTerm)) ||
                 (s.Email != null && s.Email.ToLower().Contains(lowerSearchTerm)) ||
                 (s.ContactNumber != null && s.ContactNumber.ToLower().Contains(lowerSearchTerm)));
         }
@@ -342,7 +341,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             {
                 Id = s.Id,
                 RegistrationNumber = s.RegistrationNumber ?? "-",
-                FullName = (s.FirstName + " " + s.LastName).Trim(),
+                FullName = string.Join(" ", new[] { s.FirstName, s.MiddleName, s.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))),
                 AcademicYear = s.AcademicYear != null ? s.AcademicYear.AcademicYearName : "-",
                 Level = s.Level != null ? s.Level.LevelName : "-",
                 College = s.College != null ? s.College.Name : "-",
@@ -560,7 +559,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             {
                 UserName = loginId,
                 Email = studentRegistration.Email,
-                FullName = studentRegistration.FirstName.GetFullName(studentRegistration.LastName),
+                FullName = studentRegistration.FirstName.GetFullName(studentRegistration.MiddleName, studentRegistration.LastName),
                 IsActive = true,
                 FacultyId = studentRegistration.FacultyId,
                 CollegeId = studentRegistration.CollegeId
@@ -611,9 +610,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 needsUpdate = true;
             }
 
-            if (user.FullName != studentRegistration.FirstName.GetFullName(studentRegistration.LastName))
+            if (user.FullName != studentRegistration.FirstName.GetFullName(studentRegistration.MiddleName, studentRegistration.LastName))
             {
-                user.FullName = studentRegistration.FirstName.GetFullName(studentRegistration.LastName);
+                user.FullName = studentRegistration.FirstName.GetFullName(studentRegistration.MiddleName, studentRegistration.LastName);
                 needsUpdate = true;
             }
 
@@ -694,7 +693,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     private async Task<List<string>> SendStudentRegistrationNotificationsAsync(StudentRegistration studentRegistration, string? registrationNumber)
     {
         var results = new List<string>();
-        var fullName = studentRegistration.FirstName.GetFullName(studentRegistration.LastName);
+        var fullName = studentRegistration.FirstName.GetFullName(studentRegistration.MiddleName, studentRegistration.LastName);
         var program = await context.Programs.Where(p => p.Id == studentRegistration.ProgramId).Select(p => p.ProgramName).FirstOrDefaultAsync();
         var college = await context.Colleges.Where(c => c.Id == studentRegistration.CollegeId).Select(c => c.Name).FirstOrDefaultAsync();
         var password = studentRegistration.DateOfBirthBS;

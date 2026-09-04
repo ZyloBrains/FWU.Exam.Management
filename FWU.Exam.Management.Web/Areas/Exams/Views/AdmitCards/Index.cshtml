@@ -125,7 +125,7 @@
                         </td>
                         <td class="px-4 py-3 text-gray-600">@item.ExamSchedule?.ExamScheduleName</td>
                         <td class="px-4 py-3 text-gray-600">
-                            @(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.LastName}" : "-")
+                            @(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.MiddleName} {item.StudentRegistration.LastName}".Trim() : "-")
                         </td>
                         <td class="px-4 py-3 text-gray-600 text-xs">@item.GeneratedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td class="px-4 py-3">
@@ -199,7 +199,7 @@
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
                         <div class="text-gray-500">Student</div>
-                        <div class="text-gray-800">@(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.LastName}" : "-")</div>
+                         <div class="text-gray-800">@(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.MiddleName} {item.StudentRegistration.LastName}".Trim() : "-")</div>
                         <div class="text-gray-500">Generated</div>
                         <div class="text-gray-800">@item.GeneratedDate.ToString("yyyy-MM-dd")</div>
                     </div>

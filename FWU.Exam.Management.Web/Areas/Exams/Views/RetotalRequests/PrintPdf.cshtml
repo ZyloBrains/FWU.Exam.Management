@@ -31,7 +31,7 @@
                         <td>
                             @if (item.StudentRegistration != null)
                             {
-                                <strong>@item.StudentRegistration.FirstName.GetFullName(item.StudentRegistration.LastName)</strong>
+                                <strong>@item.StudentRegistration.FirstName.GetFullName(item.StudentRegistration.MiddleName, item.StudentRegistration.LastName)</strong>
                             }
                         </td>
                         <td>@item.ExamSubjectResult?.SubjectOffering?.SubjectCatalog?.SubjectName</td>
