@@ -245,6 +245,22 @@
                         <dt class="text-xs sm:text-sm font-medium text-gray-500">Ethnicity</dt>
                         <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.Ethnicity?.EthnicityName ?? "-")</dd>
                     </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Admission ID</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">
+                            @if (Model?.StudentAdmissionId.HasValue == true)
+                            {
+                                <a asp-area="Students" asp-controller="StudentAdmissions" asp-action="Details" asp-route-id="@Model.StudentAdmissionId"
+                                   class="text-teal-600 hover:text-teal-800 underline font-medium">
+                                    @Model.StudentAdmissionId
+                                </a>
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </dd>
+                    </div>
                 </dl>
             </div>
         </div>

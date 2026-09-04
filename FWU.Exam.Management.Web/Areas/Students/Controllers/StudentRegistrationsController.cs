@@ -141,7 +141,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,IsActive,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId,PermanentAddressId")] StudentRegistration studentRegistration)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,IsActive,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId,PermanentAddressId,StudentAdmissionId")] StudentRegistration studentRegistration)
     {
         if (id != studentRegistration.Id) return NotFound();
 

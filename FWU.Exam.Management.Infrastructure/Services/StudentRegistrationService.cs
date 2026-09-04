@@ -81,6 +81,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 .ThenInclude(ll => ll!.District)
                 .ThenInclude(d => d!.Province)
             .Include(s => s.CurrentAddress)
+            .Include(s => s.StudentAdmission)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -137,7 +138,10 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             var existingRegistration = await context.StudentRegistrations.AsNoTracking().FirstOrDefaultAsync(r => r.Id == studentRegistration.Id);
             if (existingRegistration != null)
+            {
                 studentRegistration.TenantId = existingRegistration.TenantId;
+                studentRegistration.StudentAdmissionId = existingRegistration.StudentAdmissionId;
+            }
 
             if (!string.IsNullOrEmpty(permanentLocalLevelId))
             {
