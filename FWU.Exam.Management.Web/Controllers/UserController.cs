@@ -104,6 +104,7 @@ public class UserController(
         {
             var s = search.ToLower();
             usersQuery = usersQuery.Where(u =>
+                (u.UserName != null && u.UserName.ToLower().Contains(s)) ||
                 (u.Email != null && u.Email.ToLower().Contains(s)) ||
                 (u.FullName != null && u.FullName.ToLower().Contains(s)) ||
                 (u.Faculty != null && u.Faculty.Name != null && u.Faculty.Name.ToLower().Contains(s)) ||
@@ -136,6 +137,7 @@ public class UserController(
         return users.Select(user => new UserListItemViewModel
         {
             Id = user.Id,
+            UserName = user.UserName ?? string.Empty,
             Email = user.Email ?? string.Empty,
             FullName = user.FullName,
             FacultyName = user.Faculty?.Name,
@@ -166,11 +168,12 @@ public class UserController(
         var (items, _) = await GetFilteredPageAsync(page, pageSize, search, role, isActive, sort, sortDir);
 
         var sb = new StringBuilder();
-        sb.AppendLine("Full Name,Email,Roles,Faculty,College,Status");
+        sb.AppendLine("Registration Number,Full Name,Email,Roles,Faculty,College,Status");
 
         foreach (var u in items)
         {
-            sb.AppendLine($"{(u.FullName ?? "").EscapeCsv()}," +
+            sb.AppendLine($"{u.UserName.EscapeCsv()}," +
+                           $"{(u.FullName ?? "").EscapeCsv()}," +
                            $"{u.Email.EscapeCsv()}," +
                            $"{string.Join("; ", u.Roles).EscapeCsv()}," +
                            $"{(u.FacultyName ?? "-").EscapeCsv()}," +
@@ -217,6 +220,7 @@ public class UserController(
                     table.ColumnsDefinition(columns =>
                     {
                         columns.ConstantColumn(24);
+                        columns.RelativeColumn(1.4f);
                         columns.RelativeColumn(2);
                         columns.RelativeColumn(2.4f);
                         columns.RelativeColumn(1.8f);
@@ -228,6 +232,7 @@ public class UserController(
                     table.Header(header =>
                     {
                         header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("#").Bold().FontSize(9);
+                        header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Reg. No.").Bold().FontSize(9);
                         header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Full Name").Bold().FontSize(9);
                         header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Email").Bold().FontSize(9);
                         header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Roles").Bold().FontSize(9);
@@ -241,6 +246,7 @@ public class UserController(
                     {
                         serial++;
                         table.Cell().Padding(6).Text(serial.ToString()).FontSize(9);
+                        table.Cell().Padding(6).Text(item.UserName ?? "-").FontSize(9);
                         table.Cell().Padding(6).Text(item.FullName ?? "-").FontSize(9);
                         table.Cell().Padding(6).Text(item.Email).FontSize(9);
                         table.Cell().Padding(6).Text(item.Roles.Count > 0 ? string.Join(", ", item.Roles) : "-").FontSize(9);
@@ -313,7 +319,7 @@ public class UserController(
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Users");
 
-        var headers = new[] { "Full Name", "Email", "Roles", "Faculty", "College", "Status" };
+        var headers = new[] { "Registration Number", "Full Name", "Email", "Roles", "Faculty", "College", "Status" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(1, i + 1);
@@ -324,12 +330,13 @@ public class UserController(
         var row = 2;
         foreach (var u in items)
         {
-            worksheet.Cell(row, 1).Value = u.FullName ?? "";
-            worksheet.Cell(row, 2).Value = u.Email;
-            worksheet.Cell(row, 3).Value = string.Join(", ", u.Roles);
-            worksheet.Cell(row, 4).Value = u.FacultyName ?? "";
-            worksheet.Cell(row, 5).Value = u.CollegeName ?? "";
-            worksheet.Cell(row, 6).Value = u.IsActive ? "Active" : "Inactive";
+            worksheet.Cell(row, 1).Value = u.UserName ?? "";
+            worksheet.Cell(row, 2).Value = u.FullName ?? "";
+            worksheet.Cell(row, 3).Value = u.Email;
+            worksheet.Cell(row, 4).Value = string.Join(", ", u.Roles);
+            worksheet.Cell(row, 5).Value = u.FacultyName ?? "";
+            worksheet.Cell(row, 6).Value = u.CollegeName ?? "";
+            worksheet.Cell(row, 7).Value = u.IsActive ? "Active" : "Inactive";
             row++;
         }
 
@@ -347,6 +354,7 @@ public class UserController(
         return sort.ToLower() switch
         {
             "email" => u => u.Email ?? "",
+            "username" => u => u.UserName ?? "",
             "fullname" => u => u.FullName ?? "",
             "isactive" => u => u.IsActive,
             "faculty" => u => u.Faculty != null ? u.Faculty.Name ?? "" : "",
@@ -935,6 +943,7 @@ public class UserController(
         {
             var s = search.ToLower();
             usersQuery = usersQuery.Where(u =>
+                (u.UserName != null && u.UserName.ToLower().Contains(s)) ||
                 (u.Email != null && u.Email.ToLower().Contains(s)) ||
                 (u.FullName != null && u.FullName.ToLower().Contains(s)) ||
                 (u.Faculty != null && u.Faculty.Name != null && u.Faculty.Name.ToLower().Contains(s)) ||
@@ -963,6 +972,7 @@ public class UserController(
         var items = users.Select(u => new UserListItemViewModel
         {
             Id = u.Id,
+            UserName = u.UserName ?? string.Empty,
             Email = u.Email ?? string.Empty,
             FullName = u.FullName,
             FacultyName = u.Faculty?.Name,

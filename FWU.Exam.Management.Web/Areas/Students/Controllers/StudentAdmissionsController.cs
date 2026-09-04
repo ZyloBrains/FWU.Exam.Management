@@ -422,8 +422,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
         var students = await query
             .Where(s => (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(lowerSearch))
-                     || (s.FirstName != null && s.FirstName.ToLower().Contains(lowerSearch))
-                     || (s.LastName != null && s.LastName.ToLower().Contains(lowerSearch))
+                     || ((s.FirstName + (s.MiddleName != null ? " " + s.MiddleName : "") + (s.LastName != null ? " " + s.LastName : "")).ToLower().Contains(lowerSearch))
                      || (s.Email != null && s.Email.ToLower().Contains(lowerSearch)))
             .OrderBy(s => s.RegistrationNumber)
             .Take(20)
@@ -446,7 +445,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
                 s.AcademicYearId,
                 CollegeName = s.College != null ? s.College.Name : "",
                 ProgramName = s.Program != null ? s.Program.ProgramName : "",
-                FullName = (s.FirstName + " " + s.LastName).Trim()
+                FullName = (s.FirstName + (s.MiddleName != null ? " " + s.MiddleName : "") + " " + s.LastName).Trim()
             })
             .ToListAsync();
 

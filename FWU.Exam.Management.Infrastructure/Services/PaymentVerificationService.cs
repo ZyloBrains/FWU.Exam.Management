@@ -125,6 +125,7 @@ public class PaymentVerificationService(AppDbContext context, IUserContext userC
             TransactionCode = log.TransactionId,
             PaymentGateway = log.PaymentType?.PaymentTypeName,
             RequestedTime = log.ForwardedTimestamp,
+            RegistrationNumber = log.StudentRegistration?.RegistrationNumber,
             RollNumber = log.StudentRegistration != null
                 ? (log.StudentRegistration.EntranceRollNumber ?? log.StudentRegistration.RegistrationNumber)
                 : null,
@@ -175,6 +176,7 @@ public class PaymentVerificationService(AppDbContext context, IUserContext userC
             query = query.Where(v =>
                 ((v.VoucherNumber != null && v.VoucherNumber.ToLower().Contains(lowerSearch)) ||
                  (v.StudentName != null && v.StudentName.ToLower().Contains(lowerSearch)) ||
+                 (v.StudentRegistration != null && v.StudentRegistration.RegistrationNumber != null && v.StudentRegistration.RegistrationNumber.ToLower().Contains(lowerSearch)) ||
                  (v.ContactNumber != null && v.ContactNumber.Contains(trimmedSearch))) ||
                 txnVoucherIds.Contains(v.Id));
         }
