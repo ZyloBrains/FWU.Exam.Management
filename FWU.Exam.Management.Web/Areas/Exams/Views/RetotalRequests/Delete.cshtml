@@ -24,8 +24,12 @@
             <div>
                 <dt class="text-sm font-medium text-gray-500">Student</dt>
                 <dd class="mt-1 text-sm text-gray-900">
-                    @(Model.StudentRegistration != null ? $"{Model.StudentRegistration.FirstName} {Model.StudentRegistration.LastName}" : "-")
+                    @(Model.StudentRegistration != null ? $"{Model.StudentRegistration.FirstName} {Model.StudentRegistration.MiddleName} {Model.StudentRegistration.LastName}".Trim() : "-")
                 </dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Registration Number</dt>
+                <dd class="mt-1 text-sm text-gray-900 font-mono">@(Model.StudentRegistration?.RegistrationNumber ?? "-")</dd>
             </div>
             <div>
                 <dt class="text-sm font-medium text-gray-500">Status</dt>
