@@ -32,6 +32,7 @@ public interface IStudentDashboardService
     Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null);
     Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, Dictionary<int, ReExamLegs> subjectSelection, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null);
     Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData, string? responseMessage = null);
+    Task UpdatePaymentRequestLogTransactionIdAsync(int logId, string transactionId);
     Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection);
     Task<bool> TryCompleteApplyAgainTopUpAsync(int logId, string userId);
     Task SupersedeOpenApplyAgainPaymentsAsync(int examScheduleId, int studentRegistrationId, int exceptLogId);

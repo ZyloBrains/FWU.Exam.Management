@@ -27,6 +27,7 @@ public static class Permissions
     public const string GroupPaymentTypes = "paymenttypes";
     public const string GroupBillTitles = "billtitles";
     public const string GroupPaymentVerification = "paymentverification";
+    public const string GroupPaymentReconciliation = "paymentreconciliation";
     public const string GroupProvinces = "provinces";
     public const string GroupDistricts = "districts";
     public const string GroupLocalLevels = "locallevels";
@@ -200,6 +201,9 @@ public static class Permissions
     // Payment Verification
     public const string PaymentVerificationView = "paymentverification.view";
     public const string PaymentVerificationExport = "paymentverification.export";
+
+    // Payment Reconciliation
+    public const string PaymentReconciliationView = "paymentreconciliation.view";
 
     // Provinces
     public const string ProvincesView = "provinces.view";
@@ -515,6 +519,8 @@ public static class Permissions
         (PaymentVerificationView, "View Payment Verification", GroupPaymentVerification, "View student payment verification list"),
         (PaymentVerificationExport, "Export Payment Verification", GroupPaymentVerification, "Export payment verification list"),
 
+        (PaymentReconciliationView, "View Payment Reconciliation", GroupPaymentReconciliation, "View and reconcile stuck pending payments"),
+
         (ProvincesView, "View Provinces", GroupProvinces, "View province list"),
         (ProvincesCreate, "Create Provinces", GroupProvinces, "Create new provinces"),
         (ProvincesEdit, "Edit Provinces", GroupProvinces, "Edit existing provinces"),
@@ -716,6 +722,7 @@ public static class Permissions
             ExamTypesView, ExamTypesCreate, ExamTypesEdit,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
             PaymentVerificationView, PaymentVerificationExport,
+            PaymentReconciliationView,
 
             GradingSchemesView, GradingSchemesCreate, GradingSchemesEdit,
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify, ExamRegistrationApprove,
@@ -771,6 +778,7 @@ public static class Permissions
             ExamTypesView,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
             PaymentVerificationView, PaymentVerificationExport,
+            PaymentReconciliationView,
 
             GradingSchemesView,
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify,

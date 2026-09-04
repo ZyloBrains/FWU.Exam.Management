@@ -1,0 +1,424 @@
+@model IEnumerable<FWU.Exam.Management.Application.DTOs.PaymentReconciliationListDto>
+@{
+    ViewData["Title"] = "Payment Reconciliation";
+    var totalCount = ViewBag.TotalCount ?? Model.Count();
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var pageSize = ViewBag.PageSize ?? 20;
+    var currentSearch = ViewBag.Search as string ?? "";
+    var fromDate = ViewBag.FromDate as string ?? "";
+    var toDate = ViewBag.ToDate as string ?? "";
+}
+
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-sync-alt text-amber-600"></i>
+            </div>
+            <div>
+                @await Html.PartialAsync("_AlertMessages")
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Payment Reconciliation</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
+                    Verify stuck pending payments against the gateway and complete them
+                </p>
+                <p class="text-xs sm:text-sm text-gray-500">
+                    <span class="font-semibold text-gray-700">@totalCount</span> pending payment(s)
+                </p>
+            </div>
+        </div>
+        <button data-reconcile-btn onclick="reconcilePending()"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-sm shadow-green-600/20">
+            <i class="fas fa-sync-alt text-xs"></i>
+            Check All Pending
+        </button>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <form method="get" asp-action="Index" asp-area="Payments" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" name="search" value="@currentSearch"
+                       placeholder="Search by name, phone, or invoice number..."
+                       class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            </div>
+            <input type="date" name="fromDate" value="@fromDate"
+                   class="px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input type="date" name="toDate" value="@toDate"
+                   class="px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input type="hidden" name="pageSize" value="@pageSize" />
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2.5 bg-amber-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors">
+                    Search
+                </button>
+                @if (!string.IsNullOrEmpty(currentSearch) || !string.IsNullOrEmpty(fromDate) || !string.IsNullOrEmpty(toDate))
+                {
+                    <a asp-action="Index" asp-area="Payments" asp-route-pageSize="@pageSize"
+                       class="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                        <i class="fas fa-times text-xs"></i> Clear
+                    </a>
+                }
+            </div>
+        </form>
+    </div>
+
+    <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Invoice No.</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Amount (Rs.)</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Gateway</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Exam</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Contact</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Time</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @{
+                    int serial = ((int)ViewBag.CurrentPage - 1) * (int)ViewBag.PageSize;
+                }
+                @foreach (var item in Model)
+                {
+                    serial++;
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 text-gray-500 text-sm">@serial</td>
+                        <td class="px-4 py-3 font-medium text-gray-800">@item.StudentName</td>
+                        <td class="px-4 py-3 text-gray-700 font-mono text-xs">@item.InvoiceNumber</td>
+                        <td class="px-4 py-3 text-gray-700">Rs. @item.Amount.ToString("N0")</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                @item.Gateway
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-gray-700 text-xs">@item.ExamName</td>
+                        <td class="px-4 py-3 text-gray-700">@item.ContactNumber</td>
+                        <td class="px-4 py-3 text-gray-700 text-xs">@item.ForwardedTime.ToString("MMM dd, HH:mm")</td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <a asp-action="Details" asp-area="Payments" asp-route-id="@item.Id"
+                                   class="inline-flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-50 rounded-md text-xs font-medium" title="View Details">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <button onclick="reconcile(@item.Id)" class="inline-flex items-center gap-1 px-2 py-1 text-green-600 hover:bg-green-50 rounded-md text-xs font-medium" title="Verify with Gateway">
+                                    <i class="fas fa-check-circle"></i> Verify
+                                </button>
+                                <button onclick="markFailed(@item.Id)" class="inline-flex items-center gap-1 px-2 py-1 text-red-600 hover:bg-red-50 rounded-md text-xs font-medium" title="Mark as Failed">
+                                    <i class="fas fa-times-circle"></i> Failed
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (!Model.Any())
+        {
+            <div class="text-center py-12 text-gray-500">
+                <i class="fas fa-check-circle text-4xl mb-3 text-green-400 opacity-50"></i>
+                <p>No pending payments to reconcile.</p>
+                <p class="text-xs mt-1">All payments have been processed successfully.</p>
+            </div>
+        }
+    </div>
+
+    <div class="lg:hidden space-y-3">
+        @{
+            int serialM = ((int)ViewBag.CurrentPage - 1) * (int)ViewBag.PageSize;
+        }
+        @foreach (var item in Model)
+        {
+            serialM++;
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-sync-alt text-amber-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold text-amber-600 bg-amber-100 rounded px-1.5 py-0.5">#@serialM</span>
+                                <h3 class="font-semibold text-gray-800 text-sm">@item.StudentName</h3>
+                            </div>
+                            <p class="text-xs text-gray-500 font-mono">@item.InvoiceNumber</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-gray-800">Rs. @item.Amount.ToString("N0")</p>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800">@item.Gateway</span>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-500 mb-3">
+                    <span>Exam: @item.ExamName</span> &middot; <span>Contact: @item.ContactNumber</span> &middot; <span>@item.ForwardedTime.ToString("MMM dd, HH:mm")</span>
+                </div>
+                <div class="flex items-center gap-2 pt-3 border-t border-gray-100">
+                    <a asp-action="Details" asp-area="Payments" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
+                        View Details
+                    </a>
+                    <button onclick="reconcile(@item.Id)" class="flex-1 text-center py-2 text-xs font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100">
+                        Verify with Gateway
+                    </button>
+                    <button onclick="markFailed(@item.Id)" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                        Mark Failed
+                    </button>
+                </div>
+            </div>
+        }
+        @if (!Model.Any())
+        {
+            <div class="text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-500">
+                <i class="fas fa-check-circle text-4xl mb-3 text-green-400 opacity-50"></i>
+                <p>No pending payments to reconcile.</p>
+            </div>
+        }
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
+            <div class="flex flex-1 justify-between sm:hidden">
+                @if (currentPage > 1)
+                {
+                    <a asp-action="Index" asp-area="Payments" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-fromDate="@fromDate" asp-route-toDate="@toDate" asp-route-pageSize="@pageSize"
+                       class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">Previous</a>
+                }
+                else
+                {
+                    <span class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 cursor-not-allowed">Previous</span>
+                }
+                @if (currentPage < totalPages)
+                {
+                    <a asp-action="Index" asp-area="Payments" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-fromDate="@fromDate" asp-route-toDate="@toDate" asp-route-pageSize="@pageSize"
+                       class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">Next</a>
+                }
+                else
+                {
+                    <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 cursor-not-allowed">Next</span>
+                }
+            </div>
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-xs sm:text-sm text-gray-700">
+                        Showing <span class="font-medium">@(((currentPage - 1) * pageSize) + 1)</span>
+                        to <span class="font-medium">@(Math.Min(currentPage * pageSize, totalCount))</span>
+                        of <span class="font-medium">@totalCount</span> results
+                    </p>
+                </div>
+                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                    <a asp-action="Index" asp-area="Payments" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-fromDate="@fromDate" asp-route-toDate="@toDate" asp-route-pageSize="@pageSize"
+                       class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
+                        <i class="fas fa-chevron-left text-xs"></i>
+                    </a>
+                    @{
+                        var startPage = Math.Max(1, currentPage - 2);
+                        var endPage = Math.Min(totalPages, currentPage + 2);
+                        for (int i = startPage; i <= endPage; i++)
+                        {
+                            <a asp-action="Index" asp-area="Payments" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-fromDate="@fromDate" asp-route-toDate="@toDate" asp-route-pageSize="@pageSize"
+                               class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-amber-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
+                        }
+                    }
+                    <a asp-action="Index" asp-area="Payments" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-fromDate="@fromDate" asp-route-toDate="@toDate" asp-route-pageSize="@pageSize"
+                       class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">
+                        <i class="fas fa-chevron-right text-xs"></i>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Pre-flight / progress / summary modal for batch reconciliation -->
+<div id="reconcileModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4 overflow-y-auto">
+    <div class="w-full max-w-3xl h-full max-h-[85vh] overflow-hidden rounded-xl bg-white shadow-2xl flex flex-col min-h-0">
+        <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+            <h3 id="reconcileModalTitle" class="text-lg font-bold text-gray-900"></h3>
+            <button type="button" onclick="closeReconcileModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="reconcileModalBody" class="flex-1 min-h-0 overflow-auto px-6 py-4"></div>
+    </div>
+</div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function reconcile(id) {
+            if (!confirm('Verify this payment with the gateway?')) return;
+            $.ajax({
+                url: '@Url.Action("Reconcile", "PaymentReconciliation")',
+                type: 'POST',
+                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    alert(response.message);
+                    if (response.success) location.reload();
+                },
+                error: function () { alert('An error occurred while reconciling.'); }
+            });
+        }
+
+        function reconcilePending() {
+            // Pre-flight: fetch the list of payments that will be processed and
+            // show it in a modal first, so the admin knows exactly what runs.
+            $.ajax({
+                url: '@Url.Action("PendingPreview", "PaymentReconciliation")',
+                type: 'GET',
+                success: function (items) {
+                    if (!items || items.length === 0) {
+                        showReconcileModal('Check All Pending',
+                            '<p class="text-sm text-gray-600">No pending payments to check right now.</p>' +
+                            '<div class="mt-4 flex justify-end"><button onclick="closeReconcileModal()" class="rounded bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">Close</button></div>');
+                        return;
+                    }
+
+                    var rows = items.map(function (p, i) {
+                        return '<tr class="border-b border-gray-100">' +
+                            '<td class="px-2 py-2 text-sm text-gray-800">' + (i + 1) + '</td>' +
+                            '<td class="px-2 py-2 text-sm font-medium text-gray-900">' + escapeHtml(p.studentName) + '</td>' +
+                            '<td class="px-2 py-2 text-sm text-gray-600">' + escapeHtml(p.invoiceNumber) + '</td>' +
+                            '<td class="px-2 py-2 text-sm text-gray-600">' + (p.gateway ? escapeHtml(p.gateway) : '-') + '</td>' +
+                            '<td class="px-2 py-2 text-sm text-gray-600 text-right">' + formatAmount(p.amount) + '</td>' +
+                            '</tr>';
+                    }).join('');
+
+                    var body =
+                        '<p class="text-sm text-gray-600 mb-4">The following ' + items.length +
+                        ' pending payment(s) will be checked against the gateway:</p>' +
+                        '<div class="overflow-auto rounded border border-gray-200">' +
+                        '<table class="w-full text-left"><thead class="sticky top-0 bg-gray-50 text-xs uppercase text-gray-500">' +
+                        '<tr><th class="px-2 py-2">#</th><th class="px-2 py-2">Student</th><th class="px-2 py-2">Invoice</th><th class="px-2 py-2">Gateway</th><th class="px-2 py-2 text-right">Amount</th></tr>' +
+                        '</thead><tbody>' + rows + '</tbody></table></div>' +
+                        '<div class="mt-5 flex justify-end gap-2">' +
+                        '<button onclick="closeReconcileModal()" class="rounded bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">Cancel</button>' +
+                        '<button onclick="runReconcilePending()" class="rounded bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">Confirm &amp; Reconcile</button>' +
+                        '</div>';
+
+                    showReconcileModal('Check All Pending', body);
+                },
+                error: function () { alert('Could not load pending payments.'); }
+            });
+        }
+
+        function runReconcilePending() {
+            var body =
+                '<div class="flex flex-col items-center justify-center py-10">' +
+                '<div class="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-amber-600 border-t-transparent"></div>' +
+                '<p id="reconcileProgressText" class="text-sm text-gray-700">Reconciling payments with the gateway...</p>' +
+                '</div>';
+            showReconcileModal('Reconciling Payments', body);
+
+            var btn = document.querySelector('[data-reconcile-btn]');
+            if (btn) btn.disabled = true;
+
+            $.ajax({
+                url: '@Url.Action("ReconcilePending", "PaymentReconciliation")',
+                type: 'POST',
+                data: { __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    if (btn) btn.disabled = false;
+                    if (response.alreadyRunning) {
+                        showReconcileModal('Check All Pending',
+                            '<p class="text-sm text-gray-600">' + escapeHtml(response.message) + '</p>' +
+                            '<div class="mt-4 flex justify-end"><button onclick="closeReconcileModal()" class="rounded bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">Close</button></div>');
+                        return;
+                    }
+                    renderSummary(response.result);
+                },
+                error: function () {
+                    if (btn) btn.disabled = false;
+                    showReconcileModal('Reconciliation',
+                        '<p class="text-sm text-gray-600">An error occurred while reconciling pending payments.</p>' +
+                        '<div class="mt-4 flex justify-end"><button onclick="closeReconcileModal()" class="rounded bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">Close</button></div>');
+                }
+            });
+        }
+
+        function renderSummary(result) {
+            var badge = function (outcome) {
+                var map = {
+                    'Confirmed': 'bg-green-100 text-green-800',
+                    'Expired': 'bg-amber-100 text-amber-800',
+                    'Failed': 'bg-red-100 text-red-800',
+                    'StillPending': 'bg-gray-100 text-gray-700'
+                };
+                var label = { 'Confirmed': 'Confirmed', 'Expired': 'Expired', 'Failed': 'Failed', 'StillPending': 'Still Pending' };
+                return '<span class="inline-block rounded px-2 py-0.5 text-xs font-semibold ' + (map[outcome] || 'bg-gray-100 text-gray-700') + '">' + (label[outcome] || outcome) + '</span>';
+            };
+
+            var totals = {
+                'Confirmed': result.confirmed || 0,
+                'Expired': result.expired || 0,
+                'Failed': result.failed || 0,
+                'StillPending': result.stillPending || 0
+            };
+
+            var chart = '<div class="mb-4 flex flex-wrap gap-2">' +
+                '<span class="rounded bg-green-100 px-3 py-1 text-sm font-semibold text-green-800">Confirmed: ' + totals['Confirmed'] + '</span>' +
+                '<span class="rounded bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800">Expired: ' + totals['Expired'] + '</span>' +
+                '<span class="rounded bg-red-100 px-3 py-1 text-sm font-semibold text-red-800">Failed: ' + totals['Failed'] + '</span>' +
+                '<span class="rounded bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-700">Still Pending: ' + totals['StillPending'] + '</span>' +
+                '</div>';
+
+            var rows = (result.items || []).map(function (o) {
+                return '<tr class="border-b border-gray-100">' +
+                    '<td class="px-2 py-2 text-sm font-medium text-gray-900">' + escapeHtml(o.studentName) + '</td>' +
+                    '<td class="px-2 py-2 text-sm text-gray-600">' + escapeHtml(o.invoiceNumber) + '</td>' +
+                    '<td class="px-2 py-2 text-sm text-gray-600 text-right">' + formatAmount(o.amount) + '</td>' +
+                    '<td class="px-2 py-2 text-right">' + badge(o.outcome) + '</td>' +
+                    '</tr>';
+            }).join('');
+
+            var summary =
+                '<p class="text-sm text-gray-600 mb-4">Reconciliation finished. Summary of results:</p>' +
+                chart +
+                (rows ? '<div class="overflow-auto rounded border border-gray-200">' +
+                    '<table class="w-full text-left"><thead class="sticky top-0 bg-gray-50 text-xs uppercase text-gray-500">' +
+                    '<tr><th class="px-2 py-2">Student</th><th class="px-2 py-2">Invoice</th><th class="px-2 py-2 text-right">Amount</th><th class="px-2 py-2 text-right">Result</th></tr>' +
+                    '</thead><tbody>' + rows + '</tbody></table></div>'
+                    : '') +
+                '<div class="mt-5 flex justify-end gap-2">' +
+                '<button onclick="location.reload()" class="rounded bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">Done &amp; Refresh</button>' +
+                '</div>';
+
+            showReconcileModal('Reconciliation Summary', summary);
+        }
+
+        function showReconcileModal(title, bodyHtml) {
+            $('#reconcileModalTitle').text(title);
+            $('#reconcileModalBody').html(bodyHtml);
+            $('#reconcileModal').removeClass('hidden').addClass('flex');
+        }
+
+        function closeReconcileModal() {
+            $('#reconcileModal').addClass('hidden').removeClass('flex');
+        }
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function formatAmount(n) {
+            var v = Number(n || 0);
+            return 'Rs. ' + v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function markFailed(id) {
+            var reason = prompt('Reason for marking as failed (optional):');
+            if (reason === null) return;
+            $.ajax({
+                url: '@Url.Action("MarkFailed", "PaymentReconciliation")',
+                type: 'POST',
+                data: { id: id, reason: reason, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    alert(response.message);
+                    if (response.success) location.reload();
+                },
+                error: function () { alert('An error occurred while marking as failed.'); }
+            });
+        }
+    </script>
+}

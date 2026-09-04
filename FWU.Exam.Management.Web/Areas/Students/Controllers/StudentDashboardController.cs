@@ -1382,6 +1382,12 @@ public class StudentDashboardController(
                 new { gateway = "khalti", invoiceNumber, amount, examScheduleId, pidx = response.Pidx },
                 entityName: "PaymentRequestLog", entityId: logId.ToString());
             logger.LogInformation("Khalti redirecting to: {PaymentUrl}", response.PaymentUrl);
+
+            // Persist the pidx on the payment log so stuck payments can be
+            // reconciled later via the gateway lookup API without any session.
+            if (!string.IsNullOrEmpty(response.Pidx))
+                await dashboardService.UpdatePaymentRequestLogTransactionIdAsync(logId, response.Pidx);
+
             HttpContext.Session.SetInt32("KhaltiLogId", logId);
             return Redirect(response.PaymentUrl);
         }
@@ -1432,7 +1438,8 @@ public class StudentDashboardController(
                 await auditLogWriter.LogAsync(ActivityTypes.PaymentVerificationFailed,
                     $"Khalti payment verification failed (status: {lookup?.Status ?? "Unknown"})",
                     new { gateway = "khalti", pidx, reason = "lookup_not_completed", lookupStatus = lookup?.Status, callbackStatus = status }, AuditSeverity.Error);
-                TempData["ErrorMessage"] = $"Payment verification failed. Status: {lookup?.Status ?? "Unknown"}";
+
+                TempData["ErrorMessage"] = GetKhaltiVerificationFailureMessage(lookup?.Status);
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
@@ -1475,7 +1482,10 @@ public class StudentDashboardController(
         catch (Exception ex)
         {
             logger.LogError(ex, "Khalti callback processing failed");
-            TempData["ErrorMessage"] = "Failed to process Khalti callback.";
+            if (ex.Message.StartsWith("Khalti configuration is invalid", StringComparison.OrdinalIgnoreCase))
+                TempData["ErrorMessage"] = ex.Message;
+            else
+                TempData["ErrorMessage"] = "Failed to process Khalti callback.";
             return RedirectToAction(nameof(PaymentFailure));
         }
     }
@@ -1491,6 +1501,9 @@ public class StudentDashboardController(
     {
         return View();
     }
+
+    private static string GetKhaltiVerificationFailureMessage(string? status) =>
+        FWU.Exam.Management.Infrastructure.Services.KhaltiPaymentStatus.GetVerificationFailureMessage(status);
 
     private async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(AppUser user) =>
         await dashboardService.GetMissingMandatoryProfileFieldsAsync(user.Id, user.Email, user.PhoneNumber, user.ProfilePath, user.SignaturePath);

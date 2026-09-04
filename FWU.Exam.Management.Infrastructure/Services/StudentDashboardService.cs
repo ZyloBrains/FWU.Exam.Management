@@ -791,6 +791,15 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         await context.SaveChangesAsync();
     }
 
+    public async Task UpdatePaymentRequestLogTransactionIdAsync(int logId, string transactionId)
+    {
+        var log = await context.Set<PaymentRequestLog>().FirstOrDefaultAsync(prl => prl.Id == logId);
+        if (log == null || string.IsNullOrEmpty(transactionId)) return;
+
+        log.TransactionId = transactionId;
+        await context.SaveChangesAsync();
+    }
+
     public async Task<PaymentRequestLog?> GetPaymentLogByIdAsync(int logId)
     {
         return await context.Set<PaymentRequestLog>()

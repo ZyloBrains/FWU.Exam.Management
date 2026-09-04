@@ -164,9 +164,10 @@ public static class AppMenu
                 M("Banks", "fa-university", ["banks.view"], R("Payments", "Banks", "Index"), ["bank"]),
                 M("Payment Types", "fa-credit-card", ["paymenttypes.view"], R("Payments", "PaymentTypes", "Index"), ["payment type", "fee type"]),
                 M("Bill Titles", "fa-file-invoice-dollar", ["billtitles.view"], R("Payments", "BillTitles", "Index"), ["bill", "title", "fee"]),
+                M("Payment Reconciliation", "fa-sync-alt", ["paymentreconciliation.view"], R("Payments", "PaymentReconciliation", "Index"), ["reconcile", "pending", "stuck", "payment"]),
             ],
             Landing: R(null, "Section", "Payments"),
-            SectionActiveOns: [R("Payments", "Banks", null), R("Payments", "PaymentTypes", null), R("Payments", "BillTitles", null)]),
+            SectionActiveOns: [R("Payments", "Banks", null), R("Payments", "PaymentTypes", null), R("Payments", "BillTitles", null), R("Payments", "PaymentReconciliation", null)]),
 
         new("Location", "Location", "fa-map-marker-alt",
             "Manage provinces, districts and local levels",
