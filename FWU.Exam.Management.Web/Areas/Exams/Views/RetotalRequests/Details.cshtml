@@ -87,6 +87,10 @@
                     </p>
                 </div>
                 <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Registration Number</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900 font-mono">@(Model.StudentRegistration?.RegistrationNumber ?? "-")</p>
+                </div>
+                <div>
                     <label class="block text-xs sm:text-sm font-medium text-gray-500">Subject</label>
                     <p class="mt-1 text-xs sm:text-sm text-gray-900">
                         @(Model.ExamSubjectResult?.SubjectOffering?.SubjectCatalog?.SubjectName ?? "-")

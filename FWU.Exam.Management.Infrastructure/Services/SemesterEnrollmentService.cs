@@ -128,6 +128,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             {
                 AdmissionId = sa.Id,
                 StudentName = sa.FirstName + (sa.MiddleName != null ? " " + sa.MiddleName : "") + (sa.LastName != null ? " " + sa.LastName : ""),
+                RegistrationNumber = sa.StudentRegistration != null ? sa.StudentRegistration.RegistrationNumber : null,
                 CollegeRollNumber = sa.CollegeRollNumber,
                 ProgramName = sa.Program != null ? sa.Program.ProgramName : null,
                 CollegeName = sa.College != null ? sa.College.Name : null,
@@ -144,6 +145,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
     {
         var query = context.StudentAdmissions
             .AsNoTracking()
+            .Include(sa => sa.StudentRegistration)
             .Where(sa => sa.IsActive);
 
         if (academicYearId.HasValue)
@@ -163,6 +165,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             var term = search.Trim();
             query = query.Where(sa =>
                 (sa.CollegeRollNumber != null && sa.CollegeRollNumber.Contains(term)) ||
+                (sa.StudentRegistration != null && sa.StudentRegistration.RegistrationNumber != null && sa.StudentRegistration.RegistrationNumber.Contains(term)) ||
                 (sa.Program != null && sa.Program.ProgramName.Contains(term)) ||
                 ((sa.FirstName + (sa.MiddleName != null ? " " + sa.MiddleName : "") + (sa.LastName != null ? " " + sa.LastName : "")).Contains(term)));
         }
@@ -409,6 +412,8 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                 .ThenInclude(sa => sa!.College)
             .Include(se => se.StudentAdmission)
                 .ThenInclude(sa => sa!.Program)
+            .Include(se => se.StudentAdmission)
+                .ThenInclude(sa => sa!.StudentRegistration)
             .Include(se => se.SemesterInstance)
                 .ThenInclude(si => si!.Semester)
             .AsNoTracking();
@@ -440,6 +445,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             query = query.Where(se =>
                 (se.SemesterInstance != null && se.SemesterInstance.Semester != null && se.SemesterInstance.Semester.Name != null && se.SemesterInstance.Semester.Name.Contains(term)) ||
                 (se.StudentAdmission != null && se.StudentAdmission.CollegeRollNumber != null && se.StudentAdmission.CollegeRollNumber.Contains(term)) ||
+                (se.StudentAdmission != null && se.StudentAdmission.StudentRegistration != null && se.StudentAdmission.StudentRegistration.RegistrationNumber != null && se.StudentAdmission.StudentRegistration.RegistrationNumber.Contains(term)) ||
                 (se.StudentAdmission != null && (se.StudentAdmission.FirstName + (se.StudentAdmission.MiddleName != null ? " " + se.StudentAdmission.MiddleName : "") + (se.StudentAdmission.LastName != null ? " " + se.StudentAdmission.LastName : "")).Contains(term)));
         }
 
@@ -451,6 +457,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         {
             Id = se.Id,
             StudentName = se.StudentAdmission!.FirstName + (se.StudentAdmission.MiddleName != null ? " " + se.StudentAdmission.MiddleName : "") + (se.StudentAdmission.LastName != null ? " " + se.StudentAdmission.LastName : ""),
+            RegistrationNumber = se.StudentAdmission!.StudentRegistration != null ? se.StudentAdmission.StudentRegistration.RegistrationNumber : null,
             CollegeRollNumber = se.StudentAdmission!.CollegeRollNumber,
             ProgramName = se.StudentAdmission!.Program != null ? se.StudentAdmission.Program.ProgramName : null,
             CollegeName = se.StudentAdmission!.College != null ? se.StudentAdmission.College.Name : null,

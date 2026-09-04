@@ -341,7 +341,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             {
                 Id = s.Id,
                 RegistrationNumber = s.RegistrationNumber ?? "-",
-                FullName = string.Join(" ", new[] { s.FirstName, s.MiddleName, s.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))),
+                FullName = s.FirstName + (s.MiddleName != null ? " " + s.MiddleName : "") + (s.LastName != null ? " " + s.LastName : ""),
                 AcademicYear = s.AcademicYear != null ? s.AcademicYear.AcademicYearName : "-",
                 Level = s.Level != null ? s.Level.LevelName : "-",
                 College = s.College != null ? s.College.Name : "-",

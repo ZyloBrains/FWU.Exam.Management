@@ -132,7 +132,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .Select(a => new EntranceExamApplicationListDto
             {
                 Id = a.Id,
-                FullName = (a.FirstName + " " + a.LastName).Trim(),
+                FullName = (a.FirstName + (a.MiddleName != null ? " " + a.MiddleName : "") + " " + a.LastName).Trim(),
                 Email = a.Email ?? "-",
                 ContactNumber = a.ContactNumber ?? "-",
                 AcademicYear = a.AcademicYear != null ? a.AcademicYear.AcademicYearName : "-",

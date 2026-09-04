@@ -132,18 +132,13 @@
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Roll No</th>
+                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
+                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Reg No</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Program</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">College</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Semester</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Year</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Type</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Payment</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Fee</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Credits</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Result</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
                 </tr>
             </thead>
@@ -157,7 +152,7 @@
                     <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
                         <td class="px-4 py-3 text-gray-500 text-sm">@serial</td>
                         <td class="px-4 py-3 font-medium text-gray-800">@(item.StudentName ?? "-")</td>
-                        <td class="px-4 py-3 text-gray-600">@(item.CollegeRollNumber ?? "-")</td>
+                        <td class="px-4 py-3 text-gray-600 font-mono text-xs">@(item.RegistrationNumber ?? "-")</td>
                         <td class="px-4 py-3 text-gray-600">@(item.ProgramName ?? "-")</td>
                         <td class="px-4 py-3 text-gray-600">@(item.CollegeName ?? "-")</td>
                         <td class="px-4 py-3 text-gray-600">@(item.SemesterName ?? "-")</td>
@@ -169,26 +164,6 @@
                                 FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Dropped => "bg-red-100 text-red-700",
                                 _ => "bg-yellow-100 text-yellow-700"
                             })">@item.EnrollmentStatus</span>
-                        </td>
-                        <td class="px-4 py-3 text-gray-600">@item.EnrollmentType</td>
-                        <td class="px-4 py-3">
-                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.PaymentStatus switch {
-                                FWU.Exam.Management.Domain.Enums.PaymentStatus.Paid => "bg-green-100 text-green-700",
-                                FWU.Exam.Management.Domain.Enums.PaymentStatus.Pending => "bg-yellow-100 text-yellow-700",
-                                _ => "bg-gray-100 text-gray-700"
-                            })">@item.PaymentStatus</span>
-                        </td>
-                        <td class="px-4 py-3 text-gray-600">@item.TotalFee.ToString("N0")</td>
-                        <td class="px-4 py-3 text-gray-600">@item.TotalCredits</td>
-                        <td class="px-4 py-3">
-                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.ResultStatus switch {
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Passed => "bg-green-100 text-green-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Failed => "bg-red-100 text-red-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Incomplete => "bg-yellow-100 text-yellow-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Absent => "bg-gray-100 text-gray-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Withdrawn => "bg-orange-100 text-orange-700",
-                                _ => "bg-gray-100 text-gray-700"
-                            })">@item.ResultStatus</span>
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-1">
@@ -234,6 +209,7 @@
                                 <div class="flex items-center gap-2">
                                     <span class="text-[10px] font-bold text-teal-600 bg-teal-100 rounded px-1.5 py-0.5">#@serialM</span>
                                     <h3 class="font-semibold text-gray-800 text-sm">@(item.StudentName ?? "-")</h3>
+                                    <p class="text-xs text-gray-500 font-mono">@(item.RegistrationNumber ?? "-")</p>
                                 </div>
                                 <p class="text-xs text-gray-500">@(item.SemesterName ?? "-")</p>
                             </div>
@@ -245,39 +221,15 @@
                                 FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Dropped => "bg-red-100 text-red-700",
                                 _ => "bg-yellow-100 text-yellow-700"
                             })">@item.EnrollmentStatus</span>
-                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.PaymentStatus switch {
-                                FWU.Exam.Management.Domain.Enums.PaymentStatus.Paid => "bg-green-100 text-green-700",
-                                FWU.Exam.Management.Domain.Enums.PaymentStatus.Pending => "bg-yellow-100 text-yellow-700",
-                                _ => "bg-gray-100 text-gray-700"
-                            })">@item.PaymentStatus</span>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
-                        <div class="text-gray-500">Roll No</div>
-                        <div class="text-gray-800">@(item.CollegeRollNumber ?? "-")</div>
                         <div class="text-gray-500">Program</div>
                         <div class="text-gray-800">@(item.ProgramName ?? "-")</div>
                         <div class="text-gray-500">College</div>
                         <div class="text-gray-800">@(item.CollegeName ?? "-")</div>
                         <div class="text-gray-500">Year</div>
                         <div class="text-gray-800">@(item.AcademicYearName ?? "-")</div>
-                        <div class="text-gray-500">Type</div>
-                        <div class="text-gray-800">@(item.EnrollmentType)</div>
-                        <div class="text-gray-500">Fee</div>
-                        <div class="text-gray-800">@item.TotalFee.ToString("N0")</div>
-                        <div class="text-gray-500">Credits</div>
-                        <div class="text-gray-800">@item.TotalCredits</div>
-                        <div class="text-gray-500">Result</div>
-                        <div class="text-gray-800">
-                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.ResultStatus switch {
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Passed => "bg-green-100 text-green-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Failed => "bg-red-100 text-red-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Incomplete => "bg-yellow-100 text-yellow-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Absent => "bg-gray-100 text-gray-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Withdrawn => "bg-orange-100 text-orange-700",
-                                _ => "bg-gray-100 text-gray-700"
-                            })">@item.ResultStatus</span>
-                        </div>
                     </div>
                     <div class="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
                         <a asp-action="Details" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">

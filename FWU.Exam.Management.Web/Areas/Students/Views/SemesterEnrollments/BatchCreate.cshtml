@@ -149,7 +149,8 @@
                                 <input type="checkbox" id="selectAll" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" title="Select all eligible" />
                             </th>
                             <th class="px-4 py-3 w-12 text-xs font-semibold text-gray-500 uppercase">#</th>
-                            <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
+                             <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
+                             <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Reg No</th>
                             <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Roll No</th>
                             <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Program</th>
                             <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">College</th>
@@ -168,6 +169,7 @@
                                 </td>
                                 <td class="px-4 py-3 text-gray-500 text-center">@(serialIndex++)</td>
                                 <td class="px-4 py-3 font-medium text-gray-800">@(item.StudentName ?? "-")</td>
+                                <td class="px-4 py-3 text-gray-600 font-mono text-xs">@(item.RegistrationNumber ?? "-")</td>
                                 <td class="px-4 py-3 text-gray-600">@(item.CollegeRollNumber ?? "-")</td>
                                 <td class="px-4 py-3 text-gray-600">@(item.ProgramName ?? "-")</td>
                                 <td class="px-4 py-3 text-gray-600">@(item.CollegeName ?? "-")</td>
@@ -199,6 +201,7 @@
                                        class="row-check h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                                 <div>
                                     <h3 class="font-semibold text-gray-800 text-sm">@(mobileSerialIndex++). @(item.StudentName ?? "-")</h3>
+                                    <p class="text-xs text-gray-500 font-mono">@(item.RegistrationNumber ?? "-")</p>
                                     <p class="text-xs text-gray-500">@(item.CollegeRollNumber ?? "-")</p>
                                 </div>
                             </div>

@@ -52,7 +52,7 @@ public class BulkUserCreationService(
             .Select(s => new StudentWithoutUserDto
             {
                 Id = s.Id,
-                FullName = string.Join(" ", new[] { s.FirstName, s.MiddleName, s.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))),
+                FullName = s.FirstName + (s.MiddleName != null ? " " + s.MiddleName : "") + (s.LastName != null ? " " + s.LastName : ""),
                 Email = s.Email,
                 RegistrationNumber = s.RegistrationNumber,
                 CollegeName = s.College != null ? s.College.Name : "",

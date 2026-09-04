@@ -549,7 +549,9 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
         {
             query = query.Where(e =>
                 (e.AdmitCardNumber != null && e.AdmitCardNumber.Contains(search)) ||
-                (e.ExamSchedule != null && e.ExamSchedule.ExamScheduleName != null && e.ExamSchedule.ExamScheduleName.Contains(search)));
+                (e.ExamSchedule != null && e.ExamSchedule.ExamScheduleName != null && e.ExamSchedule.ExamScheduleName.Contains(search)) ||
+                (e.StudentRegistration != null && e.StudentRegistration.RegistrationNumber != null && e.StudentRegistration.RegistrationNumber.Contains(search)) ||
+                (e.StudentRegistration != null && (e.StudentRegistration.FirstName + (e.StudentRegistration.MiddleName != null ? " " + e.StudentRegistration.MiddleName : "") + (e.StudentRegistration.LastName != null ? " " + e.StudentRegistration.LastName : "")).Contains(search)));
         }
 
         var descending = sortDir.Equals("desc", StringComparison.OrdinalIgnoreCase);

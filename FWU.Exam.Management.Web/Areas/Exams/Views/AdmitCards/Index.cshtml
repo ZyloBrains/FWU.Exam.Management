@@ -66,7 +66,7 @@
             <div class="relative flex-1">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                 <input type="text" name="search" value="@currentSearch"
-                       placeholder="Search by card number, schedule..."
+                       placeholder="Search by card number, schedule, registration no, student name..."
                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div class="relative w-full sm:w-48">
@@ -107,7 +107,8 @@
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Card #</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Exam Schedule</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
+                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
+                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Reg No</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Generated Date</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
@@ -127,6 +128,7 @@
                         <td class="px-4 py-3 text-gray-600">
                             @(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.MiddleName} {item.StudentRegistration.LastName}".Trim() : "-")
                         </td>
+                        <td class="px-4 py-3 text-gray-600 font-mono text-xs">@(item.StudentRegistration?.RegistrationNumber ?? "-")</td>
                         <td class="px-4 py-3 text-gray-600 text-xs">@item.GeneratedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td class="px-4 py-3">
                             @if (item.IsActive)
@@ -200,6 +202,8 @@
                     <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
                         <div class="text-gray-500">Student</div>
                          <div class="text-gray-800">@(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.MiddleName} {item.StudentRegistration.LastName}".Trim() : "-")</div>
+                        <div class="text-gray-500">Reg No</div>
+                        <div class="text-gray-800 font-mono text-xs">@(item.StudentRegistration?.RegistrationNumber ?? "-")</div>
                         <div class="text-gray-500">Generated</div>
                         <div class="text-gray-800">@item.GeneratedDate.ToString("yyyy-MM-dd")</div>
                     </div>

@@ -186,6 +186,7 @@ public class RetotalRequestService(AppDbContext context, IUserContext userContex
             query = query.Where(r =>
                 (r.Reason != null && r.Reason.Contains(search)) ||
                 (r.ExamSubjectResult != null && r.ExamSubjectResult.GradeLetter != null && r.ExamSubjectResult.GradeLetter.Contains(search)) ||
+                (r.StudentRegistration != null && r.StudentRegistration.RegistrationNumber != null && r.StudentRegistration.RegistrationNumber.Contains(search)) ||
                 (r.StudentRegistration != null && (r.StudentRegistration.FirstName + (r.StudentRegistration.MiddleName != null ? " " + r.StudentRegistration.MiddleName : "") + (r.StudentRegistration.LastName != null ? " " + r.StudentRegistration.LastName : "")).Contains(search)));
         }
 
