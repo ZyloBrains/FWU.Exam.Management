@@ -222,9 +222,7 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
                 (sa.CollegeRollNumber ?? "").Contains(search) ||
                 sa.College!.Name.Contains(search) ||
                 sa.Program!.ProgramName.Contains(search) ||
-                sa.FirstName.Contains(search) ||
-                (sa.MiddleName != null && sa.MiddleName.Contains(search)) ||
-                sa.LastName.Contains(search));
+                ((sa.FirstName + (sa.MiddleName != null ? " " + sa.MiddleName : "") + (sa.LastName != null ? " " + sa.LastName : "")).Contains(search)));
         }
 
         return query;
