@@ -39,6 +39,14 @@ public class StudentDashboardController(
     IGradeCalculationService gradeCalculationService)
     : Controller
 {
+    // Canonical student-facing messages for a payment confirmed at the gateway
+    // but awaiting auto-completion. Shared by every held-pending path so the
+    // student experience is identical regardless of gateway or callback shape.
+    private const string PaymentUnderVerificationMessage =
+        "Your payment was received successfully. It is pending verification by the exam office before your admit card is issued. Please keep your payment receipt.";
+    private const string PaymentUnlinkableMessage =
+        "Your payment was received, but we could not link it to your exam form. Please contact the exam office with your payment receipt.";
+
     public IActionResult Profile()
     {
         return RedirectToAction("Index", "Profile");
@@ -318,6 +326,13 @@ public class StudentDashboardController(
             var rejectionReason = rejectedOnly
                 ? await dashboardService.GetLatestRejectionReasonAsync(schedule.Id, user.Id)
                 : null;
+            // Gateway confirmed the payment during the callback but the payment log
+            // has not been confirmed yet (status 3 "pending verification", or a
+            // NULL pending log the callback could not reconcile). Instead of showing
+            // "Pay Now" again and risking a double charge, surface a verification
+            // state so the student knows their payment is being checked.
+            var isPaymentUnderVerification = !hasPaid
+                && await dashboardService.HasPaymentUnderVerificationAsync(schedule.Id, registration.Id);
 
             forms.Add(new ExamFormViewModel
             {
@@ -328,6 +343,7 @@ public class StudentDashboardController(
                 HasAdmitCard = hasAdmitCard,
                 AdmitCardId = admitCardId,
                 IsRejected = rejectedOnly,
+                IsPaymentUnderVerification = isPaymentUnderVerification,
                 RejectionReason = rejectionReason,
                 EndDateBs = schedule.EndDateBs,
                 ExtendedDateBs = schedule.ExtendedDate.HasValue ? schedule.ExtendedDate.Value.ToString("yyyy-MM-dd") : null,
@@ -1067,7 +1083,7 @@ public class StudentDashboardController(
     private async Task<IActionResult> InitiateESewaGatewayAsync(
         decimal amount, int logId, string transactionUuid, string invoiceNumber, int studentRegistrationId, int examScheduleId)
     {
-        var defaultCallbackUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students" }, Request.Scheme)!;
+        var defaultCallbackUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students", uuid = transactionUuid }, Request.Scheme)!;
         var successUrl = defaultCallbackUrl;
         var failureUrl = defaultCallbackUrl;
 
@@ -1087,62 +1103,116 @@ public class StudentDashboardController(
         return View("ESewaPayment", formData);
     }
 
-    public async Task<IActionResult> ESewaCallback(string? data)
+    public async Task<IActionResult> ESewaCallback(string? uuid, string? data)
     {
         var sessionLogId = HttpContext.Session.GetInt32("ESewaLogId");
         HttpContext.Session.Remove("ESewaLogId");
 
-        logger.LogInformation("ESewaCallback hit: sessionLogId={SessionLogId}, dataPresent={DataPresent}, queryString={QueryString}",
-            sessionLogId, !string.IsNullOrEmpty(data), Request.QueryString);
+        // UUID-based lookup survives session loss (eSewa redirect may clear session).
+        int? resolvedLogId = sessionLogId;
+        if (!resolvedLogId.HasValue && !string.IsNullOrEmpty(uuid))
+        {
+            var logByUuid = await dashboardService.FindPaymentLogByTransactionUuidAsync(uuid);
+            if (logByUuid != null) resolvedLogId = logByUuid.Id;
+        }
+        // Last resort: look up the most recent pending log for the logged-in student.
+        if (!resolvedLogId.HasValue)
+        {
+            var callbackUser = await userManager.GetUserAsync(User);
+            if (callbackUser != null)
+            {
+                var registration = await dashboardService.GetStudentRegistrationByEmailAsync(callbackUser.Email ?? "");
+                if (registration != null)
+                {
+                    var pendingLog = await dashboardService.FindPendingPaymentLogByStudentAsync(registration.Id);
+                    if (pendingLog != null)
+                    {
+                        resolvedLogId = pendingLog.Id;
+                        logger.LogInformation("ESewaCallback: Fallback lookup found logId={LogId} for studentRegId={StudentRegId}", resolvedLogId, registration.Id);
+                    }
+                }
+            }
+        }
+
+        logger.LogInformation("ESewaCallback hit: sessionLogId={SessionLogId}, uuid={Uuid}, resolvedLogId={ResolvedLogId}, dataPresent={DataPresent}, queryString={QueryString}",
+            sessionLogId, uuid, resolvedLogId, !string.IsNullOrEmpty(data), Request.QueryString);
 
         if (string.IsNullOrEmpty(data))
         {
-            if (sessionLogId.HasValue)
+            if (resolvedLogId.HasValue)
             {
-                var log = await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value);
+                var log = await dashboardService.GetPaymentLogByIdAsync(resolvedLogId.Value);
                 if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
 
-                var uuid = log?.TransactionId;
-                if (log != null && !string.IsNullOrEmpty(uuid))
+                var txUuid = log?.TransactionId;
+                if (log != null && !string.IsNullOrEmpty(txUuid))
                 {
                     try
                     {
-                        var status = await esewaService.VerifyTransactionAsync(uuid, log.Amount);
-                        if (status != null && string.Equals(status.Status, "COMPLETE", StringComparison.OrdinalIgnoreCase))
+                        var status = await esewaService.VerifyTransactionAsync(txUuid, log.Amount);
+                        if (status != null
+                            && string.Equals(status.Status, "COMPLETE", StringComparison.OrdinalIgnoreCase)
+                            && !string.IsNullOrWhiteSpace(status.TransactionCode))
                         {
                             logger.LogWarning("ESewaCallback: no callback data but status API reports COMPLETE for logId={LogId}, uuid={Uuid}. Treating as paid.",
-                                sessionLogId.Value, uuid);
+                                resolvedLogId.Value, txUuid);
 
-                            await HandlePostPaymentRegistration(sessionLogId.Value);
-                            await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, status.TransactionCode ?? "", true,
+                            await HandlePostPaymentRegistration(resolvedLogId.Value);
+                            await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, status.TransactionCode ?? "", true,
                                 System.Text.Json.JsonSerializer.Serialize(status),
                                 "Payment verified via eSewa status check (callback carried no data).");
                             await auditLogWriter.LogAsync(ActivityTypes.PaymentVerified,
                                 $"eSewa payment verified via status check (Transaction {status.TransactionCode})",
-                                new { gateway = "esewa", transactionCode = status.TransactionCode, transactionUuid = uuid, amount = status.TotalAmount },
-                                entityName: "PaymentRequestLog", entityId: sessionLogId.Value.ToString());
+                                new { gateway = "esewa", transactionCode = status.TransactionCode, transactionUuid = txUuid, amount = status.TotalAmount },
+                                entityName: "PaymentRequestLog", entityId: resolvedLogId.Value.ToString());
 
-                            await CompleteExamFormSubmissionAsync(sessionLogId.Value, status.TransactionCode ?? uuid);
-                            TempData["TransactionCode"] = status.TransactionCode;
-                            TempData["TransactionUuid"] = uuid;
+                            await CompleteExamFormSubmissionAsync(resolvedLogId.Value, status.TransactionCode ?? txUuid);
+                            TempData["TransactionCode"] = !string.IsNullOrWhiteSpace(status.TransactionCode) ? status.TransactionCode : txUuid;
+                            TempData["TransactionUuid"] = txUuid;
                             return RedirectToAction(nameof(PaymentSuccess));
                         }
 
                         var statusData = status != null
                             ? $"No response data received from eSewa. QueryString: {Request.QueryString}. Status check: {status.Status}"
                             : $"No response data received from eSewa. QueryString: {Request.QueryString}. Status check: unreachable";
-                        await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, statusData, "Payment not completed at eSewa.");
+
+                        // eSewa reports COMPLETE but returned no transaction code.
+                        // Cannot trust it as a confirmed, fully-paid transaction, but
+                        // a real payment may still exist. Hold the log as pending
+                        // verification (status 3) so reconciliation can re-confirm
+                        // later instead of showing a false success or dropping it.
+                        // The gateway said COMPLETE, so do NOT show the generic
+                        // "cancelled / no amount deducted" failure page — present the
+                        // same "payment received, under verification" state used by
+                        // the Khalti and lost-log paths.
+                        if (status != null && string.Equals(status.Status, "COMPLETE", StringComparison.OrdinalIgnoreCase))
+                        {
+                            logger.LogWarning("ESewaCallback: status COMPLETE but no transaction code returned for logId={LogId}, uuid={Uuid}. Holding as pending for reconciliation.",
+                                resolvedLogId.Value, txUuid);
+                            await dashboardService.MarkPaymentLogPendingVerificationAsync(resolvedLogId.Value,
+                                System.Text.Json.JsonSerializer.Serialize(status),
+                                "eSewa status is COMPLETE but returned no transaction code; held pending for reconciliation.");
+
+                            TempData["PaymentUnderVerification"] = true;
+                            TempData["SuccessMessage"] = PaymentUnderVerificationMessage;
+                            TempData["TransactionUuid"] = txUuid;
+                            return RedirectToAction(nameof(PaymentSuccess));
+                        }
+                        else
+                        {
+                            await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, "", false, statusData, "Payment not completed at eSewa.");
+                        }
                     }
                     catch (Exception statusEx)
                     {
-                        logger.LogError(statusEx, "ESewaCallback: status check failed for logId={LogId}", sessionLogId.Value);
-                        await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false,
+                        logger.LogError(statusEx, "ESewaCallback: status check failed for logId={LogId}", resolvedLogId.Value);
+                        await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, "", false,
                             $"No response data received from eSewa. QueryString: {Request.QueryString}", "No response data received from eSewa.");
                     }
                 }
                 else
                 {
-                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, $"No response data received from eSewa. QueryString: {Request.QueryString}", "No response data received from eSewa.");
+                    await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, "", false, $"No response data received from eSewa. QueryString: {Request.QueryString}", "No response data received from eSewa.");
                 }
             }
 
@@ -1155,7 +1225,7 @@ public class StudentDashboardController(
 
         try
         {
-            var log = sessionLogId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value) : null;
+            var log = resolvedLogId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(resolvedLogId.Value) : null;
             if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
 
             logger.LogInformation("ESewaCallback: raw data length={Length}, first100={Preview}", data.Length, data.Length > 100 ? data[..100] : data);
@@ -1181,8 +1251,8 @@ public class StudentDashboardController(
             if (response == null)
             {
                 logger.LogWarning("ESewaCallback: deserialized response is null");
-                if (sessionLogId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, decodedJson, "Invalid response from eSewa.");
+                if (resolvedLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, "", false, decodedJson, "Invalid response from eSewa.");
 
                 await auditLogWriter.LogAsync(ActivityTypes.PaymentVerificationFailed,
                     "eSewa callback returned an invalid response payload",
@@ -1199,8 +1269,8 @@ public class StudentDashboardController(
 
             if (!sigValid)
             {
-                if (sessionLogId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", false, decodedJson, "Signature verification failed via eSewa.");
+                if (resolvedLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, response.TransactionCode ?? "", false, decodedJson, "Signature verification failed via eSewa.");
 
                 await auditLogWriter.LogAsync(ActivityTypes.PaymentVerificationFailed,
                     "eSewa callback signature verification failed",
@@ -1219,34 +1289,14 @@ public class StudentDashboardController(
 
             if (verified == null || verified.Status != "COMPLETE")
             {
-                if (sessionLogId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", false, combinedData, "Transaction verification failed via eSewa.");
+                if (resolvedLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, response.TransactionCode ?? "", false, combinedData, "Transaction verification failed via eSewa.");
 
                 await auditLogWriter.LogAsync(ActivityTypes.PaymentVerificationFailed,
                     "eSewa transaction verification failed",
                     new { gateway = "esewa", reason = "transaction_not_complete", status = verified?.Status, transactionCode = response.TransactionCode }, AuditSeverity.Error);
                 TempData["ErrorMessage"] = "Transaction verification failed.";
                 return RedirectToAction(nameof(PaymentFailure));
-            }
-
-            var resolvedLogId = sessionLogId;
-            if (!resolvedLogId.HasValue)
-            {
-                logger.LogWarning("ESewaCallback: Session log ID lost. Attempting fallback lookup by student registration.");
-                var callbackUser = await userManager.GetUserAsync(User);
-                if (callbackUser != null)
-                {
-                    var registration = await dashboardService.GetStudentRegistrationByEmailAsync(callbackUser.Email ?? "");
-                    if (registration != null)
-                    {
-                        var pendingLog = await dashboardService.FindPendingPaymentLogByStudentAsync(registration.Id);
-                        if (pendingLog != null)
-                        {
-                            resolvedLogId = pendingLog.Id;
-                            logger.LogInformation("ESewaCallback: Fallback lookup found logId={LogId} for studentRegId={StudentRegId}", resolvedLogId, registration.Id);
-                        }
-                    }
-                }
             }
 
             if (resolvedLogId.HasValue)
@@ -1265,7 +1315,26 @@ public class StudentDashboardController(
             }
             else
             {
-                TempData["SuccessMessage"] = "Payment successful!";
+                // eSewa confirmed the transaction complete but the payment log
+                // could not be resolved (session lost AND fallback failed). Never
+                // silently drop a confirmed payment: record it as pending
+                // verification so the exam office can reconcile the receipt and
+                // the student sees the correct status instead of "Pay Now".
+                var eSewaLostLog = await RecordUnresolvedCallbackPaymentAsync(
+                    "esewa", examScheduleId: null, response.TotalAmount,
+                    response.TransactionUuid ?? "",
+                    combinedData, "Payment completed at eSewa but could not be linked to a payment log. Pending exam office verification.",
+                    response.TransactionUuid ?? "");
+                if (eSewaLostLog)
+                {
+                    TempData["PaymentUnderVerification"] = true;
+                    TempData["SuccessMessage"] = PaymentUnderVerificationMessage;
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = PaymentUnlinkableMessage;
+                    return RedirectToAction(nameof(PaymentFailure));
+                }
             }
             TempData["TransactionCode"] = response.TransactionCode;
             TempData["TransactionUuid"] = response.TransactionUuid;
@@ -1382,6 +1451,12 @@ public class StudentDashboardController(
                 new { gateway = "khalti", invoiceNumber, amount, examScheduleId, pidx = response.Pidx },
                 entityName: "PaymentRequestLog", entityId: logId.ToString());
             logger.LogInformation("Khalti redirecting to: {PaymentUrl}", response.PaymentUrl);
+
+            // Persist the pidx on the payment log so stuck payments can be
+            // reconciled later via the gateway lookup API without any session.
+            if (!string.IsNullOrEmpty(response.Pidx))
+                await dashboardService.UpdatePaymentRequestLogTransactionIdAsync(logId, response.Pidx);
+
             HttpContext.Session.SetInt32("KhaltiLogId", logId);
             return Redirect(response.PaymentUrl);
         }
@@ -1432,7 +1507,55 @@ public class StudentDashboardController(
                 await auditLogWriter.LogAsync(ActivityTypes.PaymentVerificationFailed,
                     $"Khalti payment verification failed (status: {lookup?.Status ?? "Unknown"})",
                     new { gateway = "khalti", pidx, reason = "lookup_not_completed", lookupStatus = lookup?.Status, callbackStatus = status }, AuditSeverity.Error);
-                TempData["ErrorMessage"] = $"Payment verification failed. Status: {lookup?.Status ?? "Unknown"}";
+
+                TempData["ErrorMessage"] = GetKhaltiVerificationFailureMessage(lookup?.Status);
+                return RedirectToAction(nameof(PaymentFailure));
+            }
+
+            // Khalti reports Completed but returned no transaction id on the lookup,
+            // and the callback itself carried no transaction_id either. The payment
+            // is confirmed at the gateway, but it must not be recorded as success
+            // without a transaction identifier. Hold the log as pending verification
+            // (status 3) so reconciliation can re-confirm it later, mirroring the
+            // eSewa no-data callback guard.
+            var khaltiTransactionId = lookup.TransactionId ?? transaction_id;
+            if (string.IsNullOrWhiteSpace(khaltiTransactionId))
+            {
+                logger.LogWarning("KhaltiCallback: status Completed but no transaction id returned for pidx={Pidx}. Holding as pending for reconciliation.", pidx);
+                await auditLogWriter.LogAsync(ActivityTypes.PaymentVerificationFailed,
+                    $"Khalti payment completed but returned no transaction id (pidx: {pidx})",
+                    new { gateway = "khalti", pidx, reason = "missing_transaction_id", lookupStatus = lookup.Status }, AuditSeverity.Warning);
+
+                int? khaltiPendingLogId = sessionLogId;
+                if (!khaltiPendingLogId.HasValue && !string.IsNullOrEmpty(purchase_order_id))
+                {
+                    var pendingInvoiceLog = await dashboardService.GetPaymentLogByInvoiceNumberAsync(purchase_order_id);
+                    if (pendingInvoiceLog != null) khaltiPendingLogId = pendingInvoiceLog.Id;
+                }
+
+                if (khaltiPendingLogId.HasValue)
+                {
+                    await dashboardService.MarkPaymentLogPendingVerificationAsync(khaltiPendingLogId.Value,
+                        responseData,
+                        "Khalti status is Completed but returned no transaction id; held pending for reconciliation.");
+                    TempData["PaymentUnderVerification"] = true;
+                    TempData["SuccessMessage"] = PaymentUnderVerificationMessage;
+                    return RedirectToAction(nameof(PaymentSuccess));
+                }
+
+                var pendingKhaltiLostLog = await RecordUnresolvedCallbackPaymentAsync(
+                    "khalti", examScheduleId: null, (lookup.TotalAmount > 0 ? (decimal)lookup.TotalAmount / 100m : 0m),
+                    pidx,
+                    responseData, "Payment completed at Khalti but carried no transaction id. Pending exam office verification.",
+                    purchase_order_id);
+                if (pendingKhaltiLostLog)
+                {
+                    TempData["PaymentUnderVerification"] = true;
+                    TempData["SuccessMessage"] = PaymentUnderVerificationMessage;
+                    return RedirectToAction(nameof(PaymentSuccess));
+                }
+
+                TempData["ErrorMessage"] = PaymentUnlinkableMessage;
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
@@ -1465,7 +1588,26 @@ public class StudentDashboardController(
             }
             else
             {
-                TempData["SuccessMessage"] = "Payment successful!";
+                // Khalti confirmed the payment completed but the payment log could
+                // not be resolved (session lost AND invoice lookup failed). Record
+                // it as pending verification rather than silently dropping a
+                // confirmed payment, so the exam office can reconcile the receipt
+                // and the student sees the correct status instead of "Pay Now".
+                var khaltiLostLog = await RecordUnresolvedCallbackPaymentAsync(
+                    "khalti", examScheduleId: null, (lookup.TotalAmount > 0 ? (decimal)lookup.TotalAmount / 100m : 0m),
+                    pidx,
+                    responseData, "Payment completed at Khalti but could not be linked to a payment log. Pending exam office verification.",
+                    purchase_order_id);
+                if (khaltiLostLog)
+                {
+                    TempData["PaymentUnderVerification"] = true;
+                    TempData["SuccessMessage"] = PaymentUnderVerificationMessage;
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = PaymentUnlinkableMessage;
+                    return RedirectToAction(nameof(PaymentFailure));
+                }
             }
             TempData["TransactionCode"] = lookup.TransactionId ?? transaction_id;
             TempData["TransactionUuid"] = pidx;
@@ -1475,7 +1617,10 @@ public class StudentDashboardController(
         catch (Exception ex)
         {
             logger.LogError(ex, "Khalti callback processing failed");
-            TempData["ErrorMessage"] = "Failed to process Khalti callback.";
+            if (ex.Message.StartsWith("Khalti configuration is invalid", StringComparison.OrdinalIgnoreCase))
+                TempData["ErrorMessage"] = ex.Message;
+            else
+                TempData["ErrorMessage"] = "Failed to process Khalti callback.";
             return RedirectToAction(nameof(PaymentFailure));
         }
     }
@@ -1491,6 +1636,9 @@ public class StudentDashboardController(
     {
         return View();
     }
+
+    private static string GetKhaltiVerificationFailureMessage(string? status) =>
+        FWU.Exam.Management.Infrastructure.Services.KhaltiPaymentStatus.GetVerificationFailureMessage(status);
 
     private async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(AppUser user) =>
         await dashboardService.GetMissingMandatoryProfileFieldsAsync(user.Id, user.Email, user.PhoneNumber, user.ProfilePath, user.SignaturePath);
@@ -1634,6 +1782,55 @@ public class StudentDashboardController(
         }
 
         return selection;
+    }
+
+    private async Task<bool> RecordUnresolvedCallbackPaymentAsync(
+        string gateway, int? examScheduleId, decimal amount, string transactionUuid,
+        string responseData, string responseMessage, string? invoiceNumber = null)
+    {
+        try
+        {
+            var callbackUser = await userManager.GetUserAsync(User);
+            if (callbackUser == null)
+            {
+                logger.LogWarning("RecordUnresolvedCallbackPaymentAsync: no authenticated user for gateway={Gateway}", gateway);
+                return false;
+            }
+
+            var callbackRegistration = await dashboardService.GetStudentRegistrationByUserIdAsync(callbackUser.Id);
+            if (callbackRegistration == null)
+            {
+                logger.LogWarning("RecordUnresolvedCallbackPaymentAsync: student registration not found for user={UserId}", callbackUser.Id);
+                return false;
+            }
+
+            // Prefer to flag an existing pending log (the payment was initiated by
+            // this student) rather than creating a duplicate orphan record.
+            if (!examScheduleId.HasValue)
+            {
+                var existingPending = await dashboardService.MarkLatestPendingPaymentForVerificationAsync(
+                    callbackRegistration.Id, transactionUuid, responseData, responseMessage);
+                if (existingPending != null)
+                {
+                    logger.LogInformation("RecordUnresolvedCallbackPaymentAsync: marked pending logId={LogId} for verification (gateway={Gateway})",
+                        existingPending.Id, gateway);
+                    return true;
+                }
+            }
+
+            var newLogId = await dashboardService.RecordUnresolvedCompletedPaymentAsync(
+                examScheduleId, callbackRegistration.Id, amount, gateway, transactionUuid,
+                responseData, responseMessage, invoiceNumber);
+
+            logger.LogWarning("RecordUnresolvedCallbackPaymentAsync: created logId={LogId} flagged for verification (gateway={Gateway})",
+                newLogId, gateway);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "RecordUnresolvedCallbackPaymentAsync: failed for gateway={Gateway}", gateway);
+            return false;
+        }
     }
 
     private async Task HandlePostPaymentRegistration(int logId)

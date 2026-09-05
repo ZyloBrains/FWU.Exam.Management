@@ -196,11 +196,17 @@ public class KhaltiConfigurationsController(AppDbContext context, IAuditLogWrite
     {
         if (ModelState.IsValid)
         {
-            context.Add(khaltiConfiguration);
-            await context.SaveChangesAsync();
-            await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"Khalti payment gateway configuration created (id {khaltiConfiguration.Id})", new { gateway = "khalti", id = khaltiConfiguration.Id, productName = khaltiConfiguration.ProductName }, entityName: "KhaltiConfiguration", entityId: khaltiConfiguration.Id.ToString());
-            TempData["SuccessMessage"] = "Khalti configuration created successfully!";
-            return RedirectToAction(nameof(Index));
+            foreach (var error in FWU.Exam.Management.Infrastructure.Services.KhaltiConfigurationValidator.Validate(khaltiConfiguration))
+                ModelState.AddModelError(string.Empty, error);
+
+            if (ModelState.IsValid)
+            {
+                context.Add(khaltiConfiguration);
+                await context.SaveChangesAsync();
+                await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"Khalti payment gateway configuration created (id {khaltiConfiguration.Id})", new { gateway = "khalti", id = khaltiConfiguration.Id, productName = khaltiConfiguration.ProductName }, entityName: "KhaltiConfiguration", entityId: khaltiConfiguration.Id.ToString());
+                TempData["SuccessMessage"] = "Khalti configuration created successfully!";
+                return RedirectToAction(nameof(Index));
+            }
         }
         return View(khaltiConfiguration);
     }
@@ -224,23 +230,29 @@ public class KhaltiConfigurationsController(AppDbContext context, IAuditLogWrite
 
         if (ModelState.IsValid)
         {
-            try
+            foreach (var error in FWU.Exam.Management.Infrastructure.Services.KhaltiConfigurationValidator.Validate(khaltiConfiguration))
+                ModelState.AddModelError(string.Empty, error);
+
+            if (ModelState.IsValid)
             {
-                var existing = await context.KhaltiConfigurations.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
-                if (existing is null) return NotFound();
-                khaltiConfiguration.TenantId = existing.TenantId;
-                context.Update(khaltiConfiguration);
-                await context.SaveChangesAsync();
+                try
+                {
+                    var existing = await context.KhaltiConfigurations.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
+                    if (existing is null) return NotFound();
+                    khaltiConfiguration.TenantId = existing.TenantId;
+                    context.Update(khaltiConfiguration);
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!KhaltiConfigurationExists(khaltiConfiguration.Id))
+                        return NotFound();
+                    throw;
+                }
+                await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"Khalti payment gateway configuration {khaltiConfiguration.Id} updated", new { gateway = "khalti", id = khaltiConfiguration.Id, productName = khaltiConfiguration.ProductName }, entityName: "KhaltiConfiguration", entityId: khaltiConfiguration.Id.ToString());
+                TempData["SuccessMessage"] = "Khalti configuration updated successfully!";
+                return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!KhaltiConfigurationExists(khaltiConfiguration.Id))
-                    return NotFound();
-                throw;
-            }
-            await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"Khalti payment gateway configuration {khaltiConfiguration.Id} updated", new { gateway = "khalti", id = khaltiConfiguration.Id, productName = khaltiConfiguration.ProductName }, entityName: "KhaltiConfiguration", entityId: khaltiConfiguration.Id.ToString());
-            TempData["SuccessMessage"] = "Khalti configuration updated successfully!";
-            return RedirectToAction(nameof(Index));
         }
         return View(khaltiConfiguration);
     }

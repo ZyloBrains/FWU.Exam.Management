@@ -93,19 +93,25 @@ public class ESewaService(AppDbContext context, HttpClient httpClient, IConfigur
             };
         }
 
-        try
+        const int maxAttempts = 2;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            var url = $"{config.VerifyUrl}?product_code={config.ProductCode}&total_amount={totalAmount:F0}&transaction_uuid={transactionUuid}";
-            var response = await httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                var url = $"{config.VerifyUrl}?product_code={config.ProductCode}&total_amount={totalAmount:F0}&transaction_uuid={transactionUuid}";
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ESewaVerifyResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString });
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<ESewaVerifyResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString });
+            }
+            catch (Exception ex) when (attempt < maxAttempts)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2));
+                System.Console.WriteLine($"ESewa VerifyTransaction retry {attempt}: {ex.Message}");
+            }
         }
-        catch
-        {
-            return null;
-        }
+        return null;
     }
 
     private static string GenerateSignature(string message, string secretKey)
