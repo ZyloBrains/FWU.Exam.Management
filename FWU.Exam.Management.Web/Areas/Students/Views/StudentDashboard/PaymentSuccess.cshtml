@@ -1,50 +1,110 @@
 @{
     ViewData["Title"] = "Exam Form Submitted";
+    var underVerification = TempData["PaymentUnderVerification"] as bool? ?? false;
 }
 
 @await Html.PartialAsync("_AlertMessages")
 
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="flex items-center gap-3">
-        <a asp-action="ExamForms" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
-            <i class="fas fa-arrow-left text-gray-600"></i>
-        </a>
+@if (underVerification)
+{
+    <div class="space-y-6">
+        <!-- Header -->
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-check-circle text-emerald-600"></i>
-            </div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Exam Form Submitted!</h1>
-        </div>
-    </div>
-
-    <!-- Details Card -->
-    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
-        <!-- Basic Information Section -->
-        <div class="mb-6">
-            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Exam Information</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Schedule</p>
-                    <p class="mt-1 text-gray-800 font-semibold">@TempData["ExamScheduleName"]</p>
-                </div>
-                <div>
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">Transaction Code</p>
-                    <p class="mt-1 text-gray-800">@if (TempData["TransactionCode"] is string txnCode) { <text>@txnCode</text> } else { <text>-</text> }</p>
-                </div>
-                <div>
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">Transaction UUID</p>
-                    <p class="mt-1 text-gray-800">@if (TempData["TransactionUuid"] is string txnUuid) { <text>@txnUuid</text> } else { <text>-</text> }</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
-            <a asp-action="ExamForms"
-               class="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition shadow-md">
-                <i class="fas fa-arrow-left mr-1"></i> Back to Exam Forms
+            <a asp-action="ExamForms" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+                <i class="fas fa-arrow-left text-gray-600"></i>
             </a>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-hourglass-half text-amber-600"></i>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Payment Received, Under Verification</h1>
+            </div>
+        </div>
+
+        <!-- Details Card -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+            <div class="flex items-start gap-3 mb-6">
+                <i class="fas fa-info-circle text-amber-500 mt-0.5"></i>
+                <div>
+                    <p class="text-sm text-gray-700 leading-relaxed">
+                        Your payment was received successfully, but it could not be automatically linked to your exam form.
+                        It is now being verified by the exam office before your admit card is issued.
+                    </p>
+                    <p class="text-xs text-gray-500 mt-2">
+                        Please keep your payment receipt. If this is not resolved within a few days, contact the exam office with your receipt details.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Basic Information Section -->
+            <div class="mb-6">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Payment Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600">Transaction Code</p>
+                        <p class="mt-1 text-gray-800">@if (TempData["TransactionCode"] is string txnCode2) { <text>@txnCode2</text> } else { <text>-</text> }</p>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600">Transaction UUID</p>
+                        <p class="mt-1 text-gray-800">@if (TempData["TransactionUuid"] is string txnUuid2) { <text>@txnUuid2</text> } else { <text>-</text> }</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
+                <a asp-action="ExamForms"
+                   class="px-6 py-2 bg-gradient-to-r from-amber-600 to-amber-700 text-white text-sm font-semibold rounded-lg hover:from-amber-700 hover:to-amber-800 transition shadow-md">
+                    <i class="fas fa-arrow-left mr-1"></i> Back to Exam Forms
+                </a>
+            </div>
         </div>
     </div>
-</div>
+}
+else
+{
+    <div class="space-y-6">
+        <!-- Header -->
+        <div class="flex items-center gap-3">
+            <a asp-action="ExamForms" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-emerald-600"></i>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Exam Form Submitted!</h1>
+            </div>
+        </div>
+
+        <!-- Details Card -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+            <!-- Basic Information Section -->
+            <div class="mb-6">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Exam Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Schedule</p>
+                        <p class="mt-1 text-gray-800 font-semibold">@TempData["ExamScheduleName"]</p>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600">Transaction Code</p>
+                        <p class="mt-1 text-gray-800">@if (TempData["TransactionCode"] is string txnCode) { <text>@txnCode</text> } else { <text>-</text> }</p>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600">Transaction UUID</p>
+                        <p class="mt-1 text-gray-800">@if (TempData["TransactionUuid"] is string txnUuid) { <text>@txnUuid</text> } else { <text>-</text> }</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
+                <a asp-action="ExamForms"
+                   class="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition shadow-md">
+                    <i class="fas fa-arrow-left mr-1"></i> Back to Exam Forms
+                </a>
+            </div>
+        </div>
+    </div>
+}

@@ -99,8 +99,8 @@
                 <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-blue-100 transition-all duration-300 group">
                     <div class="flex flex-col sm:flex-row">
                         @* Left accent + number *@
-                        <div class="hidden sm:flex w-20 shrink-0 flex-col items-center justify-center @(form.IsRejected ? "bg-gradient-to-b from-red-50 to-red-100" : form.HasPaid ? "bg-gradient-to-b from-emerald-50 to-emerald-100" : "bg-gradient-to-b from-blue-50 to-indigo-100")">
-                            <span class="text-3xl font-extrabold @(form.IsRejected ? "text-red-500" : form.HasPaid ? "text-emerald-500" : "text-blue-500")">@(i + 1)</span>
+                        <div class="hidden sm:flex w-20 shrink-0 flex-col items-center justify-center @(form.IsRejected ? "bg-gradient-to-b from-red-50 to-red-100" : form.HasPaid ? "bg-gradient-to-b from-emerald-50 to-emerald-100" : form.IsPaymentUnderVerification ? "bg-gradient-to-b from-amber-50 to-amber-100" : "bg-gradient-to-b from-blue-50 to-indigo-100")">
+                            <span class="text-3xl font-extrabold @(form.IsRejected ? "text-red-500" : form.HasPaid ? "text-emerald-500" : form.IsPaymentUnderVerification ? "text-amber-500" : "text-blue-500")">@(i + 1)</span>
                         </div>
 
                         @* Content *@
@@ -122,6 +122,19 @@
                                             <i class="fas fa-rotate-right text-xs"></i>
                                             Apply Again
                                         </a>
+                                    }
+                                    else if (form.IsPaymentUnderVerification)
+                                    {
+                                        <div class="flex flex-col items-end gap-2">
+                                            <span class="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-50 text-amber-700 rounded-lg text-sm font-semibold border border-amber-200">
+                                                <span class="relative flex h-2.5 w-2.5">
+                                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                                                </span>
+                                                Payment Under Verification
+                                            </span>
+                                            <span class="text-xs text-amber-600 text-right">Payment received but pending exam office verification. Please keep your payment receipt.</span>
+                                        </div>
                                     }
                                     else if (!form.HasPaid)
                                     {

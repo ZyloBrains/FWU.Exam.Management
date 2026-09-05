@@ -32,6 +32,7 @@ public static class ActivityTypes
     public const string PaymentGatewayConfigured = "payment.gateway.configured";
     public const string PaymentReconciled = "payment.reconciled";
     public const string PaymentMarkedFailed = "payment.marked_failed";
+    public const string PaymentConfirmedManually = "payment.confirmed_manually";
 
     // Approvals
     public const string ExamScheduleCreated = "exam-schedule.created";

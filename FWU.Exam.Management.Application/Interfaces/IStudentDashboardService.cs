@@ -56,4 +56,7 @@ public interface IStudentDashboardService
     Task<PaymentRequestLog?> GetPaymentLogByInvoiceNumberAsync(string invoiceNumber);
     Task<PaymentRequestLog?> FindPendingPaymentLogByStudentAsync(int studentRegistrationId);
     Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath);
+    Task<int> RecordUnresolvedCompletedPaymentAsync(int? examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string transactionId, string responseData, string responseMessage, string? invoiceNumber = null, string? selectedSubjectIds = null);
+    Task<bool> HasPaymentUnderVerificationAsync(int examScheduleId, int studentRegistrationId);
+    Task<PaymentRequestLog?> MarkLatestPendingPaymentForVerificationAsync(int studentRegistrationId, string transactionId, string responseData, string responseMessage);
 }

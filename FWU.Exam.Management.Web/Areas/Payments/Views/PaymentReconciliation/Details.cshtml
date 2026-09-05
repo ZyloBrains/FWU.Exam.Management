@@ -1,6 +1,8 @@
 @model FWU.Exam.Management.Application.DTOs.PaymentReconciliationListDto
 @{
     ViewData["Title"] = "Payment Reconciliation Details";
+    var statusColors = Model.PaymentRequestLogStatus == 3 ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-600";
+    var statusLabel = Model.PaymentRequestLogStatus == 3 ? "Under Verification" : "Pending";
 }
 
 <div class="space-y-6">
@@ -66,7 +68,7 @@
                 <div class="flex justify-between">
                     <dt class="text-gray-500">Status</dt>
                     <dd>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Pending</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @statusColors">@statusLabel</span>
                     </dd>
                 </div>
             </dl>
@@ -78,6 +80,9 @@
         <div class="flex flex-col sm:flex-row gap-3">
             <button onclick="reconcile(@Model.Id)" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
                 <i class="fas fa-check-circle"></i> Verify with Gateway & Complete
+            </button>
+            <button onclick="confirmPaid(@Model.Id)" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors" title="Manually confirm as paid (student confirmed by phone), without checking the gateway">
+                <i class="fas fa-hand-holding-usd"></i> Confirm as Paid
             </button>
             <button onclick="markFailed(@Model.Id)" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
                 <i class="fas fa-times-circle"></i> Mark as Failed
@@ -118,6 +123,26 @@
                     if (response.success) location.href = '@Url.Action("Index", "PaymentReconciliation", new { area = "Payments" })';
                 },
                 error: function () { alert('An error occurred while marking as failed.'); }
+            });
+        }
+
+        function confirmPaid(id) {
+            var msg = 'Manually confirm this payment as PAID?\n\n' +
+                      'Use this only when the student has confirmed by phone that the payment ' +
+                      'was completed on the gateway. This will create the exam registration and ' +
+                      'notify the student, without checking the gateway.';
+            if (!confirm(msg)) return;
+            var remark = prompt('Remark (e.g. phone receipt/transaction reference, optional):');
+            if (remark === null) return;
+            $.ajax({
+                url: '@Url.Action("ConfirmPaid", "PaymentReconciliation")',
+                type: 'POST',
+                data: { id: id, remark: remark, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    alert(response.message);
+                    if (response.success) location.href = '@Url.Action("Index", "PaymentReconciliation", new { area = "Payments" })';
+                },
+                error: function () { alert('An error occurred while confirming the payment.'); }
             });
         }
     </script>

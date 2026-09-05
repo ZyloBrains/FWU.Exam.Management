@@ -99,4 +99,20 @@ public class PaymentReconciliationController(IPaymentReconciliationService recon
 
         return RedirectToAction(nameof(Index));
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmPaid(int id, string? remark)
+    {
+        var result = await reconciliationService.ConfirmPaymentManuallyAsync(id, remark);
+        if (Request.Headers.ContainsKey("X-Requested-With") && Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return Json(new { success = result.Success, message = result.Message });
+
+        if (result.Success)
+            TempData["SuccessMessage"] = result.Message;
+        else
+            TempData["ErrorMessage"] = result.Message;
+
+        return RedirectToAction(nameof(Index));
+    }
 }

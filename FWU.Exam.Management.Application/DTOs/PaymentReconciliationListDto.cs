@@ -12,6 +12,7 @@ public class PaymentReconciliationListDto
     public string? ExamName { get; set; }
     public string? ContactNumber { get; set; }
     public string? Email { get; set; }
+    public int? PaymentRequestLogStatus { get; set; }
 }
 
 public class PaymentReconciliationResult

@@ -318,6 +318,13 @@ public class StudentDashboardController(
             var rejectionReason = rejectedOnly
                 ? await dashboardService.GetLatestRejectionReasonAsync(schedule.Id, user.Id)
                 : null;
+            // Gateway confirmed the payment during the callback but the payment log
+            // has not been confirmed yet (status 3 "pending verification", or a
+            // NULL pending log the callback could not reconcile). Instead of showing
+            // "Pay Now" again and risking a double charge, surface a verification
+            // state so the student knows their payment is being checked.
+            var isPaymentUnderVerification = !hasPaid
+                && await dashboardService.HasPaymentUnderVerificationAsync(schedule.Id, registration.Id);
 
             forms.Add(new ExamFormViewModel
             {
@@ -328,6 +335,7 @@ public class StudentDashboardController(
                 HasAdmitCard = hasAdmitCard,
                 AdmitCardId = admitCardId,
                 IsRejected = rejectedOnly,
+                IsPaymentUnderVerification = isPaymentUnderVerification,
                 RejectionReason = rejectionReason,
                 EndDateBs = schedule.EndDateBs,
                 ExtendedDateBs = schedule.ExtendedDate.HasValue ? schedule.ExtendedDate.Value.ToString("yyyy-MM-dd") : null,
@@ -1265,7 +1273,26 @@ public class StudentDashboardController(
             }
             else
             {
-                TempData["SuccessMessage"] = "Payment successful!";
+                // eSewa confirmed the transaction complete but the payment log
+                // could not be resolved (session lost AND fallback failed). Never
+                // silently drop a confirmed payment: record it as pending
+                // verification so the exam office can reconcile the receipt and
+                // the student sees the correct status instead of "Pay Now".
+                var eSewaLostLog = await RecordUnresolvedCallbackPaymentAsync(
+                    "esewa", examScheduleId: null, response.TotalAmount,
+                    response.TransactionUuid ?? "",
+                    combinedData, "Payment completed at eSewa but could not be linked to a payment log. Pending exam office verification.",
+                    response.TransactionUuid ?? "");
+                if (eSewaLostLog)
+                {
+                    TempData["PaymentUnderVerification"] = true;
+                    TempData["SuccessMessage"] = "Your payment was received successfully. It is pending verification by the exam office before your admit card is issued. Please keep your payment receipt.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Your payment was received, but we could not link it to your exam form. Please contact the exam office with your payment receipt.";
+                    return RedirectToAction(nameof(PaymentFailure));
+                }
             }
             TempData["TransactionCode"] = response.TransactionCode;
             TempData["TransactionUuid"] = response.TransactionUuid;
@@ -1472,7 +1499,26 @@ public class StudentDashboardController(
             }
             else
             {
-                TempData["SuccessMessage"] = "Payment successful!";
+                // Khalti confirmed the payment completed but the payment log could
+                // not be resolved (session lost AND invoice lookup failed). Record
+                // it as pending verification rather than silently dropping a
+                // confirmed payment, so the exam office can reconcile the receipt
+                // and the student sees the correct status instead of "Pay Now".
+                var khaltiLostLog = await RecordUnresolvedCallbackPaymentAsync(
+                    "khalti", examScheduleId: null, (lookup.TotalAmount > 0 ? (decimal)lookup.TotalAmount / 100m : 0m),
+                    pidx,
+                    responseData, "Payment completed at Khalti but could not be linked to a payment log. Pending exam office verification.",
+                    purchase_order_id);
+                if (khaltiLostLog)
+                {
+                    TempData["PaymentUnderVerification"] = true;
+                    TempData["SuccessMessage"] = "Your payment was received successfully. It is pending verification by the exam office before your admit card is issued. Please keep your payment receipt.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Your payment was received, but we could not link it to your exam form. Please contact the exam office with your payment receipt.";
+                    return RedirectToAction(nameof(PaymentFailure));
+                }
             }
             TempData["TransactionCode"] = lookup.TransactionId ?? transaction_id;
             TempData["TransactionUuid"] = pidx;
@@ -1647,6 +1693,55 @@ public class StudentDashboardController(
         }
 
         return selection;
+    }
+
+    private async Task<bool> RecordUnresolvedCallbackPaymentAsync(
+        string gateway, int? examScheduleId, decimal amount, string transactionUuid,
+        string responseData, string responseMessage, string? invoiceNumber = null)
+    {
+        try
+        {
+            var callbackUser = await userManager.GetUserAsync(User);
+            if (callbackUser == null)
+            {
+                logger.LogWarning("RecordUnresolvedCallbackPaymentAsync: no authenticated user for gateway={Gateway}", gateway);
+                return false;
+            }
+
+            var callbackRegistration = await dashboardService.GetStudentRegistrationByUserIdAsync(callbackUser.Id);
+            if (callbackRegistration == null)
+            {
+                logger.LogWarning("RecordUnresolvedCallbackPaymentAsync: student registration not found for user={UserId}", callbackUser.Id);
+                return false;
+            }
+
+            // Prefer to flag an existing pending log (the payment was initiated by
+            // this student) rather than creating a duplicate orphan record.
+            if (!examScheduleId.HasValue)
+            {
+                var existingPending = await dashboardService.MarkLatestPendingPaymentForVerificationAsync(
+                    callbackRegistration.Id, transactionUuid, responseData, responseMessage);
+                if (existingPending != null)
+                {
+                    logger.LogInformation("RecordUnresolvedCallbackPaymentAsync: marked pending logId={LogId} for verification (gateway={Gateway})",
+                        existingPending.Id, gateway);
+                    return true;
+                }
+            }
+
+            var newLogId = await dashboardService.RecordUnresolvedCompletedPaymentAsync(
+                examScheduleId, callbackRegistration.Id, amount, gateway, transactionUuid,
+                responseData, responseMessage, invoiceNumber);
+
+            logger.LogWarning("RecordUnresolvedCallbackPaymentAsync: created logId={LogId} flagged for verification (gateway={Gateway})",
+                newLogId, gateway);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "RecordUnresolvedCallbackPaymentAsync: failed for gateway={Gateway}", gateway);
+            return false;
+        }
     }
 
     private async Task HandlePostPaymentRegistration(int logId)

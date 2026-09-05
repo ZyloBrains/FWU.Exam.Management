@@ -36,7 +36,7 @@ public class PaymentReconciliationService(
             .AsNoTracking()
             .Include(l => l.PaymentType)
             .Include(l => l.ExamSchedule)
-            .Where(l => l.PaymentRequestLogStatus == null
+            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 3)
                      && l.StudentRegistrationId != null);
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -73,7 +73,8 @@ public class PaymentReconciliationService(
             ForwardedTime = l.ForwardedTimestamp,
             ExamName = l.ExamSchedule?.ExamScheduleName,
             ContactNumber = l.MobileNumber,
-            Email = l.Email
+            Email = l.Email,
+            PaymentRequestLogStatus = l.PaymentRequestLogStatus
         }).ToList();
 
         return (items, totalCount);
@@ -228,44 +229,7 @@ public class PaymentReconciliationService(
     private async Task<PaymentReconciliationResult> CompletePaymentAsync(
         PaymentRequestLog log, string transactionCode, string responseData, string responseMessage)
     {
-        // Replicate the canonical post-payment registration logic (see
-        // StudentDashboardController.HandlePostPaymentRegistration): run it while
-        // the log is still pending, i.e. BEFORE marking the payment as paid.
-        if (log.StudentRegistrationId.HasValue)
-        {
-            var userId = await ResolveUserIdAsync(log);
-            if (userId == null)
-            {
-                logger.LogWarning("CompletePaymentAsync: could not resolve user for logId={LogId} (StudentRegistrationId={StudentRegId})", log.Id, log.StudentRegistrationId);
-            }
-            else
-            {
-                // A confirmed payment on a rejected form with an older confirmed
-                // payment is a reapply top-up: revive the rejected registration with
-                // this log's subject tokens rather than creating a duplicate.
-                if (await dashboardService.TryCompleteApplyAgainTopUpAsync(log.Id, userId))
-                {
-                    logger.LogInformation("CompletePaymentAsync: reapply top-up completed for logId={LogId}", log.Id);
-                }
-                else
-                {
-                    var existing = await dashboardService.HasExistingExamRegistrationAsync(log.ExamScheduleId, userId);
-                    var selection = ReExamSubjectSelection.Parse(log.SelectedSubjectIds);
-
-                    if (!existing && selection.Count > 0)
-                    {
-                        await dashboardService.CreateExamRegistrationAsync(
-                            log.ExamScheduleId, userId, log.Amount, selection.Keys.ToList(), log.StudentRegistrationId.Value, selection);
-                        logger.LogInformation("CompletePaymentAsync: created ExamRegistration for logId={LogId}, scheduleId={ScheduleId}, studentRegId={StudentRegId}",
-                            log.Id, log.ExamScheduleId, log.StudentRegistrationId);
-                    }
-                    else if (!existing)
-                    {
-                        logger.LogWarning("CompletePaymentAsync: no subject selection on logId={LogId}; skipping registration creation.", log.Id);
-                    }
-                }
-            }
-        }
+        await CompleteExamRegistrationAsync(log);
 
         // Update log status.
         await UpdateLogAsync(log, transactionCode, true, responseData, responseMessage);
@@ -284,6 +248,52 @@ public class PaymentReconciliationService(
             Message = "Payment verified and completed successfully.",
             GatewayStatus = "COMPLETE"
         };
+    }
+
+    // Replicates the canonical post-payment registration logic (see
+    // StudentDashboardController.HandlePostPaymentRegistration). Shared by the
+    // gateway reconciliation path and the admin manual-confirm path so both
+    // produce the exact same student-facing result (paid status, exam
+    // registration, admit-card eligibility).
+    private async Task CompleteExamRegistrationAsync(PaymentRequestLog log)
+    {
+        if (!log.StudentRegistrationId.HasValue || log.ExamScheduleId <= 0)
+        {
+            logger.LogWarning("CompleteExamRegistrationAsync: cannot create registration for logId={LogId} (StudentRegistrationId={StudentRegId}, ExamScheduleId={ScheduleId})",
+                log.Id, log.StudentRegistrationId, log.ExamScheduleId);
+            return;
+        }
+
+        var userId = await ResolveUserIdAsync(log);
+        if (userId == null)
+        {
+            logger.LogWarning("CompleteExamRegistrationAsync: could not resolve user for logId={LogId} (StudentRegistrationId={StudentRegId})", log.Id, log.StudentRegistrationId);
+            return;
+        }
+
+        // A confirmed payment on a rejected form with an older confirmed payment
+        // is a reapply top-up: revive the rejected registration with this log's
+        // subject tokens rather than creating a duplicate.
+        if (await dashboardService.TryCompleteApplyAgainTopUpAsync(log.Id, userId))
+        {
+            logger.LogInformation("CompleteExamRegistrationAsync: reapply top-up completed for logId={LogId}", log.Id);
+            return;
+        }
+
+        var existing = await dashboardService.HasExistingExamRegistrationAsync(log.ExamScheduleId, userId);
+        var selection = ReExamSubjectSelection.Parse(log.SelectedSubjectIds);
+
+        if (!existing && selection.Count > 0)
+        {
+            await dashboardService.CreateExamRegistrationAsync(
+                log.ExamScheduleId, userId, log.Amount, selection.Keys.ToList(), log.StudentRegistrationId.Value, selection);
+            logger.LogInformation("CompleteExamRegistrationAsync: created ExamRegistration for logId={LogId}, scheduleId={ScheduleId}, studentRegId={StudentRegId}",
+                log.Id, log.ExamScheduleId, log.StudentRegistrationId);
+        }
+        else if (!existing)
+        {
+            logger.LogWarning("CompleteExamRegistrationAsync: no subject selection on logId={LogId}; skipping registration creation.", log.Id);
+        }
     }
 
     private async Task<string?> ResolveUserIdAsync(PaymentRequestLog log)
@@ -441,12 +451,47 @@ public class PaymentReconciliationService(
         return new PaymentReconciliationResult { Success = true, Message = "Payment marked as failed." };
     }
 
+    public async Task<PaymentReconciliationResult> ConfirmPaymentManuallyAsync(int logId, string? remark)
+    {
+        var log = await context.Set<PaymentRequestLog>()
+            .Include(l => l.PaymentType)
+            .FirstOrDefaultAsync(l => l.Id == logId);
+        if (log == null)
+            return new PaymentReconciliationResult { Success = false, Message = "Payment log not found." };
+
+        if (log.PaymentRequestLogStatus == 1)
+            return new PaymentReconciliationResult { Success = true, Message = "Payment is already marked as paid." };
+
+        if (log.PaymentRequestLogStatus == 2)
+            return new PaymentReconciliationResult { Success = false, Message = "This payment was already closed as terminal (could not be confirmed)." };
+
+        // Complete the registration (paid status, exam registration, admit-card
+        // eligibility) exactly like the gateway confirmation path, so the student
+        // receives the same result as a normally completed payment.
+        await CompleteExamRegistrationAsync(log);
+
+        var remarkText = string.IsNullOrWhiteSpace(remark) ? "No remark provided" : remark;
+        var reference = log.TransactionId ?? $"ADMIN-{logId}";
+        var responseMessage = $"Payment manually confirmed as paid by admin. Remark: {remarkText}";
+
+        await UpdateLogAsync(log, reference, true, remarkText, responseMessage);
+
+        await SendConfirmationAsync(log, reference);
+
+        await auditLogWriter.LogAsync(ActivityTypes.PaymentConfirmedManually,
+            $"Payment manually confirmed as paid by admin. Remark: {remarkText}",
+            new { logId, invoice = log.InvoiceNumber, gateway = log.PaymentType?.PaymentTypeName, transactionId = log.TransactionId, remark = remarkText, amount = log.Amount },
+            AuditSeverity.Info, entityName: "PaymentRequestLog", entityId: logId.ToString());
+
+        return new PaymentReconciliationResult { Success = true, Message = "Payment manually confirmed as paid. The student has been registered and notified." };
+    }
+
     public async Task<int> ReconcilePendingBatchAsync()
     {
         var cutoff = DateTime.UtcNow.AddMinutes(-5);
         var pendingIds = await context.Set<PaymentRequestLog>()
             .AsNoTracking()
-            .Where(l => l.PaymentRequestLogStatus == null
+            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 3)
                      && l.StudentRegistrationId != null
                      && l.ForwardedTimestamp < cutoff)
             .OrderBy(l => l.ForwardedTimestamp)
@@ -471,7 +516,7 @@ public class PaymentReconciliationService(
         IQueryable<PaymentRequestLog> query = context.Set<PaymentRequestLog>()
             .AsNoTracking()
             .Include(l => l.PaymentType)
-            .Where(l => l.PaymentRequestLogStatus == null
+            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 3)
                      && l.StudentRegistrationId != null)
             .OrderBy(l => l.ForwardedTimestamp);
 
@@ -497,7 +542,8 @@ public class PaymentReconciliationService(
             ForwardedTime = l.ForwardedTimestamp,
             ExamName = l.ExamSchedule?.ExamScheduleName,
             ContactNumber = l.MobileNumber,
-            Email = l.Email
+            Email = l.Email,
+            PaymentRequestLogStatus = l.PaymentRequestLogStatus
         }).ToList();
     }
 
