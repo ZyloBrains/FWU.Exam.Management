@@ -1603,6 +1603,13 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .FirstOrDefaultAsync();
     }
 
+    public async Task<PaymentRequestLog?> FindPaymentLogByTransactionUuidAsync(string transactionUuid)
+    {
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(prl => prl.TransactionId == transactionUuid);
+    }
+
     public async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath)
     {
         var missing = new List<string>();
@@ -1755,6 +1762,26 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
         {
             PaymentRequestLogId = log.Id,
+            ResponseTimestamp = DateTime.UtcNow,
+            IsSuccess = false,
+            ResponseMessage = responseMessage,
+            FullResponse = responseData
+        });
+
+        await context.SaveChangesAsync();
+        return log;
+    }
+
+    public async Task<PaymentRequestLog?> MarkPaymentLogPendingVerificationAsync(int logId, string responseData, string responseMessage)
+    {
+        var log = await context.Set<PaymentRequestLog>().FirstOrDefaultAsync(prl => prl.Id == logId);
+        if (log == null) return null;
+
+        log.PaymentRequestLogStatus = 3;
+
+        context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+        {
+            PaymentRequestLogId = logId,
             ResponseTimestamp = DateTime.UtcNow,
             IsSuccess = false,
             ResponseMessage = responseMessage,
