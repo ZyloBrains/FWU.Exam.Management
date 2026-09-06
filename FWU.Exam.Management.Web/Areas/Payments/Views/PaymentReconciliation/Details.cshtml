@@ -1,8 +1,8 @@
 @model FWU.Exam.Management.Application.DTOs.PaymentReconciliationListDto
 @{
     ViewData["Title"] = "Payment Reconciliation Details";
-    var statusColors = Model.PaymentRequestLogStatus == 3 ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-600";
-    var statusLabel = Model.PaymentRequestLogStatus == 3 ? "Under Verification" : "Pending";
+    var statusColors = Model.PaymentRequestLogStatus == 3 ? "bg-amber-100 text-amber-800" : (Model.PaymentRequestLogStatus == 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-600");
+    var statusLabel = Model.PaymentRequestLogStatus == 3 ? "Under Verification" : (Model.PaymentRequestLogStatus == 0 ? "Failed" : "Pending");
 }
 
 <div class="space-y-6">
