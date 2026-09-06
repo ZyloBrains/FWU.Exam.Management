@@ -119,7 +119,7 @@ public class SectionController(IPermissionService permissionService, UserManager
 
     public async Task<IActionResult> Payments()
     {
-        if (!await HasAnyAsync("banks.view", "paymenttypes.view", "billtitles.view"))
+        if (!await HasAnyAsync("banks.view", "paymenttypes.view", "billtitles.view", "paymentreconciliation.view"))
             return Forbid();
         return View();
     }

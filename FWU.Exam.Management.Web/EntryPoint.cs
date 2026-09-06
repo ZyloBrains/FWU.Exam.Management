@@ -181,6 +181,8 @@ public partial class EntryPoint
         builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
         builder.Services.AddScoped<ISemesterEnrollmentService, SemesterEnrollmentService>();
         builder.Services.AddHostedService<SemesterPromotionBackgroundService>();
+        builder.Services.AddScoped<IPaymentReconciliationService, PaymentReconciliationService>();
+        builder.Services.AddHostedService<PaymentReconciliationBackgroundService>();
         builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<ISmsConfigurationService, SmsConfigurationService>();

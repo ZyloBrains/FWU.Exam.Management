@@ -39,6 +39,7 @@ public class ExamFormViewModel
     public bool HasAdmitCard { get; set; }
     public int? AdmitCardId { get; set; }
     public bool IsRejected { get; set; }
+    public bool IsPaymentUnderVerification { get; set; }
     public string? RejectionReason { get; set; }
     public string? EndDateBs { get; set; }
     public string? ExtendedDateBs { get; set; }

@@ -1,0 +1,149 @@
+@model FWU.Exam.Management.Application.DTOs.PaymentReconciliationListDto
+@{
+    ViewData["Title"] = "Payment Reconciliation Details";
+    var statusColors = Model.PaymentRequestLogStatus == 3 ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-600";
+    var statusLabel = Model.PaymentRequestLogStatus == 3 ? "Under Verification" : "Pending";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-sync-alt text-amber-600"></i>
+        </div>
+        <div>
+            @await Html.PartialAsync("_AlertMessages")
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Reconciliation Details</h1>
+            <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Payment log #@Model.Id</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-800 mb-4">Payment Information</h3>
+            <dl class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Invoice Number</dt>
+                    <dd class="font-mono text-gray-800 text-xs">@Model.InvoiceNumber</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Student Name</dt>
+                    <dd class="text-gray-800 font-medium">@Model.StudentName</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Amount</dt>
+                    <dd class="text-gray-800 font-semibold">Rs. @Model.Amount.ToString("N0")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Payment Gateway</dt>
+                    <dd>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">@Model.Gateway</span>
+                    </dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Transaction ID</dt>
+                    <dd class="font-mono text-gray-800 text-xs">@(Model.TransactionId ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Forwarded Time</dt>
+                    <dd class="text-gray-800">@Model.ForwardedTime.ToString("MMM dd, yyyy HH:mm:ss")</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-800 mb-4">Exam & Contact</h3>
+            <dl class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Exam Schedule</dt>
+                    <dd class="text-gray-800">@(Model.ExamName ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Contact Number</dt>
+                    <dd class="text-gray-800">@(Model.ContactNumber ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Email</dt>
+                    <dd class="text-gray-800 text-xs">@(Model.Email ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Status</dt>
+                    <dd>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @statusColors">@statusLabel</span>
+                    </dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">Actions</h3>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <button onclick="reconcile(@Model.Id)" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                <i class="fas fa-check-circle"></i> Verify with Gateway & Complete
+            </button>
+            <button onclick="confirmPaid(@Model.Id)" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors" title="Manually confirm as paid (student confirmed by phone), without checking the gateway">
+                <i class="fas fa-hand-holding-usd"></i> Confirm as Paid
+            </button>
+            <button onclick="markFailed(@Model.Id)" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
+                <i class="fas fa-times-circle"></i> Mark as Failed
+            </button>
+            <a asp-action="Index" asp-area="Payments" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-colors">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function reconcile(id) {
+            if (!confirm('Verify this payment with the gateway?\nThis will create a voucher and exam registration if successful.')) return;
+            $.ajax({
+                url: '@Url.Action("Reconcile", "PaymentReconciliation")',
+                type: 'POST',
+                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    alert(response.message);
+                    if (response.success) location.href = '@Url.Action("Index", "PaymentReconciliation", new { area = "Payments" })';
+                },
+                error: function () { alert('An error occurred while reconciling.'); }
+            });
+        }
+
+        function markFailed(id) {
+            var reason = prompt('Reason for marking as failed (optional):');
+            if (reason === null) return;
+            $.ajax({
+                url: '@Url.Action("MarkFailed", "PaymentReconciliation")',
+                type: 'POST',
+                data: { id: id, reason: reason, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    alert(response.message);
+                    if (response.success) location.href = '@Url.Action("Index", "PaymentReconciliation", new { area = "Payments" })';
+                },
+                error: function () { alert('An error occurred while marking as failed.'); }
+            });
+        }
+
+        function confirmPaid(id) {
+            var msg = 'Manually confirm this payment as PAID?\n\n' +
+                      'Use this only when the student has confirmed by phone that the payment ' +
+                      'was completed on the gateway. This will create the exam registration and ' +
+                      'notify the student, without checking the gateway.';
+            if (!confirm(msg)) return;
+            var remark = prompt('Remark (e.g. phone receipt/transaction reference, optional):');
+            if (remark === null) return;
+            $.ajax({
+                url: '@Url.Action("ConfirmPaid", "PaymentReconciliation")',
+                type: 'POST',
+                data: { id: id, remark: remark, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    alert(response.message);
+                    if (response.success) location.href = '@Url.Action("Index", "PaymentReconciliation", new { area = "Payments" })';
+                },
+                error: function () { alert('An error occurred while confirming the payment.'); }
+            });
+        }
+    </script>
+}
