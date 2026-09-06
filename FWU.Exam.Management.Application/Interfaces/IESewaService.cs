@@ -23,6 +23,8 @@ public class ESewaVerifyResponse
 {
     [JsonPropertyName("transaction_code")]
     public string? TransactionCode { get; set; }
+    [JsonPropertyName("ref_id")]
+    public string? RefId { get; set; }
     [JsonPropertyName("status")]
     public string? Status { get; set; }
     [JsonPropertyName("total_amount")]

@@ -1150,24 +1150,31 @@ public class StudentDashboardController(
                     try
                     {
                         var status = await esewaService.VerifyTransactionAsync(txUuid, log.Amount);
+                        // eSewa sandbox returns "ref_id" instead of "transaction_code";
+                        // treat either (or the uuid) as the transaction reference so a
+                        // COMPLETE payment confirms instead of parking under verification.
+                        var eSewaRef = !string.IsNullOrWhiteSpace(status?.TransactionCode)
+                            ? status.TransactionCode
+                            : !string.IsNullOrWhiteSpace(status?.RefId)
+                                ? status.RefId
+                                : txUuid;
                         if (status != null
-                            && string.Equals(status.Status, "COMPLETE", StringComparison.OrdinalIgnoreCase)
-                            && !string.IsNullOrWhiteSpace(status.TransactionCode))
+                            && string.Equals(status.Status, "COMPLETE", StringComparison.OrdinalIgnoreCase))
                         {
                             logger.LogWarning("ESewaCallback: no callback data but status API reports COMPLETE for logId={LogId}, uuid={Uuid}. Treating as paid.",
                                 resolvedLogId.Value, txUuid);
 
                             await HandlePostPaymentRegistration(resolvedLogId.Value);
-                            await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, status.TransactionCode ?? "", true,
+                            await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, eSewaRef, true,
                                 System.Text.Json.JsonSerializer.Serialize(status),
                                 "Payment verified via eSewa status check (callback carried no data).");
                             await auditLogWriter.LogAsync(ActivityTypes.PaymentVerified,
-                                $"eSewa payment verified via status check (Transaction {status.TransactionCode})",
-                                new { gateway = "esewa", transactionCode = status.TransactionCode, transactionUuid = txUuid, amount = status.TotalAmount },
+                                $"eSewa payment verified via status check (Transaction {eSewaRef})",
+                                new { gateway = "esewa", transactionCode = eSewaRef, transactionUuid = txUuid, amount = status.TotalAmount },
                                 entityName: "PaymentRequestLog", entityId: resolvedLogId.Value.ToString());
 
-                            await CompleteExamFormSubmissionAsync(resolvedLogId.Value, status.TransactionCode ?? txUuid);
-                            TempData["TransactionCode"] = !string.IsNullOrWhiteSpace(status.TransactionCode) ? status.TransactionCode : txUuid;
+                            await CompleteExamFormSubmissionAsync(resolvedLogId.Value, eSewaRef);
+                            TempData["TransactionCode"] = eSewaRef;
                             TempData["TransactionUuid"] = txUuid;
                             return RedirectToAction(nameof(PaymentSuccess));
                         }
@@ -1285,6 +1292,15 @@ public class StudentDashboardController(
                 : "null";
             var combinedData = $"{{\"callback\":{decodedJson},\"verification\":{verifyData}}}";
 
+            // eSewa sandbox returns "ref_id" instead of "transaction_code"; use
+            // whichever reference exists so the payment confirms in the DB and the
+            // student gets the SMS + registration instead of "Under Verification".
+            var eSewaRef = !string.IsNullOrWhiteSpace(response.TransactionCode)
+                ? response.TransactionCode
+                : !string.IsNullOrWhiteSpace(verified?.RefId)
+                    ? verified.RefId
+                    : response.TransactionUuid ?? "";
+
             logger.LogInformation("ESewaCallback: verifyResult={Status}", verified?.Status ?? "null");
 
             if (verified == null || verified.Status != "COMPLETE")
@@ -1302,16 +1318,16 @@ public class StudentDashboardController(
             if (resolvedLogId.HasValue)
             {
                 await HandlePostPaymentRegistration(resolvedLogId.Value);
-                await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, response.TransactionCode ?? "", true, combinedData, "Payment verified via eSewa.");
+                await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, eSewaRef, true, combinedData, "Payment verified via eSewa.");
                 await auditLogWriter.LogAsync(ActivityTypes.PaymentVerified,
-                    $"eSewa payment verified (Transaction {response.TransactionCode})",
-                    new { gateway = "esewa", transactionCode = response.TransactionCode, transactionUuid = response.TransactionUuid, amount = response.TotalAmount },
+                    $"eSewa payment verified (Transaction {eSewaRef})",
+                    new { gateway = "esewa", transactionCode = eSewaRef, transactionUuid = response.TransactionUuid, amount = response.TotalAmount },
                     entityName: "PaymentRequestLog", entityId: resolvedLogId.Value.ToString());
             }
 
             if (resolvedLogId.HasValue)
             {
-                await CompleteExamFormSubmissionAsync(resolvedLogId.Value, response.TransactionCode);
+                await CompleteExamFormSubmissionAsync(resolvedLogId.Value, eSewaRef);
             }
             else
             {
@@ -1322,9 +1338,9 @@ public class StudentDashboardController(
                 // the student sees the correct status instead of "Pay Now".
                 var eSewaLostLog = await RecordUnresolvedCallbackPaymentAsync(
                     "esewa", examScheduleId: null, response.TotalAmount,
-                    response.TransactionUuid ?? "",
+                    eSewaRef,
                     combinedData, "Payment completed at eSewa but could not be linked to a payment log. Pending exam office verification.",
-                    response.TransactionUuid ?? "");
+                    eSewaRef);
                 if (eSewaLostLog)
                 {
                     TempData["PaymentUnderVerification"] = true;
@@ -1336,7 +1352,7 @@ public class StudentDashboardController(
                     return RedirectToAction(nameof(PaymentFailure));
                 }
             }
-            TempData["TransactionCode"] = response.TransactionCode;
+            TempData["TransactionCode"] = eSewaRef;
             TempData["TransactionUuid"] = response.TransactionUuid;
 
             return RedirectToAction(nameof(PaymentSuccess));

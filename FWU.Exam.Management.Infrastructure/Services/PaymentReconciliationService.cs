@@ -172,7 +172,7 @@ public class PaymentReconciliationService(
             };
         }
 
-        return await CompletePaymentAsync(log, verified.TransactionCode ?? transactionUuid, responseJson, "Payment verified via eSewa status check (reconciliation).");
+        return await CompletePaymentAsync(log, verified.TransactionCode ?? verified.RefId ?? transactionUuid, responseJson, "Payment verified via eSewa status check (reconciliation).");
     }
 
     private async Task<PaymentReconciliationResult> ReconcileKhaltiAsync(PaymentRequestLog log)
