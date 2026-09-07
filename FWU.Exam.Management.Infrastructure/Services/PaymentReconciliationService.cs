@@ -29,11 +29,6 @@ public class PaymentReconciliationService(
     // processing the same payments. Static because the service is scoped.
     private static readonly SemaphoreSlim _batchLock = new(1, 1);
 
-    // Statuses eligible for the verification list and gateway reconciliation:
-    // null (initiated/pending), 0 (failed/open-unconfirmed) and 3 (under manual
-    // verification). Confirmed (1) and terminal (2) logs are never revisited.
-    private static readonly int?[] ReconcileableStatuses = [null, 0, 3];
-
     public async Task<(List<PaymentReconciliationListDto> Items, int TotalCount)> GetPendingPaymentsAsync(
         string? search, DateTime? fromDate, DateTime? toDate, int page, int pageSize)
     {
@@ -41,7 +36,7 @@ public class PaymentReconciliationService(
             .AsNoTracking()
             .Include(l => l.PaymentType)
             .Include(l => l.ExamSchedule)
-            .Where(l => ReconcileableStatuses.Contains(l.PaymentRequestLogStatus)
+            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 3)
                      && l.StudentRegistrationId != null);
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -50,13 +45,7 @@ public class PaymentReconciliationService(
             query = query.Where(l =>
                 l.InvoiceNumber.ToLower().Contains(lower) ||
                 (l.FullName != null && l.FullName.ToLower().Contains(lower)) ||
-                (l.MobileNumber != null && l.MobileNumber.Contains(search.Trim())) ||
-                (l.TransactionId != null && l.TransactionId.ToLower().Contains(lower)) ||
-                l.FullRequestContent.ToLower().Contains(lower) ||
-                context.Set<PaymentResponseLog>().Any(r =>
-                    r.PaymentRequestLogId == l.Id &&
-                    r.FullResponse != null &&
-                    r.FullResponse.ToLower().Contains(lower)));
+                (l.MobileNumber != null && l.MobileNumber.Contains(search.Trim())));
         }
 
         if (fromDate.HasValue)
@@ -502,7 +491,7 @@ public class PaymentReconciliationService(
         var cutoff = DateTime.UtcNow.AddMinutes(-5);
         var pendingIds = await context.Set<PaymentRequestLog>()
             .AsNoTracking()
-            .Where(l => ReconcileableStatuses.Contains(l.PaymentRequestLogStatus)
+            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 3)
                      && l.StudentRegistrationId != null
                      && l.ForwardedTimestamp < cutoff)
             .OrderBy(l => l.ForwardedTimestamp)
@@ -527,7 +516,7 @@ public class PaymentReconciliationService(
         IQueryable<PaymentRequestLog> query = context.Set<PaymentRequestLog>()
             .AsNoTracking()
             .Include(l => l.PaymentType)
-            .Where(l => ReconcileableStatuses.Contains(l.PaymentRequestLogStatus)
+            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 3)
                      && l.StudentRegistrationId != null)
             .OrderBy(l => l.ForwardedTimestamp);
 
