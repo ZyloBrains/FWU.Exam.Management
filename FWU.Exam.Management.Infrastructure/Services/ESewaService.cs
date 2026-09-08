@@ -93,6 +93,18 @@ public class ESewaService(AppDbContext context, HttpClient httpClient, IConfigur
             };
         }
 
+        return await CallTransactionStatusAsync(transactionUuid, totalAmount);
+    }
+
+    public async Task<ESewaVerifyResponse?> QueryTransactionStatusAsync(string transactionUuid, decimal totalAmount)
+    {
+        return await CallTransactionStatusAsync(transactionUuid, totalAmount);
+    }
+
+    private async Task<ESewaVerifyResponse?> CallTransactionStatusAsync(string transactionUuid, decimal totalAmount)
+    {
+        var config = await GetConfigAsync();
+
         const int maxAttempts = 2;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
@@ -100,15 +112,25 @@ public class ESewaService(AppDbContext context, HttpClient httpClient, IConfigur
             {
                 var url = $"{config.VerifyUrl}?product_code={config.ProductCode}&total_amount={totalAmount:F0}&transaction_uuid={transactionUuid}";
                 var response = await httpClient.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-
                 var json = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<ESewaVerifyResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString });
+                var parsed = JsonSerializer.Deserialize<ESewaVerifyResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString });
+                if (parsed == null)
+                    return null;
+
+                // eSewa returns a non-200 with an error body like { "code": 0, "error_message": "..." }
+                // or { "message": "..." } when the lookup fails (bad amount, unknown uuid, service down).
+                if (!response.IsSuccessStatusCode && string.IsNullOrWhiteSpace(parsed.Status))
+                {
+                    System.Console.WriteLine($"ESewa status check failed ({response.StatusCode}): {json}");
+                    return null;
+                }
+
+                return parsed;
             }
             catch (Exception ex) when (attempt < maxAttempts)
             {
                 await Task.Delay(TimeSpan.FromSeconds(2));
-                System.Console.WriteLine($"ESewa VerifyTransaction retry {attempt}: {ex.Message}");
+                System.Console.WriteLine($"ESewa status check retry {attempt}: {ex.Message}");
             }
         }
         return null;

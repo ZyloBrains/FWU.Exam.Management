@@ -15,6 +15,8 @@
     {
         if (status == 3)
             return "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800\" title=\"Payment made but needs exam office verification\"><i class=\"fas fa-hourglass-half mr-1\"></i>Under Verification</span>";
+        if (status == 0)
+            return "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800\" title=\"Marked as failed but may have been paid - verify with the gateway before closing\"><i class=\"fas fa-times-circle mr-1\"></i>Failed</span>";
         return "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600\" title=\"Initiated but not yet confirmed\"><i class=\"fas fa-clock mr-1\"></i>Pending</span>";
     }
 }
@@ -32,7 +34,7 @@
                     Verify stuck pending payments against the gateway and complete them
                 </p>
                 <p class="text-xs sm:text-sm text-gray-500">
-                    <span class="font-semibold text-gray-700">@totalCount</span> pending payment(s)
+                    <span class="font-semibold text-gray-700">@totalCount</span> pending/failed payment(s) awaiting verification
                 </p>
             </div>
         </div>

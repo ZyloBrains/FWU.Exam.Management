@@ -36,7 +36,7 @@ public class PaymentReconciliationService(
             .AsNoTracking()
             .Include(l => l.PaymentType)
             .Include(l => l.ExamSchedule)
-            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 3)
+            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 0 || l.PaymentRequestLogStatus == 3)
                      && l.StudentRegistrationId != null);
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -68,7 +68,7 @@ public class PaymentReconciliationService(
             InvoiceNumber = l.InvoiceNumber,
             StudentName = string.IsNullOrWhiteSpace(l.FullName) ? "-" : l.FullName,
             Amount = l.Amount,
-            Gateway = l.PaymentType?.PaymentTypeName,
+            Gateway = l.PaymentType?.PaymentTypeName ?? l.PaymentProvider,
             TransactionId = l.TransactionId,
             ForwardedTime = l.ForwardedTimestamp,
             ExamName = l.ExamSchedule?.ExamScheduleName,
@@ -95,7 +95,11 @@ public class PaymentReconciliationService(
         if (log.PaymentRequestLogStatus == 2)
             return new PaymentReconciliationResult { Success = false, Message = "This payment was already closed as terminal (could not be confirmed)." };
 
-        var gateway = log.PaymentType?.PaymentTypeName?.ToLowerInvariant() ?? "";
+        var gateway = log.PaymentType?.PaymentTypeName;
+        if (string.IsNullOrWhiteSpace(gateway) ||
+            (!gateway.Contains("esewa", StringComparison.OrdinalIgnoreCase) && !gateway.Contains("khalti", StringComparison.OrdinalIgnoreCase)))
+            gateway = log.PaymentProvider;
+        gateway = gateway?.ToLowerInvariant() ?? "";
 
         try
         {
@@ -147,21 +151,21 @@ public class PaymentReconciliationService(
         {
             logger.LogWarning("ReconcileESewaAsync: payment not complete. logId={LogId}, status={Status}", log.Id, status);
 
-            // Terminal eSewa statuses (transaction not found / failed / cancelled)
-            // cannot ever be confirmed, so close the log (status 2) exactly like the
-            // Khalti path does, so the poller stops revisiting it every cycle.
-            if (IsEsewaTerminalStatus(status))
-            {
-                var message = $"eSewa reports status '{status}' (terminal). Payment is not confirmed and has been closed; no amount was charged.";
-                await LogResponseAsync(log, null, message, success: false);
-                await MarkLogTerminalAsync(log, message);
-                return new PaymentReconciliationResult
+            // Terminal eSewa statuses (failed / cancelled) cannot ever be
+                // confirmed, so close the log (status 2) exactly like the Khalti
+                // path does, so the poller stops revisiting it every cycle.
+                if (ESewaPaymentStatus.IsTerminalStatus(status))
                 {
-                    Success = false,
-                    Message = $"eSewa reports status '{status}' — payment is not confirmed and was closed as terminal.",
-                    GatewayStatus = status
-                };
-            }
+                    var message = $"eSewa reports status '{status}' (terminal). Payment is not confirmed and has been closed; no amount was charged.";
+                    await LogResponseAsync(log, null, message, success: false);
+                    await MarkLogTerminalAsync(log, message);
+                    return new PaymentReconciliationResult
+                    {
+                        Success = false,
+                        Message = $"eSewa reports status '{status}' — payment is not confirmed and was closed as terminal.",
+                        GatewayStatus = status
+                    };
+                }
 
             await LogResponseAsync(log, null, $"eSewa verification returned status '{status}' (not COMPLETE). Payment is not confirmed.", success: false);
             return new PaymentReconciliationResult
@@ -177,7 +181,7 @@ public class PaymentReconciliationService(
 
     private async Task<PaymentReconciliationResult> ReconcileKhaltiAsync(PaymentRequestLog log)
     {
-        var pidx = log.TransactionId;
+        var pidx = log.ProviderReferenceId ?? log.TransactionId;
         if (string.IsNullOrEmpty(pidx))
         {
             await LogResponseAsync(log, null, $"Could not reconcile Khalti payment logId={log.Id}: no pidx stored.", success: false);
@@ -219,6 +223,21 @@ public class PaymentReconciliationService(
             {
                 Success = false,
                 Message = $"Khalti reports status '{status}' — payment is not confirmed yet (will retry).",
+                GatewayStatus = status
+            };
+        }
+
+        // Khalti reports Completed but the paisa amount does not match the local
+        // record. Never auto-complete a possibly-mismatched payment: hold it for
+        // manual review (admin can confirm or fail from the reconciliation page).
+        if (lookup.TotalAmount != (long)(log.Amount * 100m))
+        {
+            var mismatchMessage = $"Khalti amount mismatch — gateway reports {lookup.TotalAmount} paisa but the local record expects {(long)(log.Amount * 100m)} paisa. Manual review required.";
+            await LogResponseAsync(log, lookup.TransactionId ?? pidx, mismatchMessage, success: false);
+            return new PaymentReconciliationResult
+            {
+                Success = false,
+                Message = mismatchMessage,
                 GatewayStatus = status
             };
         }
@@ -359,7 +378,15 @@ public class PaymentReconciliationService(
     private async Task UpdateLogAsync(PaymentRequestLog log, string transactionId, bool isSuccess, string responseData, string? responseMessage = null)
     {
         log.TransactionId = transactionId;
+        if (!string.IsNullOrEmpty(transactionId))
+            log.ProviderTransactionId = transactionId;
         log.PaymentRequestLogStatus = isSuccess ? 1 : 0;
+        log.PaymentStatus = isSuccess ? PaymentStatusValues.Completed : PaymentStatusValues.Failed;
+        if (isSuccess)
+        {
+            log.PaidAt ??= DateTime.UtcNow;
+            log.VerifiedAt ??= DateTime.UtcNow;
+        }
         context.Set<PaymentRequestLog>().Update(log);
 
         context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
@@ -398,6 +425,7 @@ public class PaymentReconciliationService(
     private async Task MarkLogTerminalAsync(PaymentRequestLog log, string? reason)
     {
         log.PaymentRequestLogStatus = 2;
+        log.PaymentStatus = PaymentStatusValues.Failed;
         context.Set<PaymentRequestLog>().Update(log);
 
         context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
@@ -430,6 +458,7 @@ public class PaymentReconciliationService(
             return new PaymentReconciliationResult { Success = false, Message = "This payment was already closed as terminal (could not be confirmed)." };
 
         log.PaymentRequestLogStatus = 0;
+        log.PaymentStatus = PaymentStatusValues.Failed;
         context.Set<PaymentRequestLog>().Update(log);
 
         context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
@@ -491,7 +520,7 @@ public class PaymentReconciliationService(
         var cutoff = DateTime.UtcNow.AddMinutes(-5);
         var pendingIds = await context.Set<PaymentRequestLog>()
             .AsNoTracking()
-            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 3)
+            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 0 || l.PaymentRequestLogStatus == 3)
                      && l.StudentRegistrationId != null
                      && l.ForwardedTimestamp < cutoff)
             .OrderBy(l => l.ForwardedTimestamp)
@@ -516,7 +545,7 @@ public class PaymentReconciliationService(
         IQueryable<PaymentRequestLog> query = context.Set<PaymentRequestLog>()
             .AsNoTracking()
             .Include(l => l.PaymentType)
-            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 3)
+            .Where(l => (l.PaymentRequestLogStatus == null || l.PaymentRequestLogStatus == 0 || l.PaymentRequestLogStatus == 3)
                      && l.StudentRegistrationId != null)
             .OrderBy(l => l.ForwardedTimestamp);
 
@@ -537,7 +566,7 @@ public class PaymentReconciliationService(
             InvoiceNumber = l.InvoiceNumber,
             StudentName = string.IsNullOrWhiteSpace(l.FullName) ? "-" : l.FullName,
             Amount = l.Amount,
-            Gateway = l.PaymentType?.PaymentTypeName,
+            Gateway = l.PaymentType?.PaymentTypeName ?? l.PaymentProvider,
             TransactionId = l.TransactionId,
             ForwardedTime = l.ForwardedTimestamp,
             ExamName = l.ExamSchedule?.ExamScheduleName,
@@ -583,7 +612,7 @@ public class PaymentReconciliationService(
                     result.Confirmed++;
                 }
                 else if (KhaltiPaymentStatus.IsTerminalStatus(status) ||
-                         IsEsewaTerminalStatus(status))
+                         ESewaPaymentStatus.IsTerminalStatus(status))
                 {
                     outcome.Outcome = "Expired";
                     outcome.Message = reconcileResult.Message;
@@ -616,18 +645,5 @@ public class PaymentReconciliationService(
         {
             _batchLock.Release();
         }
-    }
-
-    private static bool IsEsewaTerminalStatus(string? status)
-    {
-        // NOTE: NOT_FOUND is intentionally NOT terminal. Real prod logs show eSewa
-        // can return NOT_FOUND/PENDING for a transaction_uuid and later confirm the
-        // SAME uuid as COMPLETE. Closing NOT_FOUND as status 2 would orphan a payment
-        // that eSewa subsequently reports as paid. So NOT_FOUND/PENDING stay pending
-        // (retried), and only genuinely-terminal outcomes are closed.
-        return !string.IsNullOrWhiteSpace(status) &&
-               (string.Equals(status, "FAILED", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(status, "CANCELLED", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(status, "CANCELED", StringComparison.OrdinalIgnoreCase));
     }
 }
