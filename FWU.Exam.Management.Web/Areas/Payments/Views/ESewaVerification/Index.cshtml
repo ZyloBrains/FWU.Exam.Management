@@ -1,0 +1,237 @@
+@model FWU.Exam.Management.Application.DTOs.ESewaVerificationResultDto
+@{
+    ViewData["Title"] = "eSewa Transaction Verification";
+}
+
+@functions {
+    string StatusBadge(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status)) return "";
+        return status.ToLowerInvariant() switch
+        {
+            "complete" or "completed" => "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800\"><i class=\"fas fa-check-circle mr-1\"></i>" + status + "</span>",
+            "pending" or "ambiguous" => "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800\"><i class=\"fas fa-hourglass-half mr-1\"></i>" + status + "</span>",
+            "not_found" or "canceled" or "cancel" or "cancelled" or "failed" or "full_refund" or "partial_refund" => "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800\"><i class=\"fas fa-times-circle mr-1\"></i>" + status + "</span>",
+            _ => "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600\">" + status + "</span>"
+        };
+    }
+
+    string VerdictBanner(string verdict)
+    {
+        return verdict switch
+        {
+            "COMPLETED" => "<div class=\"flex items-start gap-3 p-4 rounded-lg border border-green-200 bg-green-50\">" +
+                           "<i class=\"fas fa-check-circle text-green-600 mt-0.5\"></i>" +
+                           "<div><p class=\"font-semibold text-green-800\">Verified — payment completed</p>" +
+                           "<p class=\"text-sm text-green-700 mt-0.5\">eSewa reports this transaction as COMPLETE and the amount matches the local record.</p></div></div>",
+            "NOTFOUND" => "<div class=\"flex items-start gap-3 p-4 rounded-lg border border-gray-200 bg-gray-50\">" +
+                          "<i class=\"fas fa-exclamation-circle text-gray-500 mt-0.5\"></i>" +
+                          "<div><p class=\"font-semibold text-gray-800\">No matching record</p>" +
+                          "<p class=\"text-sm text-gray-600 mt-0.5\">No local payment record was found for the reference you entered. If verifying a raw UUID, provide the exact amount paid.</p></div></div>",
+            "NOREF" or "NOREQ" => "<div class=\"flex items-start gap-3 p-4 rounded-lg border border-gray-200 bg-gray-50\">" +
+                                  "<i class=\"fas fa-info-circle text-gray-500 mt-0.5\"></i>" +
+                                  "<div><p class=\"font-semibold text-gray-800\">Nothing to verify</p>" +
+                                  "<p class=\"text-sm text-gray-600 mt-0.5\">Provide an eSewa transaction UUID, or an invoice number with a stored UUID.</p></div></div>",
+            "AMOUNTMISMATCH" => "<div class=\"flex items-start gap-3 p-4 rounded-lg border border-red-200 bg-red-50\">" +
+                                "<i class=\"fas fa-exclamation-triangle text-red-600 mt-0.5\"></i>" +
+                                "<div><p class=\"font-semibold text-red-800\">Amount mismatch detected</p>" +
+                                "<p class=\"text-sm text-red-700 mt-0.5\">The amount eSewa reports does not match the local record. Do not mark this payment as paid.</p></div></div>",
+            "NOTCOMPLETED" => "<div class=\"flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50\">" +
+                              "<i class=\"fas fa-clock text-amber-600 mt-0.5\"></i>" +
+                              "<div><p class=\"font-semibold text-amber-800\">Payment not completed</p>" +
+                              "<p class=\"text-sm text-amber-700 mt-0.5\">eSewa reports this transaction is not COMPLETE yet.</p></div></div>",
+            "NOTMATCHED" => "<div class=\"flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50\">" +
+                            "<i class=\"fas fa-search text-amber-600 mt-0.5\"></i>" +
+                            "<div><p class=\"font-semibold text-amber-800\">Found at eSewa, not linked locally</p>" +
+                            "<p class=\"text-sm text-amber-700 mt-0.5\">The transaction exists on eSewa but no local payment record references it.</p></div></div>",
+            "ERROR" => "<div class=\"flex items-start gap-3 p-4 rounded-lg border border-red-200 bg-red-50\">" +
+                       "<i class=\"fas fa-times-circle text-red-600 mt-0.5\"></i>" +
+                       "<div><p class=\"font-semibold text-red-800\">eSewa status endpoint error</p>" +
+                       "<p class=\"text-sm text-red-700 mt-0.5\">The eSewa API could not be reached or rejected the lookup. Please try again.</p></div></div>",
+            _ => ""
+        };
+    }
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-search text-green-600"></i>
+        </div>
+        <div>
+            @await Html.PartialAsync("_AlertMessages")
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">eSewa Transaction Verification</h1>
+            <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
+                Verify a transaction directly with the eSewa status endpoint and cross-check it against the database
+            </p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <form method="post" asp-action="Verify" asp-area="Payments" asp-controller="ESewaVerification" class="flex flex-col sm:flex-row gap-3">
+            @Html.AntiForgeryToken()
+            <div class="relative flex-1">
+                <i class="fas fa-credit-card absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" name="query" value="@(Model?.TransactionUuid ?? "")"
+                       placeholder="Enter eSewa transaction UUID, or invoice number..."
+                       class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                       required />
+            </div>
+            <div class="relative sm:w-44">
+                <i class="fas fa-dollar-sign absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="number" name="totalAmount" min="0" step="any" value="@(Model != null && Model.TotalAmount > 0 ? Model.TotalAmount.ToString(System.Globalization.CultureInfo.InvariantCulture) : "")"
+                       placeholder="Amount (NPR) if needed"
+                       title="Only used when the UUID has no matching local record — eSewa requires the exact amount."
+                       class="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
+            </div>
+            <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-sm shadow-green-600/20">
+                <i class="fas fa-sync-alt text-xs"></i>
+                Verify with eSewa
+            </button>
+        </form>
+    </div>
+
+    @if (Model != null)
+    {
+        <div>
+            @Html.Raw(VerdictBanner(Model.Verdict))
+            <p class="text-xs text-gray-500 mt-1.5">@Model.Message</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="fas fa-bolt text-green-600"></i>
+                    <h3 class="text-sm font-semibold text-gray-800">Live eSewa Status Response</h3>
+                </div>
+                <dl class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center">
+                        <dt class="text-gray-500">transaction_uuid</dt>
+                        <dd class="font-mono text-gray-800 text-xs">@(Model.TransactionUuid ?? "—")</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">total_amount</dt>
+                        <dd class="text-gray-800 font-semibold">
+                            Rs. @Model.TotalAmount.ToString("N0")
+                        </dd>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <dt class="text-gray-500">status</dt>
+                        <dd>@Html.Raw(StatusBadge(Model.Status))</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">transaction_code</dt>
+                        <dd class="font-mono text-gray-800 text-xs">@(Model.TransactionCode ?? "—")</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">ref_id</dt>
+                        <dd class="font-mono text-gray-800 text-xs">@(Model.RefId ?? "—")</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">product_code</dt>
+                        <dd class="font-mono text-gray-800 text-xs">@(Model.ProductCode ?? "—")</dd>
+                    </div>
+                </dl>
+                <details class="mt-4 pt-4 border-t border-gray-100">
+                    <summary class="cursor-pointer text-xs font-semibold text-gray-500 hover:text-gray-700">View raw response shape</summary>
+                    <pre class="mt-2 text-xs bg-gray-50 rounded-lg p-3 overflow-x-auto font-mono text-gray-700"><code>{
+  "product_code": "@Model.ProductCode",
+  "transaction_uuid": "@Model.TransactionUuid",
+  "total_amount": @Model.TotalAmount.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture),
+  "status": "@Model.Status",
+  "ref_id": "@Model.RefId"
+}</code></pre>
+                </details>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="fas fa-database text-blue-600"></i>
+                    <h3 class="text-sm font-semibold text-gray-800">Local Payment Record</h3>
+                </div>
+                @if (Model.LocalRecord == null)
+                {
+                    <p class="text-sm text-gray-500">No matching local payment record was found for this transaction.</p>
+                }
+                else
+                {
+                    <dl class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Log ID</dt>
+                            <dd class="text-gray-800 font-mono text-xs">#@Model.LocalRecord.Id</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Invoice Number</dt>
+                            <dd class="font-mono text-gray-800 text-xs">@Model.LocalRecord.InvoiceNumber</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Student</dt>
+                            <dd class="text-gray-800">@(Model.LocalRecord.StudentName ?? "—")</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Amount</dt>
+                            <dd class="text-gray-800 font-semibold">Rs. @Model.LocalRecord.AmountRupees.ToString("N0")</dd>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <dt class="text-gray-500">Local Status</dt>
+                            <dd>@Html.Raw(StatusBadge(Model.LocalRecord.PaymentStatus))</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Provider</dt>
+                            <dd>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">@(Model.LocalRecord.PaymentProvider ?? "—")</span>
+                            </dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Provider Reference (UUID)</dt>
+                            <dd class="font-mono text-gray-800 text-xs">@(Model.LocalRecord.ProviderReferenceId ?? "—")</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Provider Transaction</dt>
+                            <dd class="font-mono text-gray-800 text-xs">@(Model.LocalRecord.ProviderTransactionId ?? "—")</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Initiated At</dt>
+                            <dd class="text-gray-800 text-xs">@(Model.LocalRecord.InitiatedAt?.ToString("MMM dd, yyyy HH:mm:ss") ?? "—")</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Paid At</dt>
+                            <dd class="text-gray-800 text-xs">@(Model.LocalRecord.PaidAt?.ToString("MMM dd, yyyy HH:mm:ss") ?? "—")</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Verified At</dt>
+                            <dd class="text-gray-800 text-xs">@(Model.LocalRecord.VerifiedAt?.ToString("MMM dd, yyyy HH:mm:ss") ?? "—")</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Amounts Match (DB vs eSewa)</dt>
+                            <dd>
+                                @if (Model.AmountMatches)
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800"><i class="fas fa-check mr-1"></i>Match</span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800"><i class="fas fa-times mr-1"></i>Mismatch</span>
+                                }
+                            </dd>
+                        </div>
+                    </dl>
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <a asp-action="Details" asp-controller="PaymentReconciliation" asp-area="Payments" asp-route-id="@Model.LocalRecord.Id"
+                           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-eye"></i> Open in Reconciliation
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <i class="fas fa-search text-4xl mb-3 text-gray-300"></i>
+            <p class="text-gray-500">Enter an eSewa transaction UUID, or an invoice number to verify a completed transaction.</p>
+            <p class="text-xs text-gray-400 mt-2">The verification always calls the live eSewa status endpoint and does not trust local status alone. eSewa requires the exact amount, so the Amount field is used when no local record exists.</p>
+        </div>
+    }
+</div>
