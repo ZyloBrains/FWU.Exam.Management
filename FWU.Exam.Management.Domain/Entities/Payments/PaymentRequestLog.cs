@@ -60,6 +60,31 @@ public class PaymentRequestLog : ITenantScoped
     [Display(Name = "Transaction ID")]
     public string? TransactionId { get; set; }
 
+    [MaxLength(50)]
+    [Display(Name = "Payment Provider")]
+    public string? PaymentProvider { get; set; }
+
+    [MaxLength(30)]
+    [Display(Name = "Payment Status")]
+    public string? PaymentStatus { get; set; }
+
+    [MaxLength(200)]
+    [Display(Name = "Provider Reference ID")]
+    public string? ProviderReferenceId { get; set; }
+
+    [MaxLength(200)]
+    [Display(Name = "Provider Transaction ID")]
+    public string? ProviderTransactionId { get; set; }
+
+    [Display(Name = "Initiated At")]
+    public DateTime? InitiatedAt { get; set; }
+
+    [Display(Name = "Paid At")]
+    public DateTime? PaidAt { get; set; }
+
+    [Display(Name = "Verified At")]
+    public DateTime? VerifiedAt { get; set; }
+
     [Display(Name = "College")]
     public int? CollegeId { get; set; }
 

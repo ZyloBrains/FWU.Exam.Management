@@ -21,7 +21,7 @@ public class StudentDashboardServiceTests
     private const string Email = "stu@test.com";
 
     private static StudentDashboardService CreateService(TestDb db) =>
-        new(db.Context, new TestUserContext(), NullLogger<StudentDashboardService>.Instance);
+        new(db.Context, new TestUserContext(), NullLogger<StudentDashboardService>.Instance, new NullKhaltiService());
 
     private static DateOnly Past => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-10));
     private static DateOnly Future => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10));

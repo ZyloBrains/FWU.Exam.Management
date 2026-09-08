@@ -177,7 +177,7 @@ public class PaymentReconciliationService(
 
     private async Task<PaymentReconciliationResult> ReconcileKhaltiAsync(PaymentRequestLog log)
     {
-        var pidx = log.TransactionId;
+        var pidx = log.ProviderReferenceId ?? log.TransactionId;
         if (string.IsNullOrEmpty(pidx))
         {
             await LogResponseAsync(log, null, $"Could not reconcile Khalti payment logId={log.Id}: no pidx stored.", success: false);
@@ -359,7 +359,15 @@ public class PaymentReconciliationService(
     private async Task UpdateLogAsync(PaymentRequestLog log, string transactionId, bool isSuccess, string responseData, string? responseMessage = null)
     {
         log.TransactionId = transactionId;
+        if (!string.IsNullOrEmpty(transactionId))
+            log.ProviderTransactionId = transactionId;
         log.PaymentRequestLogStatus = isSuccess ? 1 : 0;
+        log.PaymentStatus = isSuccess ? PaymentStatusValues.Completed : PaymentStatusValues.Failed;
+        if (isSuccess)
+        {
+            log.PaidAt ??= DateTime.UtcNow;
+            log.VerifiedAt ??= DateTime.UtcNow;
+        }
         context.Set<PaymentRequestLog>().Update(log);
 
         context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
@@ -398,6 +406,7 @@ public class PaymentReconciliationService(
     private async Task MarkLogTerminalAsync(PaymentRequestLog log, string? reason)
     {
         log.PaymentRequestLogStatus = 2;
+        log.PaymentStatus = PaymentStatusValues.Failed;
         context.Set<PaymentRequestLog>().Update(log);
 
         context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
@@ -430,6 +439,7 @@ public class PaymentReconciliationService(
             return new PaymentReconciliationResult { Success = false, Message = "This payment was already closed as terminal (could not be confirmed)." };
 
         log.PaymentRequestLogStatus = 0;
+        log.PaymentStatus = PaymentStatusValues.Failed;
         context.Set<PaymentRequestLog>().Update(log);
 
         context.Set<PaymentResponseLog>().Add(new PaymentResponseLog

@@ -32,6 +32,7 @@ public class StudentDashboardController(
     INotificationService notificationService,
     IESewaService esewaService,
     IKhaltiService khaltiService,
+    IPaymentStateTokenService paymentStateTokenService,
     ILogger<StudentDashboardController> logger,
     FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper,
     AppDbContext context,
@@ -928,7 +929,7 @@ public class StudentDashboardController(
                 await dashboardService.SupersedeOpenApplyAgainPaymentsAsync(examScheduleId, registration.Id, khaltiLogId);
                 logger.LogInformation("Student {UserId} initiated a Khalti reapply top-up of Rs {Delta} for scheduleId={ScheduleId}",
                     user.Id, delta, examScheduleId);
-                return await InitiateKhaltiGatewayAsync(delta, khaltiLogId, invoiceNumber, examScheduleId,
+                return await InitiateKhaltiTopUpAsync(khaltiLogId, examScheduleId, delta, invoiceNumber,
                     schedule.ExamScheduleName, fullName, registration.Email, registration.ContactNumber);
             }
 
@@ -1101,6 +1102,54 @@ public class StudentDashboardController(
         ViewBag.TransactionUuid = transactionUuid;
 
         return View("ESewaPayment", formData);
+    }
+
+    // Shared by the ApplyAgain additional-payment (top-up) flow. A normal form
+    // POST, so the outcome is a server-side redirect to Khalti; the pidx is
+    // persisted (ProviderReferenceId + Initiated) before the redirect happens,
+    // so a bounced user or stuck payment can always be recovered via lookup.
+    private async Task<IActionResult> InitiateKhaltiTopUpAsync(
+        int logId, int examScheduleId, decimal amount, string invoiceNumber, string? examScheduleName,
+        string? customerFullName = null, string? customerEmail = null, string? customerPhone = null)
+    {
+        var scheme = Request.Scheme;
+        var host = Request.Host.Value;
+        var baseUrl = $"{scheme}://{host}";
+
+        var returnUrl = Url.Action(nameof(KhaltiCallback), "StudentDashboard", new { area = "Students" }, scheme)!;
+        var stateToken = paymentStateTokenService.Generate(logId, TimeSpan.FromMinutes(30));
+        if (!string.IsNullOrEmpty(stateToken))
+            returnUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(returnUrl, "state", stateToken);
+
+        try
+        {
+            logger.LogInformation("Initiating Khalti top-up: amount={Amount}, invoice={Invoice}, logId={LogId}",
+                amount, invoiceNumber, logId);
+
+            var initiated = await dashboardService.InitiateKhaltiPaymentAsync(
+                logId, returnUrl, baseUrl,
+                customerFullName, customerEmail, customerPhone);
+
+            if (initiated == null || string.IsNullOrEmpty(initiated.Value.Pidx))
+            {
+                TempData["ErrorMessage"] = "Khalti did not return a payment URL. Please try again.";
+                return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
+            }
+
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentInitiated,
+                $"Khalti payment initiated for Rs {amount:N0} (Invoice {invoiceNumber})",
+                new { gateway = "khalti", invoiceNumber, amount, examScheduleId, pidx = initiated.Value.Pidx },
+                entityName: "PaymentRequestLog", entityId: logId.ToString());
+            logger.LogInformation("Khalti top-up redirecting to: {PaymentUrl}", initiated.Value.PaymentUrl);
+
+            return Redirect(initiated.Value.PaymentUrl);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Khalti top-up initiation failed for logId={LogId}", logId);
+            TempData["ErrorMessage"] = $"Khalti payment failed: {ex.Message}";
+            return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
+        }
     }
 
     public async Task<IActionResult> ESewaCallback(string? uuid, string? data)
@@ -1395,9 +1444,9 @@ public class StudentDashboardController(
         // Security: the posted amount is never trusted (see ProcessPayment).
         amount = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection);
 
-        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
         var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
 
+        // Step 1: create the payment record with PaymentProvider=Khalti, PaymentStatus=Created.
         int logId;
         if (selection.Count == 0)
         {
@@ -1412,51 +1461,26 @@ public class StudentDashboardController(
                 fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
         }
 
-        return await InitiateKhaltiGatewayAsync(amount, logId, invoiceNumber, examScheduleId,
-            schedule?.ExamScheduleName, fullName, registration.Email, registration.ContactNumber);
-    }
-
-    private async Task<IActionResult> InitiateKhaltiGatewayAsync(
-        decimal amount, int logId, string invoiceNumber, int examScheduleId, string? examScheduleName,
-        string? customerFullName = null, string? customerEmail = null, string? customerPhone = null)
-    {
-        var scheme = Request.Scheme;
-        var host = Request.Host.Value;
-        var baseUrl = $"{scheme}://{host}";
-
-        var returnUrl = Url.Action(nameof(KhaltiCallback), "StudentDashboard",
-            new { area = "Students" }, scheme)!;
-
-        if (string.IsNullOrWhiteSpace(customerEmail))
-            customerEmail = null;
-        else
-        {
-            try { _ = new System.Net.Mail.MailAddress(customerEmail); }
-            catch { customerEmail = null; }
-        }
-
-        var khaltiRequest = new KhaltiInitiateRequest
-        {
-            ReturnUrl = returnUrl,
-            WebsiteUrl = baseUrl,
-            Amount = (long)(amount * 100),
-            PurchaseOrderId = invoiceNumber,
-            PurchaseOrderName = $"Exam Fee - {examScheduleName ?? ""}",
-            CustomerInfo = new KhaltiCustomerInfo
-            {
-                Name = string.IsNullOrWhiteSpace(customerFullName) ? null : customerFullName,
-                Email = customerEmail,
-                Phone = string.IsNullOrWhiteSpace(customerPhone) ? null : customerPhone
-            }
-        };
-
         try
         {
-            logger.LogInformation("Initiating Khalti payment: amount={Amount}, invoice={Invoice}, returnUrl={ReturnUrl}, websiteUrl={WebsiteUrl}",
-                amount, invoiceNumber, returnUrl, baseUrl);
+            // Sign a state token bound to this log and embed it in the Khalti return URL so
+            // the callback can be verified (anti-forgery) without trusting a session flag.
+            var stateToken = paymentStateTokenService.Generate(logId, TimeSpan.FromMinutes(30));
 
-            var response = await khaltiService.InitiatePaymentAsync(khaltiRequest);
-            if (response?.PaymentUrl == null)
+            var scheme = Request.Scheme;
+            var host = Request.Host.Value;
+            var baseUrl = $"{scheme}://{host}";
+
+            var returnUrl = Url.Action(nameof(KhaltiCallback), "StudentDashboard", new { area = "Students" }, scheme)!;
+            if (!string.IsNullOrEmpty(stateToken))
+                returnUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(returnUrl, "state", stateToken);
+
+            // Step 2 + 3: initiate at Khalti and persist the pidx (Initialted) before returning.
+            var initiated = await dashboardService.InitiateKhaltiPaymentAsync(
+                logId, returnUrl, baseUrl,
+                fullName, registration.Email, registration.ContactNumber);
+
+            if (initiated == null || string.IsNullOrEmpty(initiated.Value.Pidx))
             {
                 TempData["ErrorMessage"] = "Khalti did not return a payment URL. Please try again.";
                 return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
@@ -1464,61 +1488,121 @@ public class StudentDashboardController(
 
             await auditLogWriter.LogAsync(ActivityTypes.PaymentInitiated,
                 $"Khalti payment initiated for Rs {amount:N0} (Invoice {invoiceNumber})",
-                new { gateway = "khalti", invoiceNumber, amount, examScheduleId, pidx = response.Pidx },
+                new { gateway = "khalti", invoiceNumber, amount, examScheduleId, pidx = initiated.Value.Pidx },
                 entityName: "PaymentRequestLog", entityId: logId.ToString());
-            logger.LogInformation("Khalti redirecting to: {PaymentUrl}", response.PaymentUrl);
 
-            // Persist the pidx on the payment log so stuck payments can be
-            // reconciled later via the gateway lookup API without any session.
-            if (!string.IsNullOrEmpty(response.Pidx))
-                await dashboardService.UpdatePaymentRequestLogTransactionIdAsync(logId, response.Pidx);
+            logger.LogInformation("Khalti initiate succeeded: logId={LogId}, pidx={Pidx}", logId, initiated.Value.Pidx);
 
-            HttpContext.Session.SetInt32("KhaltiLogId", logId);
-            return Redirect(response.PaymentUrl);
+            // Step 4: only after the pidx is durable, return the payment URL to the frontend.
+            return Json(new
+            {
+                paymentId = logId,
+                invoiceNumber,
+                paymentUrl = initiated.Value.PaymentUrl,
+                pidx = initiated.Value.Pidx,
+                redirect = true
+            });
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Khalti payment initiation failed");
+            logger.LogError(ex, "Khalti payment initiation failed for logId={LogId}", logId);
             TempData["ErrorMessage"] = $"Khalti payment failed: {ex.Message}";
             return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
         }
     }
 
-    public async Task<IActionResult> KhaltiCallback(string? pidx, string? status, string? transaction_id, string? purchase_order_id)
+    public async Task<IActionResult> KhaltiCallback(string? pidx, string? state, string? status, string? transaction_id, string? purchase_order_id)
     {
-        var sessionLogId = HttpContext.Session.GetInt32("KhaltiLogId");
-        HttpContext.Session.Remove("KhaltiLogId");
-
-        logger.LogInformation("KhaltiCallback hit: sessionLogId={SessionLogId}, pidx={Pidx}, status={Status}", sessionLogId, pidx, status);
+        logger.LogInformation("KhaltiCallback hit: pidx={Pidx}, statePresent={StatePresent}, callbackStatus={Status}", pidx, !string.IsNullOrEmpty(state), status);
 
         if (string.IsNullOrEmpty(pidx))
         {
-            if (sessionLogId.HasValue)
-                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, "No pidx received from Khalti.", "No pidx received from Khalti.");
-
             TempData["ErrorMessage"] = "No payment identifier received from Khalti.";
             return RedirectToAction(nameof(PaymentFailure));
         }
 
         try
         {
-            var log = sessionLogId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value) : null;
-            if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
+            // Resolve the originating log from the signed state token first (the primary,
+            // forgery-resistant path), falling back to the invoice number Khalti echoes back.
+            int? resolvedLogId = null;
+            var requestedLogId = paymentStateTokenService.Verify(state);
+            if (requestedLogId.HasValue)
+                resolvedLogId = requestedLogId;
+
+            var log = resolvedLogId.HasValue
+                ? await dashboardService.GetPaymentLogByIdAsync(resolvedLogId.Value)
+                : null;
+
+            // The state token must resolve to a Khalti log whose stored pidx matches the
+            // pidx Khalti sent back. If the token is absent/invalid we still allow the
+            // purchase_order_id (invoice) fallback, matching historical behavior.
+            if (log != null &&
+                (string.Equals(log.PaymentProvider, PaymentProviders.Khalti, StringComparison.OrdinalIgnoreCase)) &&
+                (!string.IsNullOrEmpty(log.ProviderReferenceId) && log.ProviderReferenceId != pidx) &&
+                (!string.IsNullOrEmpty(log.TransactionId) && log.TransactionId != pidx))
+            {
+                logger.LogWarning("KhaltiCallback: state token resolved logId={LogId} but pidx {Pidx} does not match stored reference.", log.Id, pidx);
+                log = null;
+                resolvedLogId = null;
+            }
+
+            if (log == null && !string.IsNullOrEmpty(purchase_order_id))
+            {
+                var invoiceLog = await dashboardService.GetPaymentLogByInvoiceNumberAsync(purchase_order_id);
+                if (invoiceLog != null &&
+                    (string.Equals(invoiceLog.PaymentProvider, PaymentProviders.Khalti, StringComparison.OrdinalIgnoreCase) ||
+                     invoiceLog.ProviderReferenceId == pidx ||
+                     invoiceLog.TransactionId == pidx))
+                {
+                    log = invoiceLog;
+                    resolvedLogId = invoiceLog.Id;
+                    logger.LogInformation("KhaltiCallback: resolved log via invoice fallback logId={LogId}", invoiceLog.Id);
+                }
+            }
+
+            // Idempotency guard: a payment already completed locally must not be processed
+            // again (e.g. Khalti redirecting the user twice, or a replayed callback).
+            if (log != null && string.Equals(log.PaymentStatus, PaymentStatusValues.Completed, StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogInformation("KhaltiCallback: payment logId={LogId} already Completed; ignoring duplicate callback.", log.Id);
+                TempData["ExamScheduleId"] = log.ExamScheduleId;
+                TempData["TransactionCode"] = log.ProviderTransactionId ?? log.TransactionId;
+                TempData["TransactionUuid"] = pidx;
+                return RedirectToAction(nameof(PaymentSuccess));
+            }
 
             var lookup = await khaltiService.LookupPaymentAsync(pidx!);
             var responseData = System.Text.Json.JsonSerializer.Serialize(new
             {
                 pidx,
+                state_present = !string.IsNullOrEmpty(state),
                 callback_status = status,
                 callback_transaction_id = transaction_id,
+                purchase_order_id,
                 lookup
             });
+
+            // Amount verification: Khalti returns total_amount in paisa; the local record
+            // stores NPR. They must match before we ever mark the payment completed.
+            if (log != null && lookup != null && lookup.TotalAmount != (long)(log.Amount * 100m))
+            {
+                logger.LogError("KhaltiCallback: amount mismatch for logId={LogId}. Khalti={KhaltiPaisa}, expected={ExpectedPaisa}",
+                    log.Id, lookup.TotalAmount, (long)(log.Amount * 100m));
+                await auditLogWriter.LogAsync(ActivityTypes.PaymentVerificationFailed,
+                    $"Khalti amount mismatch (pidx {pidx})",
+                    new { gateway = "khalti", pidx, khaltiPaisa = lookup.TotalAmount, expectedPaisa = (long)(log.Amount * 100m), reason = "amount_mismatch" }, AuditSeverity.Error);
+                if (log.Id > 0)
+                    await dashboardService.UpdatePaymentRequestLogAsync(log.Id, "", false, responseData, "Payment verification failed via Khalti (amount mismatch).");
+                TempData["ErrorMessage"] = "The payment amount Khalti reported does not match your exam form. Please contact the exam office.";
+                return RedirectToAction(nameof(PaymentFailure));
+            }
 
             if (lookup == null || lookup.Status != "Completed")
             {
                 logger.LogWarning("Khalti payment verification failed: status={LookupStatus}, callback_status={CallbackStatus}", lookup?.Status, status);
-                if (sessionLogId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, transaction_id ?? "", false, responseData, "Payment verification failed via Khalti.");
+                if (resolvedLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, transaction_id ?? "", false, responseData, "Payment verification failed via Khalti.");
 
                 await auditLogWriter.LogAsync(ActivityTypes.PaymentVerificationFailed,
                     $"Khalti payment verification failed (status: {lookup?.Status ?? "Unknown"})",
@@ -1528,12 +1612,9 @@ public class StudentDashboardController(
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
-            // Khalti reports Completed but returned no transaction id on the lookup,
-            // and the callback itself carried no transaction_id either. The payment
-            // is confirmed at the gateway, but it must not be recorded as success
-            // without a transaction identifier. Hold the log as pending verification
-            // (status 3) so reconciliation can re-confirm it later, mirroring the
-            // eSewa no-data callback guard.
+            // Khalti reports Completed but returned no transaction id on the lookup and the
+            // callback carried none either. Keep the local record pending verification
+            // (status 3) so reconciliation can re-confirm it later.
             var khaltiTransactionId = lookup.TransactionId ?? transaction_id;
             if (string.IsNullOrWhiteSpace(khaltiTransactionId))
             {
@@ -1542,16 +1623,9 @@ public class StudentDashboardController(
                     $"Khalti payment completed but returned no transaction id (pidx: {pidx})",
                     new { gateway = "khalti", pidx, reason = "missing_transaction_id", lookupStatus = lookup.Status }, AuditSeverity.Warning);
 
-                int? khaltiPendingLogId = sessionLogId;
-                if (!khaltiPendingLogId.HasValue && !string.IsNullOrEmpty(purchase_order_id))
+                if (resolvedLogId.HasValue)
                 {
-                    var pendingInvoiceLog = await dashboardService.GetPaymentLogByInvoiceNumberAsync(purchase_order_id);
-                    if (pendingInvoiceLog != null) khaltiPendingLogId = pendingInvoiceLog.Id;
-                }
-
-                if (khaltiPendingLogId.HasValue)
-                {
-                    await dashboardService.MarkPaymentLogPendingVerificationAsync(khaltiPendingLogId.Value,
+                    await dashboardService.MarkPaymentLogPendingVerificationAsync(resolvedLogId.Value,
                         responseData,
                         "Khalti status is Completed but returned no transaction id; held pending for reconciliation.");
                     TempData["PaymentUnderVerification"] = true;
@@ -1575,40 +1649,32 @@ public class StudentDashboardController(
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
-            logger.LogInformation("Khalti payment successful: transaction_id={TransactionId}", lookup.TransactionId);
-            var khaltiResolvedLogId = sessionLogId;
-            if (!khaltiResolvedLogId.HasValue && !string.IsNullOrEmpty(purchase_order_id))
+            logger.LogInformation("Khalti payment successful: transaction_id={TransactionId}", khaltiTransactionId);
+
+            // Resolve / confirm which log to complete. Prefer the state-token log; if we
+            // could not resolve it (session lost / token expired), fall back to the pidx,
+            // invoice, or failing that, record a pending-verification orphan.
+            int? completedLogId = resolvedLogId;
+            if (!completedLogId.HasValue)
             {
-                logger.LogWarning("KhaltiCallback: Session log ID lost. Attempting fallback lookup by invoice={Invoice}", purchase_order_id);
-                var invoiceLog = await dashboardService.GetPaymentLogByInvoiceNumberAsync(purchase_order_id);
-                if (invoiceLog != null)
-                {
-                    khaltiResolvedLogId = invoiceLog.Id;
-                    logger.LogInformation("KhaltiCallback: Fallback lookup found logId={LogId} for invoice={Invoice}", khaltiResolvedLogId, purchase_order_id);
-                }
+                var byReference = await dashboardService.GetPaymentLogByProviderReferenceAsync(pidx!);
+                if (byReference != null) completedLogId = byReference.Id;
             }
 
-            if (khaltiResolvedLogId.HasValue)
+            if (completedLogId.HasValue)
             {
-                await HandlePostPaymentRegistration(khaltiResolvedLogId.Value);
-                await dashboardService.UpdatePaymentRequestLogAsync(khaltiResolvedLogId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
+                await HandlePostPaymentRegistration(completedLogId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(completedLogId.Value, khaltiTransactionId, true, responseData, "Payment verified via Khalti.");
                 await auditLogWriter.LogAsync(ActivityTypes.PaymentVerified,
-                    $"Khalti payment verified (Transaction {lookup.TransactionId ?? transaction_id})",
-                    new { gateway = "khalti", pidx, transactionId = lookup.TransactionId ?? transaction_id, amount = lookup.TotalAmount },
-                    entityName: "PaymentRequestLog", entityId: khaltiResolvedLogId.Value.ToString());
-            }
-
-            if (khaltiResolvedLogId.HasValue)
-            {
-                await CompleteExamFormSubmissionAsync(khaltiResolvedLogId.Value, lookup.TransactionId ?? transaction_id);
+                    $"Khalti payment verified (Transaction {khaltiTransactionId})",
+                    new { gateway = "khalti", pidx, transactionId = khaltiTransactionId, amount = lookup.TotalAmount, verifiedByIdentity = User?.Identity?.IsAuthenticated == true ? "student" : "system" },
+                    entityName: "PaymentRequestLog", entityId: completedLogId.Value.ToString());
+                await CompleteExamFormSubmissionAsync(completedLogId.Value, khaltiTransactionId);
             }
             else
             {
-                // Khalti confirmed the payment completed but the payment log could
-                // not be resolved (session lost AND invoice lookup failed). Record
-                // it as pending verification rather than silently dropping a
-                // confirmed payment, so the exam office can reconcile the receipt
-                // and the student sees the correct status instead of "Pay Now".
+                // Khalti confirmed the payment but the log could not be resolved. Record it
+                // as pending verification for the exam office instead of silently dropping it.
                 var khaltiLostLog = await RecordUnresolvedCallbackPaymentAsync(
                     "khalti", examScheduleId: null, (lookup.TotalAmount > 0 ? (decimal)lookup.TotalAmount / 100m : 0m),
                     pidx,
@@ -1625,7 +1691,8 @@ public class StudentDashboardController(
                     return RedirectToAction(nameof(PaymentFailure));
                 }
             }
-            TempData["TransactionCode"] = lookup.TransactionId ?? transaction_id;
+
+            TempData["TransactionCode"] = khaltiTransactionId;
             TempData["TransactionUuid"] = pidx;
 
             return RedirectToAction(nameof(PaymentSuccess));

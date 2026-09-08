@@ -226,6 +226,8 @@ public partial class EntryPoint
         builder.Services.AddScoped<IESewaService, ESewaService>();
         builder.Services.AddHttpClient<IESewaService, ESewaService>();
         builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
+        builder.Services.AddScoped<IPaymentStateTokenService, PaymentStateTokenService>();
+        builder.Services.AddScoped<IKhaltiLookupVerificationService, KhaltiLookupVerificationService>();
         builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
         builder.Services.AddScoped<ICountryService, CountryService>();
         builder.Services.AddScoped<IPermissionService, PermissionService>();
