@@ -801,17 +801,42 @@
                 return;
             }
             if (confirm('Pay Rs ' + parseFloat(amount).toLocaleString() + ' via ' + method.charAt(0).toUpperCase() + method.slice(1) + '?')) {
-                var form = document.getElementById('paymentForm');
                 document.getElementById('hfPaymentMethod').value = method;
-                if (method === 'esewa') {
+                if (method === 'khalti') {
+                    initiateKhaltiPayment();
+                } else if (method === 'esewa') {
+                    var form = document.getElementById('paymentForm');
                     form.action = '@Url.Action("ESewaPayment", "StudentDashboard", new { area = "Students" })';
-                } else if (method === 'khalti') {
-                    form.action = '@Url.Action("KhaltiPayment", "StudentDashboard", new { area = "Students" })';
+                    form.submit();
                 } else {
+                    var form = document.getElementById('paymentForm');
                     form.action = '@Url.Action("ProcessPayment", "StudentDashboard", new { area = "Students" })';
+                    form.submit();
                 }
-                form.submit();
             }
+        }
+
+        // KhaltiPayment now returns a JSON payload ({ paymentUrl, pidx, ... }) and
+        // only after the pidx is persisted, so the student is redirected client-side.
+        function initiateKhaltiPayment() {
+            var form = document.getElementById('paymentForm');
+            var url = '@Url.Action("KhaltiPayment", "StudentDashboard", new { area = "Students" })';
+            fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: new FormData(form),
+                headers: { 'Accept': 'application/json' }
+            }).then(function(res) {
+                return res.json();
+            }).then(function(payload) {
+                if (payload && payload.paymentUrl) {
+                    window.location.href = payload.paymentUrl;
+                    return;
+                }
+                window.location.reload();
+            }).catch(function() {
+                window.location.reload();
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function() {

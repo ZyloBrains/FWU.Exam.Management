@@ -196,6 +196,8 @@ public class KhaltiConfigurationsController(AppDbContext context, IAuditLogWrite
     {
         if (ModelState.IsValid)
         {
+            khaltiConfiguration.AuthorizationKey = FWU.Exam.Management.Domain.Constants.KhaltiAuthorizationKey.Normalize(khaltiConfiguration.AuthorizationKey) ?? string.Empty;
+
             foreach (var error in FWU.Exam.Management.Infrastructure.Services.KhaltiConfigurationValidator.Validate(khaltiConfiguration))
                 ModelState.AddModelError(string.Empty, error);
 
@@ -230,6 +232,8 @@ public class KhaltiConfigurationsController(AppDbContext context, IAuditLogWrite
 
         if (ModelState.IsValid)
         {
+            khaltiConfiguration.AuthorizationKey = FWU.Exam.Management.Domain.Constants.KhaltiAuthorizationKey.Normalize(khaltiConfiguration.AuthorizationKey) ?? string.Empty;
+
             foreach (var error in FWU.Exam.Management.Infrastructure.Services.KhaltiConfigurationValidator.Validate(khaltiConfiguration))
                 ModelState.AddModelError(string.Empty, error);
 

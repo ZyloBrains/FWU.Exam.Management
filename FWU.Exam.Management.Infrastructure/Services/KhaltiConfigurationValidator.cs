@@ -83,6 +83,17 @@ public static class KhaltiConfigurationValidator
         }
 
         var key = config.AuthorizationKey.Trim();
+        // Khalti's auth parser rejects any token that still contains whitespace
+        // ("Invalid token header. Token string should not contain spaces."). The
+        // header-style "Key live_..." paste is stripped on save and at request time,
+        // so reaching this check means something else contains a space.
+        if (key.Contains(' ') || key.Contains('\t') || key.Contains('\r') || key.Contains('\n'))
+        {
+            errors.Add(
+                "Khalti AuthorizationKey must be a single token without spaces (e.g. 'live_secret_...' " +
+                "or 'test_secret_...'). Remove any 'Key '/'Bearer ' prefix and whitespace.");
+            return;
+        }
         // The seeder writes this placeholder when no real key is configured; it can
         // never authenticate a lookup, so flag it explicitly.
         if (string.Equals(key, "test_secret_key", StringComparison.OrdinalIgnoreCase) ||

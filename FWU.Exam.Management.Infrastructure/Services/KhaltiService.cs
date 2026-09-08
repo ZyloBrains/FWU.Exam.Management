@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -39,7 +40,7 @@ public class KhaltiService(HttpClient httpClient, AppDbContext context, ILogger<
         {
             Content = content
         };
-        requestMessage.Headers.Add("Authorization", $"Key {config.AuthorizationKey}");
+        requestMessage.Headers.Add("Authorization", $"Key {KhaltiAuthorizationKey.Normalize(config.AuthorizationKey)}");
 
         logger.LogInformation("Sending Khalti initiate request to {Url} with amount {Amount} paisa", config.PostUrl, request.Amount);
 
@@ -77,7 +78,7 @@ public class KhaltiService(HttpClient httpClient, AppDbContext context, ILogger<
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
             };
-            requestMessage.Headers.Add("Authorization", $"Key {config.AuthorizationKey}");
+            requestMessage.Headers.Add("Authorization", $"Key {KhaltiAuthorizationKey.Normalize(config.AuthorizationKey)}");
 
             try
             {

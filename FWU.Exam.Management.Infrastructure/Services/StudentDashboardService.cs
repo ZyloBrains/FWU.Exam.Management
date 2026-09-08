@@ -1,6 +1,7 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -16,7 +17,11 @@ using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class StudentDashboardService(AppDbContext context, IUserContext userContext, ILogger<StudentDashboardService> logger) : IStudentDashboardService
+public class StudentDashboardService(
+    AppDbContext context,
+    IUserContext userContext,
+    ILogger<StudentDashboardService> logger,
+    IKhaltiService khaltiService) : IStudentDashboardService
 {
     public async Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email)
     {
@@ -777,7 +782,14 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (log == null) return;
 
         log.TransactionId = transactionId;
+        log.ProviderTransactionId = string.IsNullOrEmpty(transactionId) ? log.ProviderTransactionId : transactionId;
         log.PaymentRequestLogStatus = isSuccess ? 1 : 0;
+        log.PaymentStatus = isSuccess ? PaymentStatusValues.Completed : PaymentStatusValues.Failed;
+        if (isSuccess)
+        {
+            log.PaidAt ??= DateTime.UtcNow;
+            log.VerifiedAt ??= DateTime.UtcNow;
+        }
 
         context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
         {
@@ -797,6 +809,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (log == null || string.IsNullOrEmpty(transactionId)) return;
 
         log.TransactionId = transactionId;
+        if (string.IsNullOrEmpty(log.ProviderReferenceId))
+            log.ProviderReferenceId = transactionId;
         await context.SaveChangesAsync();
     }
 
@@ -1455,10 +1469,13 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             DateOfBirthAd = dob,
             FullRequestContent = requestContent,
             PaymentTypeId = paymentType?.Id ?? 0,
+            PaymentProvider = PaymentProviders.Normalize(paymentMethod),
+            PaymentStatus = PaymentStatusValues.Created,
             ForwardedTimestamp = DateTime.UtcNow,
             StudentCount = subjectIds.Count,
             SelectedSubjectIds = selectedSubjectIds,
-            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
+            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid,
+            ProviderReferenceId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
         };
 
         context.Set<PaymentRequestLog>().Add(log);
@@ -1508,14 +1525,127 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             DateOfBirthAd = dob,
             FullRequestContent = requestContent,
             PaymentTypeId = paymentType?.Id ?? 0,
+            PaymentProvider = PaymentProviders.Normalize(paymentMethod),
+            PaymentStatus = PaymentStatusValues.Created,
             ForwardedTimestamp = DateTime.UtcNow,
             StudentCount = 1,
-            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
+            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid,
+            ProviderReferenceId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
         };
 
         context.Set<PaymentRequestLog>().Add(log);
         await context.SaveChangesAsync();
         return log.Id;
+    }
+
+    // Initiates the Khalti ePayment request for an already-created log and persists the
+    // returned pidx (ProviderReferenceId) in the same save as the status transition, so the
+    // pidx is recorded BEFORE the payment URL is handed back to the frontend. The Khalti
+    // secret key is used only inside IKhaltiService and is never returned or logged here.
+    public async Task<(string Pidx, string PaymentUrl)?> InitiateKhaltiPaymentAsync(
+        int logId, string returnUrl, string websiteUrl,
+        string? customerFullName = null, string? customerEmail = null, string? customerPhone = null)
+    {
+        var log = await context.Set<PaymentRequestLog>()
+            .FirstOrDefaultAsync(prl => prl.Id == logId);
+        if (log == null)
+            throw new InvalidOperationException($"Payment log {logId} not found.");
+
+        if (string.IsNullOrWhiteSpace(customerEmail))
+            customerEmail = null;
+        else if (!IsValidEmail(customerEmail))
+            customerEmail = null;
+
+        var khaltiRequest = new KhaltiInitiateRequest
+        {
+            ReturnUrl = returnUrl,
+            WebsiteUrl = websiteUrl,
+            Amount = (long)(log.Amount * 100m),
+            PurchaseOrderId = log.InvoiceNumber,
+            PurchaseOrderName = $"Exam Fee #{log.InvoiceNumber}",
+            CustomerInfo = new KhaltiCustomerInfo
+            {
+                Name = string.IsNullOrWhiteSpace(customerFullName) ? null : customerFullName,
+                Email = customerEmail,
+                Phone = string.IsNullOrWhiteSpace(customerPhone) ? null : customerPhone
+            }
+        };
+
+        KhaltiInitiateResponse? response;
+        try
+        {
+            response = await khaltiService.InitiatePaymentAsync(khaltiRequest);
+        }
+        catch (Exception)
+        {
+            log.PaymentStatus = PaymentStatusValues.Failed;
+            log.PaymentRequestLogStatus = PaymentRequestLogStatuses.Failed;
+            context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+            {
+                PaymentRequestLogId = log.Id,
+                ResponseTimestamp = DateTime.UtcNow,
+                IsSuccess = false,
+                ResponseMessage = "Khalti initiate failed.",
+                FullResponse = "Khalti initiate failed."
+            });
+            await context.SaveChangesAsync();
+            throw;
+        }
+
+        if (response?.Pidx == null)
+        {
+            log.PaymentStatus = PaymentStatusValues.Failed;
+            log.PaymentRequestLogStatus = PaymentRequestLogStatuses.Failed;
+            context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+            {
+                PaymentRequestLogId = log.Id,
+                ResponseTimestamp = DateTime.UtcNow,
+                IsSuccess = false,
+                ResponseMessage = "Khalti did not return a pidx.",
+                FullResponse = string.IsNullOrEmpty(response?.PaymentUrl) ? "{ }" : $"{{\"payment_url\":\"{response.PaymentUrl}\"}}"
+            });
+            await context.SaveChangesAsync();
+            return null;
+        }
+
+        // Persist the pidx (and payment URL) with the status transition BEFORE returning to
+        // the caller. The secret key is not part of any of this.
+        log.ProviderReferenceId = response.Pidx;
+        log.TransactionId = response.Pidx;
+        log.PaymentStatus = PaymentStatusValues.Initiated;
+        log.InitiatedAt = DateTime.UtcNow;
+        log.PaymentRequestLogStatus = PaymentRequestLogStatuses.Pending;
+
+        context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+        {
+            PaymentRequestLogId = log.Id,
+            ResponseTimestamp = DateTime.UtcNow,
+            IsSuccess = true,
+            ResponseMessage = "Khalti initiate succeeded.",
+            FullResponse = System.Text.Json.JsonSerializer.Serialize(response)
+        });
+
+        await context.SaveChangesAsync();
+
+        logger.LogInformation("InitiateKhaltiPaymentAsync: logId={LogId}, invoice={Invoice}, providerReferenceId={Pidx}",
+            log.Id, log.InvoiceNumber, response.Pidx);
+
+        return (response.Pidx, response.PaymentUrl ?? string.Empty);
+    }
+
+    private static bool IsValidEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+        try
+        {
+            _ = new System.Net.Mail.MailAddress(email);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<List<AdmitCard>> GetAdmitCardsForStudentAsync(string userId, int studentRegistrationId)
@@ -1591,6 +1721,19 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return await context.Set<PaymentRequestLog>()
             .AsNoTracking()
             .FirstOrDefaultAsync(prl => prl.InvoiceNumber == invoiceNumber);
+    }
+
+    public async Task<PaymentRequestLog?> GetPaymentLogByProviderReferenceAsync(string providerReferenceId)
+    {
+        if (string.IsNullOrWhiteSpace(providerReferenceId))
+            return null;
+
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .Where(prl => (prl.ProviderReferenceId != null && prl.ProviderReferenceId == providerReferenceId)
+                       || (prl.TransactionId != null && prl.TransactionId == providerReferenceId))
+            .OrderByDescending(prl => prl.ForwardedTimestamp)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<PaymentRequestLog?> FindPendingPaymentLogByStudentAsync(int studentRegistrationId)
@@ -1713,6 +1856,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             DateOfBirthAd = DateTime.TryParse(registration?.DateOfBirthAD, out var dob) ? dob : null,
             FullRequestContent = responseData,
             PaymentTypeId = paymentType?.Id ?? 0,
+            PaymentProvider = PaymentProviders.Normalize(paymentMethod),
+            PaymentStatus = PaymentStatusValues.Pending,
             ForwardedTimestamp = DateTime.UtcNow,
             StudentCount = string.IsNullOrWhiteSpace(selectedSubjectIds) ? 1 : selectedSubjectIds.Split(',').Length,
             SelectedSubjectIds = selectedSubjectIds,
@@ -1757,7 +1902,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (log == null) return null;
 
         log.TransactionId = string.IsNullOrWhiteSpace(transactionId) ? log.TransactionId : transactionId;
+        if (string.IsNullOrEmpty(log.ProviderReferenceId) && !string.IsNullOrWhiteSpace(transactionId))
+            log.ProviderReferenceId = transactionId;
         log.PaymentRequestLogStatus = 3;
+        log.PaymentStatus = PaymentStatusValues.Pending;
 
         context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
         {
@@ -1778,6 +1926,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (log == null) return null;
 
         log.PaymentRequestLogStatus = 3;
+        log.PaymentStatus = PaymentStatusValues.Pending;
 
         context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
         {
