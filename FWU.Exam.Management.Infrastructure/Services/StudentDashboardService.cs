@@ -827,11 +827,17 @@ public class StudentDashboardService(
     // Legacy plain-id tokens ("101", no leg suffix) mean both available papers
     // were registered, so their practical legs are charged too — matching how
     // ResolveRegistrationLegs stamps the registration rows.
-    public async Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection)
+    public async Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection, string userId)
     {
         var schedule = await context.ExamSchedules!
             .AsNoTracking().IgnoreQueryFilters()
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+
+        // University fee waiver for disabled students: an admission flagged as
+        // fee-exempt pays no exam fee at all. The exemption is read from the DB
+        // record (never the client), so it cannot be toggled by the student.
+        if (await IsStudentFeeExemptAsync(userId))
+            return 0m;
 
         var examFee = schedule?.ExamFee ?? 0;
         var practicalFee = schedule?.PracticalSubjectFee ?? 0;
@@ -1347,6 +1353,8 @@ public class StudentDashboardService(
     {
         var admission = await context.StudentAdmissions!
             .AsNoTracking()
+            .OrderByDescending(sa => sa.IsActive)
+            .ThenByDescending(sa => sa.Id)
             .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
         if (admission != null) return admission;
 
@@ -1369,9 +1377,17 @@ public class StudentDashboardService(
 
         return await context.StudentAdmissions!
             .AsNoTracking()
+            .OrderByDescending(sa => sa.IsActive)
+            .ThenByDescending(sa => sa.Id)
             .FirstOrDefaultAsync(sa => sa.CollegeId == sr.CollegeId
                                     && sa.ProgramsId == sr.ProgramId
                                     && sa.IsActive);
+    }
+
+    public async Task<bool> IsStudentFeeExemptAsync(string userId)
+    {
+        var admission = await ResolveStudentAdmissionAsync(userId);
+        return admission?.HasFeeExemption == true;
     }
 
     private async Task<List<int>> GetStudentExamRegistrationIdsAsync(string userId)
@@ -1468,7 +1484,7 @@ public class StudentDashboardService(
             CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
             FullRequestContent = requestContent,
-            PaymentTypeId = paymentType?.Id ?? 0,
+            PaymentTypeId = paymentType?.Id ?? paymentTypes.FirstOrDefault()?.Id ?? 0,
             PaymentProvider = PaymentProviders.Normalize(paymentMethod),
             PaymentStatus = PaymentStatusValues.Created,
             ForwardedTimestamp = DateTime.UtcNow,
@@ -1524,7 +1540,7 @@ public class StudentDashboardService(
             CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
             FullRequestContent = requestContent,
-            PaymentTypeId = paymentType?.Id ?? 0,
+            PaymentTypeId = paymentType?.Id ?? paymentTypes.FirstOrDefault()?.Id ?? 0,
             PaymentProvider = PaymentProviders.Normalize(paymentMethod),
             PaymentStatus = PaymentStatusValues.Created,
             ForwardedTimestamp = DateTime.UtcNow,
