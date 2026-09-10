@@ -12,4 +12,7 @@ public interface IPaymentReconciliationService
     Task<int> ReconcilePendingBatchAsync();
     Task<PaymentReconciliationBatchResult> ReconcilePendingWithDetailsAsync();
     Task<List<PaymentReconciliationListDto>> GetReconcileablePendingAsync();
+    Task<(List<PaymentHistoryListDto> Items, int TotalCount)> GetPaymentHistoryAsync(
+        string? search, string? status, string? gateway, DateTime? fromDate, DateTime? toDate, int page, int pageSize);
+    Task<PaymentHistoryDetailDto?> GetPaymentHistoryDetailAsync(int logId);
 }

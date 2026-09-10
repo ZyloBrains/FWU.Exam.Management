@@ -29,6 +29,7 @@ public interface IStudentDashboardService
     Task<ExamSchedule?> GetExamScheduleByIdAsync(int examScheduleId);
     Task<List<ExamSchedule>> GetExamSchedulesByIdsAsync(IEnumerable<int> ids);
     Task<StudentAdmission?> GetStudentAdmissionByUserIdAsync(string userId);
+    Task<bool> IsStudentFeeExemptAsync(string userId);
     Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null);
     Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, Dictionary<int, ReExamLegs> subjectSelection, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null);
     Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData, string? responseMessage = null);
@@ -43,7 +44,7 @@ public interface IStudentDashboardService
     Task<(string Pidx, string PaymentUrl)?> InitiateKhaltiPaymentAsync(
         int logId, string returnUrl, string websiteUrl,
         string? customerFullName = null, string? customerEmail = null, string? customerPhone = null);
-    Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection);
+    Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection, string userId);
     Task<bool> TryCompleteApplyAgainTopUpAsync(int logId, string userId);
     Task SupersedeOpenApplyAgainPaymentsAsync(int examScheduleId, int studentRegistrationId, int exceptLogId);
     Task<bool> HasOpenApplyAgainPaymentAsync(int examScheduleId, int studentRegistrationId);

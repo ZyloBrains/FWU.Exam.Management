@@ -28,6 +28,7 @@ public static class Permissions
     public const string GroupBillTitles = "billtitles";
     public const string GroupPaymentVerification = "paymentverification";
     public const string GroupPaymentReconciliation = "paymentreconciliation";
+    public const string GroupPaymentHistory = "paymenthistory";
     public const string GroupProvinces = "provinces";
     public const string GroupDistricts = "districts";
     public const string GroupLocalLevels = "locallevels";
@@ -204,6 +205,9 @@ public static class Permissions
 
     // Payment Reconciliation
     public const string PaymentReconciliationView = "paymentreconciliation.view";
+
+    // Payment History
+    public const string PaymentHistoryView = "paymenthistory.view";
 
     // Provinces
     public const string ProvincesView = "provinces.view";
@@ -521,6 +525,8 @@ public static class Permissions
 
         (PaymentReconciliationView, "View Payment Reconciliation", GroupPaymentReconciliation, "View and reconcile stuck pending payments"),
 
+        (PaymentHistoryView, "View Payment History", GroupPaymentHistory, "Search all payment records regardless of status"),
+
         (ProvincesView, "View Provinces", GroupProvinces, "View province list"),
         (ProvincesCreate, "Create Provinces", GroupProvinces, "Create new provinces"),
         (ProvincesEdit, "Edit Provinces", GroupProvinces, "Edit existing provinces"),
@@ -723,6 +729,7 @@ public static class Permissions
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
             PaymentVerificationView, PaymentVerificationExport,
             PaymentReconciliationView,
+            PaymentHistoryView,
 
             GradingSchemesView, GradingSchemesCreate, GradingSchemesEdit,
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify, ExamRegistrationApprove,

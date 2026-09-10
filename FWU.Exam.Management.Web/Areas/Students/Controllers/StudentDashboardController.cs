@@ -635,6 +635,21 @@ public class StudentDashboardController(
 
         vm.GrandTotal = vm.TotalExamFee + vm.TotalPracticalFee + vm.ExtendedDateCharge;
 
+        // University fee waiver for disabled students: show Rs 0 and skip the
+        // payment screen entirely when the admission is fee-exempt.
+        if (await dashboardService.IsStudentFeeExemptAsync(user.Id))
+        {
+            vm.IsFeeExempt = true;
+            vm.TotalExamFee = 0;
+            vm.TotalPracticalFee = 0;
+            vm.ExtendedDateCharge = 0;
+            vm.GrandTotal = 0;
+            // Zero the per-subject practical rate too, so no practical fee is
+            // shown anywhere (rows, subtotals, or client-side fee math).
+            foreach (var subject in vm.Subjects)
+                subject.PracticalFee = 0;
+        }
+
         return View(vm);
     }
 
@@ -806,8 +821,18 @@ public class StudentDashboardController(
             PracticalFee = practicalFee,
             HasUnpaidTopUp = await dashboardService.HasOpenApplyAgainPaymentAsync(examScheduleId, registration.Id),
             IsPartialForm = isReExamForm,
-            PaymentTypes = supportedPaymentTypes
+            PaymentTypes = supportedPaymentTypes,
+            IsFeeExempt = await dashboardService.IsStudentFeeExemptAsync(user.Id)
         };
+
+        // Fee-exempt students re-apply with no charge: zero the preview rates
+        // so the client-side delta math never suggests a payment is due.
+        if (vm.IsFeeExempt)
+        {
+            vm.ExamFee = 0;
+            vm.PracticalFee = 0;
+            vm.PaidAmount = 0;
+        }
 
         return View(vm);
     }
@@ -894,7 +919,7 @@ public class StudentDashboardController(
         // Selecting extra papers (e.g. a practical leg that was skipped the
         // first time) requires paying only the difference before the form can
         // be revived. Reductions are absorbed by the college (no refunds).
-        var newTotal = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection);
+        var newTotal = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection, user.Id);
         var previouslyPaid = paidLog?.Amount ?? 0;
         var delta = newTotal - previouslyPaid;
 
@@ -1006,7 +1031,16 @@ public class StudentDashboardController(
 
         // Security: the posted amount is never trusted. The charge always comes
         // from the schedule rates applied to the validated selection.
-        amount = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection);
+        amount = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection, user.Id);
+
+        // Fee-exempt (disabled) students pay nothing: complete the registration
+        // directly with a recorded zero-fee waiver instead of a payment record.
+        if (amount == 0)
+        {
+            var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
+            return await CompleteWaivedRegistrationAsync(examScheduleId, registration.Id, selection,
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+        }
 
         int logId;
         if (selection.Count == 0)
@@ -1059,9 +1093,17 @@ public class StudentDashboardController(
         }
 
         // Security: the posted amount is never trusted (see ProcessPayment).
-        amount = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection);
+        amount = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection, user.Id);
 
         var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
+
+        // Fee-exempt (disabled) students pay nothing: complete the registration
+        // directly and skip the gateway so no Rs 0 payment is initiated.
+        if (amount == 0)
+        {
+            return await CompleteWaivedRegistrationAsync(examScheduleId, registration.Id, selection,
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+        }
 
         var transactionUuid = esewaService.GenerateTransactionUuid();
 
@@ -1080,6 +1122,31 @@ public class StudentDashboardController(
         }
 
         return await InitiateESewaGatewayAsync(amount, logId, transactionUuid, invoiceNumber, registration.Id, examScheduleId);
+    }
+
+    // Fee-exempt (disabled) students pay nothing. Completes the registration
+    // directly with a recorded zero-fee waiver instead of routing through a
+    // payment gateway, so no Rs 0 payment is ever initiated. The subject
+    // selection is persisted on the log so the post-payment flow can revive /
+    // create the ExamRegistration with the exact papers the student chose.
+    private async Task<IActionResult> CompleteWaivedRegistrationAsync(
+        int examScheduleId, int studentRegistrationId, Dictionary<int, ReExamLegs> selection,
+        string fullName, string? email, string? mobileNumber, string? dateOfBirthAd)
+    {
+        var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{studentRegistrationId}";
+        var logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
+            examScheduleId, studentRegistrationId, 0m, "waiver", invoiceNumber, selection,
+            fullName, email, mobileNumber, dateOfBirthAd);
+
+        await HandlePostPaymentRegistration(logId);
+        await dashboardService.UpdatePaymentRequestLogAsync(logId, invoiceNumber, true,
+            $"{{\"method\":\"waiver\",\"amount\":0}}", "Exam fee waived (fee-exempt student).");
+        await auditLogWriter.LogAsync(ActivityTypes.PaymentProcessed,
+            $"Exam fee waived for disabled student (Invoice {invoiceNumber})",
+            new { invoiceNumber, amount = 0m, method = "waiver", examScheduleId, registrationId = studentRegistrationId },
+            entityName: "PaymentRequestLog", entityId: logId.ToString());
+        await CompleteExamFormSubmissionAsync(logId, invoiceNumber);
+        return RedirectToAction(nameof(PaymentSuccess));
     }
 
     private async Task<IActionResult> InitiateESewaGatewayAsync(
@@ -1472,9 +1539,17 @@ public class StudentDashboardController(
         }
 
         // Security: the posted amount is never trusted (see ProcessPayment).
-        amount = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection);
+        amount = await dashboardService.ComputeSelectionFeeAsync(examScheduleId, selection, user.Id);
 
         var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
+
+        // Fee-exempt (disabled) students pay nothing: complete the registration
+        // directly and skip the gateway so no Rs 0 payment is initiated.
+        if (amount == 0)
+        {
+            return await CompleteWaivedRegistrationAsync(examScheduleId, registration.Id, selection,
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+        }
 
         // Step 1: create the payment record with PaymentProvider=Khalti, PaymentStatus=Created.
         int logId;

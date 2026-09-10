@@ -76,6 +76,9 @@ public class ReapplyExamViewModel
     // schedules lock every tick to the previously paid selection.
     public bool IsPartialForm { get; set; }
 
+    // Disabled students with fee exemption re-apply without any charge.
+    public bool IsFeeExempt { get; set; }
+
     // Gateways the reapply top-up flow can settle (eSewa / Khalti).
     public List<PaymentTypeDetail> PaymentTypes { get; set; } = new();
 }
@@ -126,6 +129,7 @@ public class ExamPaymentViewModel
     public decimal TotalPracticalFee { get; set; }
     public decimal ExtendedDateCharge { get; set; }
     public decimal GrandTotal { get; set; }
+    public bool IsFeeExempt { get; set; }
     public List<SubjectFeeDetail> Subjects { get; set; } = new();
     public bool HasESewa { get; set; }
     public bool HasKhalti { get; set; }

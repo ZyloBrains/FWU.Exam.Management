@@ -10,6 +10,7 @@ public static class PaymentProviders
     public const string Khalti = "Khalti";
     public const string Esewa = "Esewa";
     public const string ImePay = "ImePay";
+    public const string Waiver = "Waiver";
 
     /// <summary>
     /// Normalizes a free-text payment method (e.g. from a PaymentType name or UI dropdown)
@@ -21,6 +22,8 @@ public static class PaymentProviders
             return null;
 
         var lower = paymentMethod.Trim().ToLowerInvariant();
+        if (lower.Contains("waiver"))
+            return Waiver;
         if (lower.Contains("khalti"))
             return Khalti;
         if (lower.Contains("esewa") || lower.Contains("e-sewa"))

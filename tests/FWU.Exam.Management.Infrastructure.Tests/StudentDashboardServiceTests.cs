@@ -1527,6 +1527,55 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task CreatePaymentRequestLogWithSubjectsAsync_UnknownMethod_FallsBackToActivePaymentTypeAndPersistsSubjects()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Future, null));
+            ctx.Set<PaymentType>().Add(new PaymentType { Id = 1, PaymentTypeName = "Online", IsActive = true });
+        });
+        var service = CreateService(db);
+
+        var logId = await service.CreatePaymentRequestLogWithSubjectsAsync(
+            21, 1, 0m, "waiver", "INV-WVR",
+            new Dictionary<int, ReExamLegs>
+            {
+                [301] = ReExamLegs.Theory,
+                [302] = ReExamLegs.Theory | ReExamLegs.Practical
+            });
+
+        var log = await db.Context.PaymentRequestLogs!.SingleAsync(l => l.Id == logId);
+        Assert.Equal(1, log.PaymentTypeId);
+        Assert.Equal("Waiver", log.PaymentProvider);
+        Assert.Equal(0m, log.Amount);
+        Assert.Equal("301:T,302:TP", log.SelectedSubjectIds);
+    }
+
+    [Fact]
+    public async Task CreatePaymentRequestLogAsync_UnknownMethod_FallsBackToActivePaymentType()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Future, null));
+            ctx.Set<PaymentType>().Add(new PaymentType { Id = 1, PaymentTypeName = "Online", IsActive = true });
+        });
+        var service = CreateService(db);
+
+        var logId = await service.CreatePaymentRequestLogAsync(21, 1, 0m, "waiver", "INV-WVR2");
+
+        var log = await db.Context.PaymentRequestLogs!.SingleAsync(l => l.Id == logId);
+        Assert.Equal(1, log.PaymentTypeId);
+        Assert.Equal("Waiver", log.PaymentProvider);
+        Assert.Equal(0m, log.Amount);
+    }
+
+    [Fact]
     public async Task GetFailedSubjectOptionsForStudentAsync_PerPartGrades_ResolvesFailedLegsOnly()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
@@ -1588,7 +1637,7 @@ public class StudentDashboardServiceTests
             [301] = ReExamLegs.Theory,
             [302] = ReExamLegs.Theory | ReExamLegs.Practical,
             [303] = ReExamLegs.Practical
-        });
+        }, UserId);
 
         // Flat exam fee + one practical charge per ticked practical leg.
         Assert.Equal(1000m + 2 * 1500m, total);
@@ -1604,7 +1653,7 @@ public class StudentDashboardServiceTests
         });
         var service = CreateService(db);
 
-        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>());
+        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>(), UserId);
 
         Assert.Equal(1000m, total);
     }
@@ -1627,7 +1676,7 @@ public class StudentDashboardServiceTests
         var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>
         {
             [401] = ReExamLegs.None
-        });
+        }, UserId);
 
         Assert.Equal(1000m + 1500m, total);
     }
@@ -1648,7 +1697,7 @@ public class StudentDashboardServiceTests
         {
             [302] = ReExamLegs.Theory | ReExamLegs.Practical,
             [402] = ReExamLegs.None
-        });
+        }, UserId);
 
         Assert.Equal(1000m + 1500m, total);
     }
@@ -1672,10 +1721,125 @@ public class StudentDashboardServiceTests
             [301] = ReExamLegs.Theory,
             [302] = ReExamLegs.Theory | ReExamLegs.Practical,
             [303] = ReExamLegs.Practical
-        });
+        }, UserId);
 
         // Flat fee + practical legs + extended date charge (today > EndDate, today <= ExtendedDate).
         Assert.Equal(1000m + 2 * 1500m + 1000m, total);
+    }
+
+    [Fact]
+    public async Task ComputeSelectionFeeAsync_ReturnsZero_WhenAdmissionIsFeeExempt()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var schedule = FeeSchedule();
+            schedule.ExamFee = 1000;
+            schedule.PracticalSubjectFee = 1500;
+            ctx.ExamSchedules.Add(schedule);
+            var admission = TestData.Admission(1, UserId);
+            admission.HasFeeExemption = true;
+            ctx.StudentAdmissions.Add(admission);
+            var registration = TestData.StudentRegistration(1, Email);
+            registration.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(registration);
+        });
+        var service = CreateService(db);
+
+        // Even with practical legs and an extended charge due, a fee-exempt
+        // (disabled) student pays nothing.
+        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>
+        {
+            [301] = ReExamLegs.Theory,
+            [302] = ReExamLegs.Theory | ReExamLegs.Practical,
+            [303] = ReExamLegs.Practical
+        }, UserId);
+
+        Assert.Equal(0m, total);
+    }
+
+    [Fact]
+    public async Task ComputeSelectionFeeAsync_ChargesNormally_WhenAdmissionNotFeeExempt()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.ExamSchedules.Add(FeeSchedule());
+            // Admission exists but is NOT fee-exempt.
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            var registration = TestData.StudentRegistration(1, Email);
+            registration.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(registration);
+        });
+        var service = CreateService(db);
+
+        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>
+        {
+            [301] = ReExamLegs.Theory,
+            [302] = ReExamLegs.Theory | ReExamLegs.Practical,
+            [303] = ReExamLegs.Practical
+        }, UserId);
+
+        Assert.Equal(1000m + 2 * 1500m, total);
+    }
+
+    [Fact]
+    public async Task IsStudentFeeExemptAsync_True_WhenExemptAdmissionLinkedViaStudentRegistration()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var admission = TestData.Admission(1, UserId);
+            admission.AppUserId = null;
+            admission.HasFeeExemption = true;
+            ctx.StudentAdmissions.Add(admission);
+            var registration = TestData.StudentRegistration(1, Email);
+            registration.StudentAdmissionId = 1;
+            registration.RegistrationNumber = Email; // matches user.UserName for the fallback lookup
+            ctx.StudentRegistrations.Add(registration);
+        });
+        var service = CreateService(db);
+
+        // The exemption is on an admission reachable only via
+        // StudentRegistration.StudentAdmissionId (no AppUserId on the admission).
+        Assert.True(await service.IsStudentFeeExemptAsync(UserId));
+    }
+
+    [Fact]
+    public async Task ComputeSelectionFeeAsync_ReturnsZero_WhenExemptAdmissionLinkedViaStudentRegistration()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var schedule = FeeSchedule();
+            schedule.ExamFee = 1000;
+            schedule.PracticalSubjectFee = 1500;
+            ctx.ExamSchedules.Add(schedule);
+            var admission = TestData.Admission(1, UserId);
+            admission.AppUserId = null;
+            admission.HasFeeExemption = true;
+            ctx.StudentAdmissions.Add(admission);
+            var registration = TestData.StudentRegistration(1, Email);
+            registration.StudentAdmissionId = 1;
+            registration.RegistrationNumber = Email; // matches user.UserName for the fallback lookup
+            ctx.StudentRegistrations.Add(registration);
+        });
+        var service = CreateService(db);
+
+        // Even with practical legs and an extended charge due, a fee-exempt
+        // (disabled) student pays nothing regardless of how the admission links.
+        var total = await service.ComputeSelectionFeeAsync(21, new Dictionary<int, ReExamLegs>
+        {
+            [301] = ReExamLegs.Theory,
+            [302] = ReExamLegs.Theory | ReExamLegs.Practical,
+            [303] = ReExamLegs.Practical
+        }, UserId);
+
+        Assert.Equal(0m, total);
     }
 
     [Fact]
