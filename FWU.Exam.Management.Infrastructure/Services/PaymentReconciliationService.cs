@@ -182,6 +182,14 @@ public class PaymentReconciliationService(
     private async Task<PaymentReconciliationResult> ReconcileKhaltiAsync(PaymentRequestLog log)
     {
         var pidx = log.ProviderReferenceId ?? log.TransactionId;
+
+        // Fallback: extract pidx from PaymentResponseLog.FullResponse JSON when
+        // it was not persisted to ProviderReferenceId / TransactionId.
+        if (string.IsNullOrEmpty(pidx))
+        {
+            pidx = await ExtractPidxFromResponseLogsAsync(log.Id);
+        }
+
         if (string.IsNullOrEmpty(pidx))
         {
             await LogResponseAsync(log, null, $"Could not reconcile Khalti payment logId={log.Id}: no pidx stored.", success: false);
@@ -190,6 +198,15 @@ public class PaymentReconciliationService(
                 Success = false,
                 Message = "No pidx stored for this payment — cannot verify with Khalti."
             };
+        }
+
+        // Persist the discovered pidx back to the request log so future
+        // reconciliation attempts don't need the fallback again.
+        if (string.IsNullOrEmpty(log.ProviderReferenceId) && string.IsNullOrEmpty(log.TransactionId))
+        {
+            log.ProviderReferenceId = pidx;
+            context.Set<PaymentRequestLog>().Update(log);
+            await context.SaveChangesAsync();
         }
 
         var lookup = await khaltiService.LookupPaymentAsync(pidx);
@@ -419,6 +436,53 @@ public class PaymentReconciliationService(
         await context.SaveChangesAsync();
     }
 
+    // Extracts the Khalti pidx from the most recent PaymentResponseLog.FullResponse
+    // JSON (which stores it as `pidx` when a callback/lookup ran) so reconciliation
+    // can still verify payments whose pidx was never persisted on the request log.
+    private async Task<string?> ExtractPidxFromResponseLogsAsync(int logId)
+    {
+        var responseLogs = await context.Set<PaymentResponseLog>()
+            .AsNoTracking()
+            .Where(r => r.PaymentRequestLogId == logId)
+            .OrderByDescending(r => r.ResponseTimestamp)
+            .Select(r => r.FullResponse)
+            .ToListAsync();
+
+        foreach (var raw in responseLogs)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) continue;
+            try
+            {
+                using var doc = JsonDocument.Parse(raw);
+                if (doc.RootElement.ValueKind != JsonValueKind.Object) continue;
+
+                if (doc.RootElement.TryGetProperty("pidx", out var pidxProp) &&
+                    pidxProp.ValueKind == JsonValueKind.String &&
+                    !string.IsNullOrWhiteSpace(pidxProp.GetString()))
+                {
+                    return pidxProp.GetString();
+                }
+
+                if (doc.RootElement.TryGetProperty("lookup", out var lookupProp) &&
+                    lookupProp.ValueKind == JsonValueKind.Object)
+                {
+                    if (lookupProp.TryGetProperty("pidx", out var nestedPidx) &&
+                        nestedPidx.ValueKind == JsonValueKind.String &&
+                        !string.IsNullOrWhiteSpace(nestedPidx.GetString()))
+                    {
+                        return nestedPidx.GetString();
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+                // Not JSON — skip and check the next response log.
+            }
+        }
+
+        return null;
+    }
+
     // Terminal Khalti lookup statuses: the payment can never reach "Completed",
     // so there is no point polling it repeatedly. Status 2 is the app-wide
     // "closed / never revisited" marker used for superseded attempts.
@@ -574,6 +638,125 @@ public class PaymentReconciliationService(
             Email = l.Email,
             PaymentRequestLogStatus = l.PaymentRequestLogStatus
         }).ToList();
+    }
+
+    public async Task<(List<PaymentHistoryListDto> Items, int TotalCount)> GetPaymentHistoryAsync(
+        string? search, string? status, string? gateway, DateTime? fromDate, DateTime? toDate, int page, int pageSize)
+    {
+        var query = context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .Include(l => l.PaymentType)
+            .Include(l => l.ExamSchedule)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query = status.Trim().ToLowerInvariant() switch
+            {
+                "paid" => query.Where(l => l.PaymentRequestLogStatus == 1),
+                "failed" => query.Where(l => l.PaymentRequestLogStatus == 0),
+                "terminal" => query.Where(l => l.PaymentRequestLogStatus == 2),
+                "underverification" => query.Where(l => l.PaymentRequestLogStatus == 3),
+                _ => query.Where(l => l.PaymentRequestLogStatus == null)
+            };
+        }
+
+        if (!string.IsNullOrWhiteSpace(gateway))
+        {
+            var g = gateway.Trim().ToLowerInvariant();
+            query = query.Where(l =>
+                (l.PaymentType != null && l.PaymentType.PaymentTypeName.ToLower().Contains(g)) ||
+                (l.PaymentProvider != null && l.PaymentProvider.ToLower().Contains(g)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var lower = search.Trim().ToLower();
+            query = query.Where(l =>
+                l.InvoiceNumber.ToLower().Contains(lower) ||
+                (l.FullName != null && l.FullName.ToLower().Contains(lower)) ||
+                (l.MobileNumber != null && l.MobileNumber.Contains(search.Trim())) ||
+                (l.TransactionId != null && l.TransactionId.ToLower().Contains(lower)) ||
+                (l.ProviderReferenceId != null && l.ProviderReferenceId.ToLower().Contains(lower)) ||
+                (l.ProviderTransactionId != null && l.ProviderTransactionId.ToLower().Contains(lower)));
+        }
+
+        if (fromDate.HasValue)
+            query = query.Where(l => l.ForwardedTimestamp >= fromDate.Value);
+
+        if (toDate.HasValue)
+            query = query.Where(l => l.ForwardedTimestamp < toDate.Value.Date.AddDays(1));
+
+        var totalCount = await query.CountAsync();
+
+        var logs = await query
+            .OrderByDescending(l => l.ForwardedTimestamp)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var items = logs.Select(l => new PaymentHistoryListDto
+        {
+            Id = l.Id,
+            InvoiceNumber = l.InvoiceNumber,
+            StudentName = string.IsNullOrWhiteSpace(l.FullName) ? "-" : l.FullName,
+            Amount = l.Amount,
+            Gateway = l.PaymentType?.PaymentTypeName ?? l.PaymentProvider,
+            TransactionId = l.TransactionId,
+            ProviderReferenceId = l.ProviderReferenceId,
+            ForwardedTime = l.ForwardedTimestamp,
+            ExamName = l.ExamSchedule?.ExamScheduleName,
+            ContactNumber = l.MobileNumber,
+            Email = l.Email,
+            PaymentRequestLogStatus = l.PaymentRequestLogStatus
+        }).ToList();
+
+        return (items, totalCount);
+    }
+
+    public async Task<PaymentHistoryDetailDto?> GetPaymentHistoryDetailAsync(int logId)
+    {
+        var log = await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .Include(l => l.PaymentType)
+            .Include(l => l.ExamSchedule)
+            .Include(l => l.PaymentResponseLog)
+            .FirstOrDefaultAsync(l => l.Id == logId);
+
+        if (log == null) return null;
+
+        return new PaymentHistoryDetailDto
+        {
+            Id = log.Id,
+            InvoiceNumber = log.InvoiceNumber,
+            StudentName = string.IsNullOrWhiteSpace(log.FullName) ? "-" : log.FullName,
+            Amount = log.Amount,
+            Gateway = log.PaymentType?.PaymentTypeName ?? log.PaymentProvider,
+            TransactionId = log.TransactionId,
+            ProviderReferenceId = log.ProviderReferenceId,
+            ForwardedTime = log.ForwardedTimestamp,
+            ExamName = log.ExamSchedule?.ExamScheduleName,
+            ContactNumber = log.MobileNumber,
+            Email = log.Email,
+            PaymentRequestLogStatus = log.PaymentRequestLogStatus,
+            PaymentStatus = log.PaymentStatus,
+            PaymentProvider = log.PaymentProvider,
+            InitiatedAt = log.InitiatedAt,
+            PaidAt = log.PaidAt,
+            VerifiedAt = log.VerifiedAt,
+            SelectedSubjectIds = log.SelectedSubjectIds,
+            FullRequestContent = log.FullRequestContent,
+            Responses = log.PaymentResponseLog
+                .OrderByDescending(r => r.ResponseTimestamp)
+                .Select(r => new PaymentHistoryResponseDto
+                {
+                    Id = r.Id,
+                    ResponseTimestamp = r.ResponseTimestamp,
+                    IsSuccess = r.IsSuccess,
+                    ResponseMessage = r.ResponseMessage,
+                    FullResponse = r.FullResponse
+                }).ToList()
+        };
     }
 
     public async Task<PaymentReconciliationBatchResult> ReconcilePendingWithDetailsAsync()

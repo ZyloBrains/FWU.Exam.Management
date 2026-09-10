@@ -165,11 +165,12 @@ public static class AppMenu
                 M("Payment Types", "fa-credit-card", ["paymenttypes.view"], R("Payments", "PaymentTypes", "Index"), ["payment type", "fee type"]),
                 M("Bill Titles", "fa-file-invoice-dollar", ["billtitles.view"], R("Payments", "BillTitles", "Index"), ["bill", "title", "fee"]),
                 M("Payment Reconciliation", "fa-sync-alt", ["paymentreconciliation.view"], R("Payments", "PaymentReconciliation", "Index"), ["reconcile", "pending", "stuck", "payment"]),
+                M("Payment History", "fa-clock-rotate-left", ["paymenthistory.view"], R("Payments", "PaymentHistory", "Index"), ["history", "payment history", "search payment", "all payments", "receipt"]),
                 M("Khalti Transaction Verification", "fa-search", ["paymentreconciliation.view"], R("Payments", "PaymentVerification", "Index"), ["khalti", "verify", "pidx", "transaction"]),
                 M("eSewa Transaction Verification", "fa-search", ["paymentreconciliation.view"], R("Payments", "ESewaVerification", "Index"), ["esewa", "verify", "transaction_uuid", "transaction"]),
             ],
             Landing: R(null, "Section", "Payments"),
-            SectionActiveOns: [R("Payments", "Banks", null), R("Payments", "PaymentTypes", null), R("Payments", "BillTitles", null), R("Payments", "PaymentReconciliation", null), R("Payments", "PaymentVerification", null), R("Payments", "ESewaVerification", null)]),
+            SectionActiveOns: [R("Payments", "Banks", null), R("Payments", "PaymentTypes", null), R("Payments", "BillTitles", null), R("Payments", "PaymentReconciliation", null), R("Payments", "PaymentHistory", null), R("Payments", "PaymentVerification", null), R("Payments", "ESewaVerification", null)]),
 
         new("Location", "Location", "fa-map-marker-alt",
             "Manage provinces, districts and local levels",
