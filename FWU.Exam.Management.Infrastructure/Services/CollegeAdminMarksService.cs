@@ -282,6 +282,7 @@ public class CollegeAdminMarksService(
 
         var erIds = examRegistrations.Select(er => er.Id).ToList();
         var registrationNumbers = await GetRegistrationNumbersForExamRegistrationsAsync(erIds);
+        var studentNames = await StudentNameResolver.ResolveAsync(context, erIds);
 
         var existingResults = await context.ExamSubjectResults
             .AsNoTracking()
@@ -301,11 +302,13 @@ public class CollegeAdminMarksService(
             var existing = x.existing;
             var er = x.er;
             registrationNumbers.TryGetValue(er.Id, out var regNum);
+            studentNames.TryGetValue(er.Id, out var name);
 
             return new StudentInternalMarksRowDto
             {
                 ExamRegistrationId = er.Id,
                 ExamSubjectResultId = existing?.Id,
+                StudentName = name ?? "",
                 RegistrationNumber = regNum ?? "",
                 SymbolNumber = er.SymbolNumber ?? er.ExamRollNumber ?? "",
                 TheoryInternal = existing?.ObtainedMarksTheoryInternal,
@@ -569,7 +572,7 @@ public class CollegeAdminMarksService(
 
         var erIds = examRegistrations.Select(er => er.Id).ToList();
 
-        var studentNames = await GetStudentNamesForExamRegistrationsAsync(erIds);
+        var studentNames = await StudentNameResolver.ResolveAsync(context, erIds);
         var registrationNumbers = await GetRegistrationNumbersForExamRegistrationsAsync(erIds);
 
         var existingResults = await context.ExamSubjectResults
@@ -695,7 +698,7 @@ public class CollegeAdminMarksService(
                 if (examReg == null && !string.IsNullOrEmpty(studentName))
                 {
                     var erIds = examRegs.Select(er => er.Id).ToList();
-                    var names = await GetStudentNamesForExamRegistrationsAsync(erIds);
+                    var names = await StudentNameResolver.ResolveAsync(context, erIds);
                     examReg = examRegs.FirstOrDefault(er =>
                         names.TryGetValue(er.Id, out var name) &&
                         string.Equals(name, studentName, StringComparison.OrdinalIgnoreCase));
@@ -806,7 +809,7 @@ public class CollegeAdminMarksService(
             .ToListAsync();
 
         var erIds = examRegistrations.Select(er => er.Id).ToList();
-        var studentNames = await GetStudentNamesForExamRegistrationsAsync(erIds);
+        var studentNames = await StudentNameResolver.ResolveAsync(context, erIds);
         var registrationNumbers = await GetRegistrationNumbersForExamRegistrationsAsync(erIds);
 
         using var workbook = new XLWorkbook();
@@ -880,7 +883,7 @@ public class CollegeAdminMarksService(
                        && esr.ExamScheduleId == examScheduleId)
             .ToDictionaryAsync(esr => esr.ExamRegistrationId);
 
-        var studentNames = await GetStudentNamesForExamRegistrationsAsync(erIds);
+        var studentNames = await StudentNameResolver.ResolveAsync(context, erIds);
         var registrationNumbers = await GetRegistrationNumbersForExamRegistrationsAsync(erIds);
 
         using var workbook = new XLWorkbook();
@@ -940,43 +943,6 @@ public class CollegeAdminMarksService(
         using var ms = new MemoryStream();
         workbook.SaveAs(ms);
         return ms.ToArray();
-    }
-
-    private async Task<Dictionary<int, string>> GetStudentNamesForExamRegistrationsAsync(List<int> examRegistrationIds)
-    {
-        var semEnrollments = await context.Set<SemesterEnrollment>()
-            .AsNoTracking()
-            .Include(se => se.StudentAdmission)
-            .Include(se => se.ExamRegistrations)
-            .Where(se => se.ExamRegistrations!.Any(er => examRegistrationIds.Contains(er.Id)))
-            .ToListAsync();
-
-        var userIds = semEnrollments
-            .Select(se => se.StudentAdmission?.AppUserId)
-            .Where(id => id != null)
-            .Distinct()
-            .Cast<string>()
-            .ToList();
-
-        var userNames = await context.Users
-            .AsNoTracking()
-            .Where(u => userIds.Contains(u.Id))
-            .Select(u => new { u.Id, Name = u.FullName ?? u.Email ?? "" })
-            .ToDictionaryAsync(u => u.Id, u => u.Name);
-
-        var names = new Dictionary<int, string>();
-        foreach (var se in semEnrollments)
-        {
-            if (se.ExamRegistrations == null) continue;
-            var appUserId = se.StudentAdmission?.AppUserId;
-            var name = appUserId != null && userNames.TryGetValue(appUserId, out var n) ? n : "";
-            foreach (var er in se.ExamRegistrations.Where(er => examRegistrationIds.Contains(er.Id)))
-            {
-                names[er.Id] = name;
-            }
-        }
-
-        return names;
     }
 
     private IQueryable<ExamSchedule> ScopedScheduleQuery(int effectiveCollegeId)

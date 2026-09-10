@@ -1,6 +1,7 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Web.Authorization;
+using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
@@ -20,6 +21,7 @@ public class TheoryMarksController(ITheoryMarksService theoryMarksService) : Con
             Icon = "pen-alt",
             ControllerBase = "TheoryMarks",
             SaveAction = "SaveTheoryMarks",
+            ExportAction = "ExportTheoryMarksPreview",
             IsSuperAdmin = page.IsSuperAdmin,
             IsFacultyAdmin = page.IsFacultyAdmin,
             Faculties = page.Faculties,
@@ -150,5 +152,25 @@ public class TheoryMarksController(ITheoryMarksService theoryMarksService) : Con
         {
             return Json(new { success = false, message = ex.Message });
         }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult ExportTheoryMarksPreview([FromForm] TheoryMarksSaveDto dto, string? format, string? subjectName, string? context)
+    {
+        var rows = dto.Students
+            .Select(s => MarksPreviewRow.Create(s.StudentName, s.RegistrationNumber, s.SymbolNumber, s.Theory))
+            .ToList();
+
+        const string marksColumn = "Theory Marks";
+        var title = string.IsNullOrWhiteSpace(subjectName) ? "Theory Marks Entry" : subjectName;
+        var (contentType, extension) = MarksPreviewExporter.ResolveFormat(format);
+
+        byte[] file = string.Equals(format, "pdf", StringComparison.OrdinalIgnoreCase)
+            ? MarksPreviewExporter.BuildPdf(title, context ?? string.Empty, marksColumn, true, rows)
+            : MarksPreviewExporter.BuildExcel(title, marksColumn, true, rows);
+
+        var fileName = $"{MarksPreviewExporter.SanitizeFileName(title)}_TheoryMarksPreview.{extension}";
+        return File(file, contentType, fileName);
     }
 }

@@ -279,6 +279,7 @@ public class PracticalMarksService(
 
         var erIds = examRegistrations.Select(er => er.Id).ToList();
         var registrationNumbers = await GetRegistrationNumbersForExamRegistrationsAsync(erIds);
+        var studentNames = await StudentNameResolver.ResolveAsync(context, erIds);
 
         var existingResults = await context.ExamSubjectResults
             .AsNoTracking()
@@ -296,11 +297,13 @@ public class PracticalMarksService(
             var existing = x.existing;
             var er = x.er;
             registrationNumbers.TryGetValue(er.Id, out var regNum);
+            studentNames.TryGetValue(er.Id, out var name);
 
             return new StudentPracticalMarksRowDto
             {
                 ExamRegistrationId = er.Id,
                 ExamSubjectResultId = existing?.Id,
+                StudentName = name ?? "",
                 RegistrationNumber = regNum ?? "",
                 SymbolNumber = er.SymbolNumber ?? er.ExamRollNumber ?? "",
                 Practical = existing?.ObtainedMarksPractical,

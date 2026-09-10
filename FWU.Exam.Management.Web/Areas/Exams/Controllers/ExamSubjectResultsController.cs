@@ -32,7 +32,7 @@ public class ExamSubjectResultsController(
         ViewBag.Search = search;
         ViewBag.ExamScheduleId = examScheduleId;
 
-        ViewData["ExamScheduleId"] = new SelectList(context.ExamSchedules.AsNoTracking().Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
+        ViewData["ExamSchedulesFilter"] = new SelectList(context.ExamSchedules.AsNoTracking().Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
 
         return View(items);
     }
