@@ -8,6 +8,7 @@ using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
@@ -25,7 +26,8 @@ public class ExamRegistrationsController(
     IExamRegistrationService examRegistrationService,
     IPermissionService permissionService,
     UserManager<AppUser> userManager,
-    AppDbContext context) : Controller
+    AppDbContext context,
+    IUserContext userContext) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null, int? collegeId = null)
     {
@@ -41,8 +43,8 @@ public class ExamRegistrationsController(
         ViewBag.ExamScheduleId = examScheduleId;
         ViewBag.CollegeId = collegeId;
 
-        ViewData["ExamScheduleId"] = new SelectList(context.ExamSchedules.AsNoTracking().Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
-        ViewData["CollegeId"] = new SelectList(await examRegistrationService.GetFilterCollegesAsync(), "Id", "Name", collegeId);
+        ViewData["ExamSchedulesFilter"] = new SelectList(context.ExamSchedules.AsNoTracking().ApplyScope(userContext).Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
+        ViewData["CollegesFilter"] = new SelectList(await examRegistrationService.GetFilterCollegesAsync(), "Id", "Name", collegeId);
 
         return View(items);
     }

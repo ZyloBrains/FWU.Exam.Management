@@ -40,7 +40,7 @@
             <div>
                 <select name="examScheduleId" class="select2 border border-gray-300 rounded-md px-3 py-2.5 text-sm" onchange="this.form.submit()">
                     <option value="">All Schedules</option>
-                    @if (ViewData["ExamScheduleId"] is SelectList sl)
+                    @if (ViewData["ExamSchedulesFilter"] is SelectList sl)
                     {
                         foreach (var item in (sl.Items as IEnumerable<dynamic>)!)
                         {
