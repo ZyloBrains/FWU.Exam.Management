@@ -108,8 +108,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         {
             var lowerSearch = search.ToLower();
             query = query.Where(a =>
-                (a.FirstName != null && a.FirstName.ToLower().Contains(lowerSearch)) ||
-                (a.LastName != null && a.LastName.ToLower().Contains(lowerSearch)) ||
+                ((a.FirstName + (a.MiddleName != null ? " " + a.MiddleName : "") + (a.LastName != null ? " " + a.LastName : "")).ToLower().Contains(lowerSearch)) ||
                 (a.Email != null && a.Email.ToLower().Contains(lowerSearch)) ||
                 (a.ContactNumber != null && a.ContactNumber.ToLower().Contains(lowerSearch)));
         }
@@ -133,7 +132,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .Select(a => new EntranceExamApplicationListDto
             {
                 Id = a.Id,
-                FullName = (a.FirstName + " " + a.LastName).Trim(),
+                FullName = (a.FirstName + (a.MiddleName != null ? " " + a.MiddleName : "") + " " + a.LastName).Trim(),
                 Email = a.Email ?? "-",
                 ContactNumber = a.ContactNumber ?? "-",
                 AcademicYear = a.AcademicYear != null ? a.AcademicYear.AcademicYearName : "-",
@@ -228,8 +227,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         {
             var lowerSearch = search.ToLower();
             query = query.Where(a =>
-                (a.FirstName != null && a.FirstName.ToLower().Contains(lowerSearch)) ||
-                (a.LastName != null && a.LastName.ToLower().Contains(lowerSearch)) ||
+                ((a.FirstName + (a.MiddleName != null ? " " + a.MiddleName : "") + (a.LastName != null ? " " + a.LastName : "")).ToLower().Contains(lowerSearch)) ||
                 (a.Email != null && a.Email.ToLower().Contains(lowerSearch)) ||
                 (a.ContactNumber != null && a.ContactNumber.ToLower().Contains(lowerSearch)));
         }
@@ -516,7 +514,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
 
     private async Task SendEntranceSubmissionNotificationsAsync(EntranceExamApplication application)
     {
-        var fullName = application.FirstName.GetFullName(application.LastName);
+        var fullName = application.FirstName.GetFullName(application.MiddleName, application.LastName);
         var program = await context.Programs.Where(p => p.Id == application.ProgramId).Select(p => p.ProgramName).FirstOrDefaultAsync();
         var college = await context.Colleges.Where(c => c.Id == application.CollegeId).Select(c => c.Name).FirstOrDefaultAsync();
 

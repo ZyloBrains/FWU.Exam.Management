@@ -18,6 +18,7 @@
 </head>
 
 <body class="font-poppins antialiased">
+    @await Html.PartialAsync("_ToastMessages")
     @RenderBody()
 
     <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>

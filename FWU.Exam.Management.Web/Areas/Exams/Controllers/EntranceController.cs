@@ -559,7 +559,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         foreach (var item in data)
         {
             worksheet.Cell(row, 1).Value = item.Id;
-            worksheet.Cell(row, 2).Value = (item.FirstName + " " + item.LastName).Trim();
+            worksheet.Cell(row, 2).Value = (item.FirstName + (item.MiddleName != null ? " " + item.MiddleName : "") + " " + item.LastName).Trim();
             worksheet.Cell(row, 3).Value = item.Email;
             worksheet.Cell(row, 4).Value = item.ContactNumber;
             worksheet.Cell(row, 5).Value = item.Gender?.GenderName;
@@ -593,7 +593,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         sb.AppendLine("Application ID,Full Name,Email,Contact Number,Gender,Academic Year,College,Program,Status,Submitted Date");
         foreach (var item in data)
         {
-            sb.AppendLine($"{item.Id},{(item.FirstName + " " + item.LastName).Trim().EscapeCsv()},{(item.Email ?? "").EscapeCsv()},{(item.ContactNumber ?? "").EscapeCsv()},{(item.Gender?.GenderName ?? "").EscapeCsv()},{(item.AcademicYear?.AcademicYearName ?? "").EscapeCsv()},{(item.College?.Name ?? "").EscapeCsv()},{(item.Program?.ProgramName ?? "").EscapeCsv()},{(item.Status.ToString() ?? "").EscapeCsv()},{item.CreatedAt:yyyy-MM-dd HH:mm}");
+            sb.AppendLine($"{item.Id},{(item.FirstName + (item.MiddleName != null ? " " + item.MiddleName : "") + " " + item.LastName).Trim().EscapeCsv()},{(item.Email ?? "").EscapeCsv()},{(item.ContactNumber ?? "").EscapeCsv()},{(item.Gender?.GenderName ?? "").EscapeCsv()},{(item.AcademicYear?.AcademicYearName ?? "").EscapeCsv()},{(item.College?.Name ?? "").EscapeCsv()},{(item.Program?.ProgramName ?? "").EscapeCsv()},{(item.Status.ToString() ?? "").EscapeCsv()},{item.CreatedAt:yyyy-MM-dd HH:mm}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());

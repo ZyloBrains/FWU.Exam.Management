@@ -13,10 +13,9 @@
     var currentProgramId = ViewBag.ProgramId as int?;
     var currentSemesterId = ViewBag.SemesterId as int?;
     var currentAcademicYearId = ViewBag.AcademicYearId as int?;
-    var hasFilters = !string.IsNullOrEmpty(currentSearch) || admissionId.HasValue || currentCollegeId.HasValue || currentProgramId.HasValue || currentSemesterId.HasValue || currentAcademicYearId.HasValue;
 }
 
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ showFilters: false }">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center shrink-0">
@@ -39,89 +38,128 @@
             <a asp-action="BatchCreate" class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
                 <i class="fas fa-users text-xs"></i> Bulk Enroll
             </a>
-            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
-            {
-                RouteValues = new Dictionary<string, string>
-                {
-                    ["search"] = currentSearch,
-                    ["admissionId"] = admissionId?.ToString() ?? "",
-                    ["collegeId"] = currentCollegeId?.ToString() ?? "",
-                    ["programId"] = currentProgramId?.ToString() ?? "",
-                    ["semesterId"] = currentSemesterId?.ToString() ?? "",
-                    ["academicYearId"] = currentAcademicYearId?.ToString() ?? ""
-                },
-                ButtonClass = "bg-green-600 hover:bg-green-700",
-                ScopeLabel = " (All)"
-            })
         </div>
     </div>
 
     @await Html.PartialAsync("_AlertMessages")
 
+    <!-- Toolbar -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <form method="get" asp-action="Index" id="filterForm" class="flex flex-col lg:flex-row lg:items-center gap-3 flex-wrap">
-            <div class="relative flex-1 md:min-w-[22rem]">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <input type="text" name="search" value="@currentSearch"
-                       placeholder="Search by student name, roll number, registration no..."
-                       class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
-            </div>
-            <select name="academicYearId" id="academicYearId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem] shrink-0">
-                <option value="">All Years</option>
-                @if (ViewData["AcademicYearFilter"] is SelectList academicYearList)
-                {
-                    foreach (var item in academicYearList.Items)
+        <form method="get" asp-action="Index" id="filterForm">
+            <!-- Row 1: Search Box + Actions -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div class="relative flex-1">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text" name="search" value="@currentSearch"
+                           placeholder="Search by student name, roll number, registration no..."
+                           class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button type="button" x-on:click="showFilters = !showFilters"
+                            :class="showFilters ? 'bg-teal-50 text-teal-700 border-teal-200' : 'bg-white text-gray-700 border-gray-200'"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-filter text-xs"></i> Filters
+                    </button>
+                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-600 border border-teal-600 rounded-lg hover:bg-teal-700 transition-colors">
+                        <i class="fas fa-search text-xs"></i> Search
+                    </button>
+                    @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
                     {
-                        var value = ((dynamic)item).Id.ToString();
-                        <option value="@value" selected="@(value == currentAcademicYearId?.ToString())">@(((dynamic)item).AcademicYearCode)</option>
-                    }
-                }
-            </select>
-            @if (ViewData["ShowCollegeFilter"] as bool? == true)
-            {
-                <select name="collegeId" id="collegeId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem] shrink-0">
-                    <option value="">All Colleges</option>
-                    @if (ViewData["CollegeFilter"] is SelectList collegeList)
-                    {
-                        foreach (var item in collegeList.Items)
+                        RouteValues = new Dictionary<string, string>
                         {
-                            var value = ((dynamic)item).Id.ToString();
-                            <option value="@value" selected="@(value == currentCollegeId?.ToString())">@(((dynamic)item).Name)</option>
-                        }
-                    }
-                </select>
-            }
-            <select name="programId" id="programId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem] shrink-0">
-                <option value="">All Programs</option>
-                @if (ViewData["ProgramFilter"] is SelectList programList)
-                {
-                    foreach (var item in programList.Items)
+                            ["search"] = currentSearch,
+                            ["admissionId"] = admissionId?.ToString() ?? "",
+                            ["collegeId"] = currentCollegeId?.ToString() ?? "",
+                            ["programId"] = currentProgramId?.ToString() ?? "",
+                            ["semesterId"] = currentSemesterId?.ToString() ?? "",
+                            ["academicYearId"] = currentAcademicYearId?.ToString() ?? ""
+                        },
+                        ButtonClass = "bg-green-600 hover:bg-green-700",
+                        ScopeLabel = " (All)"
+                    })
+                </div>
+            </div>
+
+            <!-- Row 2: Filter Dropdowns (Collapsible) -->
+            <div x-show="showFilters" x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
+                 class="mt-4 pt-4 border-t border-gray-200">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Academic Year</label>
+                        <select name="academicYearId" id="academicYearId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                            <option value="">All Years</option>
+                            @if (ViewData["AcademicYearFilter"] is SelectList academicYearList)
+                            {
+                                foreach (var item in academicYearList.Items)
+                                {
+                                    var value = ((dynamic)item).Id.ToString();
+                                    <option value="@value" selected="@(value == currentAcademicYearId?.ToString())">@(((dynamic)item).AcademicYearCode)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    @if (ViewData["ShowCollegeFilter"] as bool? == true)
                     {
-                        var value = ((dynamic)item).Id.ToString();
-                        <option value="@value" selected="@(value == currentProgramId?.ToString())">@(((dynamic)item).ProgramName)</option>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">College</label>
+                            <select name="collegeId" id="collegeId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                                <option value="">All Colleges</option>
+                                @if (ViewData["CollegeFilter"] is SelectList collegeList)
+                                {
+                                    foreach (var item in collegeList.Items)
+                                    {
+                                        var value = ((dynamic)item).Id.ToString();
+                                        <option value="@value" selected="@(value == currentCollegeId?.ToString())">@(((dynamic)item).Name)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
                     }
-                }
-            </select>
-            <select name="semesterId" id="semesterId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem] shrink-0" onchange="this.form.submit()">
-                <option value="">All Semesters</option>
-                @if (ViewData["SemesterFilter"] is SelectList semesterList)
-                {
-                    foreach (var item in semesterList.Items)
-                    {
-                        var value = ((dynamic)item).Id.ToString();
-                        <option value="@value" selected="@(value == currentSemesterId?.ToString())">@(((dynamic)item).Name)</option>
-                    }
-                }
-            </select>
-            <div class="flex gap-2 shrink-0">
-                <button type="submit" class="px-4 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors">Search</button>
-                @if (hasFilters)
-                {
-                    <a asp-action="Index" asp-route-pageSize="@pageSize"
-                       class="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
-                        <i class="fas fa-times text-xs"></i> Clear
-                    </a>
-                }
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Program</label>
+                        <select name="programId" id="programId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                            <option value="">All Programs</option>
+                            @if (ViewData["ProgramFilter"] is SelectList programList)
+                            {
+                                foreach (var item in programList.Items)
+                                {
+                                    var value = ((dynamic)item).Id.ToString();
+                                    <option value="@value" selected="@(value == currentProgramId?.ToString())">@(((dynamic)item).ProgramName)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Semester</label>
+                        <select name="semesterId" id="semesterId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                            <option value="">All Semesters</option>
+                            @if (ViewData["SemesterFilter"] is SelectList semesterList)
+                            {
+                                foreach (var item in semesterList.Items)
+                                {
+                                    var value = ((dynamic)item).Id.ToString();
+                                    <option value="@value" selected="@(value == currentSemesterId?.ToString())">@(((dynamic)item).Name)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-3 gap-3">
+                    <div class="flex items-center gap-2 text-xs text-gray-400">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Select filters and press Search to apply</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a asp-action="Index" asp-route-pageSize="@pageSize" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId"
+                           asp-route-collegeId="@currentCollegeId" asp-route-programId="@currentProgramId" asp-route-semesterId="@currentSemesterId" asp-route-academicYearId="@currentAcademicYearId"
+                           class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                            <i class="fas fa-times text-xs"></i> Clear All
+                        </a>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
@@ -132,18 +170,13 @@
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Roll No</th>
+                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
+                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Reg No</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Program</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">College</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Semester</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Year</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Type</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Payment</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Fee</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Credits</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Result</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
                 </tr>
             </thead>
@@ -157,7 +190,7 @@
                     <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
                         <td class="px-4 py-3 text-gray-500 text-sm">@serial</td>
                         <td class="px-4 py-3 font-medium text-gray-800">@(item.StudentName ?? "-")</td>
-                        <td class="px-4 py-3 text-gray-600">@(item.CollegeRollNumber ?? "-")</td>
+                        <td class="px-4 py-3 text-gray-600 font-mono text-xs">@(item.RegistrationNumber ?? "-")</td>
                         <td class="px-4 py-3 text-gray-600">@(item.ProgramName ?? "-")</td>
                         <td class="px-4 py-3 text-gray-600">@(item.CollegeName ?? "-")</td>
                         <td class="px-4 py-3 text-gray-600">@(item.SemesterName ?? "-")</td>
@@ -169,26 +202,6 @@
                                 FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Dropped => "bg-red-100 text-red-700",
                                 _ => "bg-yellow-100 text-yellow-700"
                             })">@item.EnrollmentStatus</span>
-                        </td>
-                        <td class="px-4 py-3 text-gray-600">@item.EnrollmentType</td>
-                        <td class="px-4 py-3">
-                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.PaymentStatus switch {
-                                FWU.Exam.Management.Domain.Enums.PaymentStatus.Paid => "bg-green-100 text-green-700",
-                                FWU.Exam.Management.Domain.Enums.PaymentStatus.Pending => "bg-yellow-100 text-yellow-700",
-                                _ => "bg-gray-100 text-gray-700"
-                            })">@item.PaymentStatus</span>
-                        </td>
-                        <td class="px-4 py-3 text-gray-600">@item.TotalFee.ToString("N0")</td>
-                        <td class="px-4 py-3 text-gray-600">@item.TotalCredits</td>
-                        <td class="px-4 py-3">
-                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.ResultStatus switch {
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Passed => "bg-green-100 text-green-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Failed => "bg-red-100 text-red-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Incomplete => "bg-yellow-100 text-yellow-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Absent => "bg-gray-100 text-gray-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Withdrawn => "bg-orange-100 text-orange-700",
-                                _ => "bg-gray-100 text-gray-700"
-                            })">@item.ResultStatus</span>
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-1">
@@ -234,6 +247,7 @@
                                 <div class="flex items-center gap-2">
                                     <span class="text-[10px] font-bold text-teal-600 bg-teal-100 rounded px-1.5 py-0.5">#@serialM</span>
                                     <h3 class="font-semibold text-gray-800 text-sm">@(item.StudentName ?? "-")</h3>
+                                    <p class="text-xs text-gray-500 font-mono">@(item.RegistrationNumber ?? "-")</p>
                                 </div>
                                 <p class="text-xs text-gray-500">@(item.SemesterName ?? "-")</p>
                             </div>
@@ -245,39 +259,15 @@
                                 FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Dropped => "bg-red-100 text-red-700",
                                 _ => "bg-yellow-100 text-yellow-700"
                             })">@item.EnrollmentStatus</span>
-                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.PaymentStatus switch {
-                                FWU.Exam.Management.Domain.Enums.PaymentStatus.Paid => "bg-green-100 text-green-700",
-                                FWU.Exam.Management.Domain.Enums.PaymentStatus.Pending => "bg-yellow-100 text-yellow-700",
-                                _ => "bg-gray-100 text-gray-700"
-                            })">@item.PaymentStatus</span>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
-                        <div class="text-gray-500">Roll No</div>
-                        <div class="text-gray-800">@(item.CollegeRollNumber ?? "-")</div>
                         <div class="text-gray-500">Program</div>
                         <div class="text-gray-800">@(item.ProgramName ?? "-")</div>
                         <div class="text-gray-500">College</div>
                         <div class="text-gray-800">@(item.CollegeName ?? "-")</div>
                         <div class="text-gray-500">Year</div>
                         <div class="text-gray-800">@(item.AcademicYearName ?? "-")</div>
-                        <div class="text-gray-500">Type</div>
-                        <div class="text-gray-800">@(item.EnrollmentType)</div>
-                        <div class="text-gray-500">Fee</div>
-                        <div class="text-gray-800">@item.TotalFee.ToString("N0")</div>
-                        <div class="text-gray-500">Credits</div>
-                        <div class="text-gray-800">@item.TotalCredits</div>
-                        <div class="text-gray-500">Result</div>
-                        <div class="text-gray-800">
-                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.ResultStatus switch {
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Passed => "bg-green-100 text-green-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Failed => "bg-red-100 text-red-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Incomplete => "bg-yellow-100 text-yellow-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Absent => "bg-gray-100 text-gray-700",
-                                FWU.Exam.Management.Domain.Enums.ResultStatus.Withdrawn => "bg-orange-100 text-orange-700",
-                                _ => "bg-gray-100 text-gray-700"
-                            })">@item.ResultStatus</span>
-                        </div>
                     </div>
                     <div class="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
                         <a asp-action="Details" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">

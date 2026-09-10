@@ -69,5 +69,65 @@
             </div>
         </a>
         }
+
+        @if (HasPerm("paymentreconciliation.view"))
+        {
+        <a asp-area="Payments" asp-controller="PaymentReconciliation" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center group-hover:bg-amber-200 transition-colors">
+                    <i class="fas fa-sync-alt text-amber-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Payment Reconciliation</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Verify stuck pending payments with the gateway</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("paymenthistory.view"))
+        {
+        <a asp-area="Payments" asp-controller="PaymentHistory" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center group-hover:bg-cyan-200 transition-colors">
+                    <i class="fas fa-clock-rotate-left text-cyan-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Payment History</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Search all payment records regardless of status</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("paymentreconciliation.view"))
+        {
+        <a asp-area="Payments" asp-controller="PaymentVerification" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center group-hover:bg-cyan-200 transition-colors">
+                    <i class="fas fa-search text-cyan-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Khalti Transaction Verification</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Verify a completed transaction with the live Khalti API</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("paymentreconciliation.view"))
+        {
+        <a asp-area="Payments" asp-controller="ESewaVerification" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <i class="fas fa-search text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">eSewa Transaction Verification</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Verify a completed transaction with the live eSewa status API</p>
+                </div>
+            </div>
+        </a>
+        }
     </div>
 </div>

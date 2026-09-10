@@ -1,0 +1,248 @@
+@model FWU.Exam.Management.Application.DTOs.PaymentHistoryDetailDto
+@{
+    ViewData["Title"] = "Payment History Details";
+    var statusLabel = Model.PaymentRequestLogStatus switch
+    {
+        3 => "Under Verification",
+        1 => "Paid",
+        2 => "Closed",
+        0 => "Failed",
+        _ => "Pending"
+    };
+    var statusClass = Model.PaymentRequestLogStatus switch
+    {
+        3 => "bg-amber-100 text-amber-800",
+        1 => "bg-green-100 text-green-800",
+        2 => "bg-gray-200 text-gray-700",
+        0 => "bg-red-100 text-red-800",
+        _ => "bg-gray-100 text-gray-600"
+    };
+    var canAct = Model.PaymentRequestLogStatus != 1 && Model.PaymentRequestLogStatus != 2;
+}
+
+<div class="space-y-6">
+    @await Html.PartialAsync("_AlertMessages")
+
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-clock-rotate-left text-blue-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Payment History Details</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Payment log #@Model.Id</p>
+            </div>
+        </div>
+        <a asp-action="Index" asp-area="Payments" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-colors">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-800 mb-4">Payment Information</h3>
+            <dl class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Invoice Number</dt>
+                    <dd class="font-mono text-gray-800 text-xs">@Model.InvoiceNumber</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Student Name</dt>
+                    <dd class="text-gray-800 font-medium">@Model.StudentName</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Amount</dt>
+                    <dd class="text-gray-800 font-semibold">Rs. @Model.Amount.ToString("N0")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Payment Gateway</dt>
+                    <dd>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">@Model.Gateway</span>
+                    </dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Transaction ID</dt>
+                    <dd class="font-mono text-gray-800 text-xs">@(Model.TransactionId ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Provider Reference</dt>
+                    <dd class="font-mono text-gray-800 text-xs">@(Model.ProviderReferenceId ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Provider</dt>
+                    <dd class="text-gray-800 text-xs">@(Model.PaymentProvider ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Forwarded Time</dt>
+                    <dd class="text-gray-800">@Model.ForwardedTime.ToString("MMM dd, yyyy HH:mm:ss")</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-800 mb-4">Exam & Contact</h3>
+            <dl class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Exam Schedule</dt>
+                    <dd class="text-gray-800">@(Model.ExamName ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Contact Number</dt>
+                    <dd class="text-gray-800">@(Model.ContactNumber ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Email</dt>
+                    <dd class="text-gray-800 text-xs">@(Model.Email ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Status</dt>
+                    <dd>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @statusClass">@statusLabel</span>
+                    </dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Initiated At</dt>
+                    <dd class="text-gray-800 text-xs">@(Model.InitiatedAt?.ToString("MMM dd, yyyy HH:mm:ss") ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Paid At</dt>
+                    <dd class="text-gray-800 text-xs">@(Model.PaidAt?.ToString("MMM dd, yyyy HH:mm:ss") ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Verified At</dt>
+                    <dd class="text-gray-800 text-xs">@(Model.VerifiedAt?.ToString("MMM dd, yyyy HH:mm:ss") ?? "—")</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Selected Subjects</dt>
+                    <dd class="font-mono text-gray-800 text-xs">@(Model.SelectedSubjectIds ?? "—")</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.FullRequestContent))
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-800 mb-3">Request Payload</h3>
+            <pre class="text-xs text-gray-600 bg-gray-50 rounded-lg p-3 overflow-x-auto">@Model.FullRequestContent</pre>
+        </div>
+    }
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">Response Logs (@Model.Responses.Count)</h3>
+        @if (Model.Responses.Any())
+        {
+            <div class="space-y-3">
+                @foreach (var resp in Model.Responses)
+                {
+                    <div class="rounded-lg border @(resp.IsSuccess ? "border-green-200 bg-green-50/50" : "border-red-200 bg-red-50/50") p-3">
+                        <div class="flex items-center justify-between gap-3 mb-1">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold @(resp.IsSuccess ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                                    @if (resp.IsSuccess)
+                                    {
+                                        <i class="fas fa-check mr-1"></i><text>Success</text>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-times mr-1"></i><text>Failed</text>
+                                    }
+                                </span>
+                                <span class="text-xs text-gray-500">#@resp.Id</span>
+                            </div>
+                            <span class="text-xs text-gray-500">@resp.ResponseTimestamp.ToString("MMM dd, yyyy HH:mm:ss")</span>
+                        </div>
+                        <p class="text-xs text-gray-700">@resp.ResponseMessage</p>
+                        @if (!string.IsNullOrWhiteSpace(resp.FullResponse) && resp.FullResponse != resp.ResponseMessage)
+                        {
+                            <details class="mt-2">
+                                <summary class="text-xs text-blue-600 cursor-pointer">Full response</summary>
+                                <pre class="text-[11px] text-gray-600 bg-white rounded-lg p-2 mt-2 overflow-x-auto">@resp.FullResponse</pre>
+                            </details>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-sm text-gray-500">No gateway responses recorded for this payment.</p>
+        }
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">Actions</h3>
+        <div class="flex flex-col sm:flex-row gap-3">
+            @if (canAct)
+            {
+                <button onclick="reconcile(@Model.Id)" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-check-circle"></i> Verify with Gateway & Complete
+                </button>
+                <button onclick="confirmPaid(@Model.Id)" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors" title="Manually confirm as paid (student confirmed by phone), without checking the gateway">
+                    <i class="fas fa-hand-holding-usd"></i> Confirm as Paid
+                </button>
+                <button onclick="markFailed(@Model.Id)" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
+                    <i class="fas fa-times-circle"></i> Mark as Failed
+                </button>
+            }
+            else
+            {
+                <p class="text-sm text-gray-500">This payment is already settled — no actions available.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function reconcile(id) {
+            if (!confirm('Verify this payment with the gateway?\nThis will create the exam registration and notify the student if successful.')) return;
+            $.ajax({
+                url: '@Url.Action("Reconcile", "PaymentHistory")',
+                type: 'POST',
+                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    alert(response.message);
+                    if (response.success) location.reload();
+                },
+                error: function () { alert('An error occurred while reconciling.'); }
+            });
+        }
+
+        function markFailed(id) {
+            var reason = prompt('Reason for marking as failed (optional):');
+            if (reason === null) return;
+            $.ajax({
+                url: '@Url.Action("MarkFailed", "PaymentHistory")',
+                type: 'POST',
+                data: { id: id, reason: reason, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    alert(response.message);
+                    if (response.success) location.reload();
+                },
+                error: function () { alert('An error occurred while marking as failed.'); }
+            });
+        }
+
+        function confirmPaid(id) {
+            var msg = 'Manually confirm this payment as PAID?\n\n' +
+                      'Use this only when the student has confirmed by phone that the payment ' +
+                      'was completed on the gateway. This will create the exam registration and ' +
+                      'notify the student, without checking the gateway.';
+            if (!confirm(msg)) return;
+            var remark = prompt('Remark (e.g. phone receipt/transaction reference, optional):');
+            if (remark === null) return;
+            $.ajax({
+                url: '@Url.Action("ConfirmPaid", "PaymentHistory")',
+                type: 'POST',
+                data: { id: id, remark: remark, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    alert(response.message);
+                    if (response.success) location.reload();
+                },
+                error: function () { alert('An error occurred while confirming the payment.'); }
+            });
+        }
+    </script>
+}

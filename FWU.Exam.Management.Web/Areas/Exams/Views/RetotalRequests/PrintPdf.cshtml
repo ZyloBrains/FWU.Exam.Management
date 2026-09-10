@@ -19,7 +19,7 @@
         <table class="exam-table">
             <thead>
                 <tr>
-                    <th>#</th><th>Student</th><th>Subject</th><th>Status</th><th>Requested Date</th><th>Reason</th><th>Fee Paid</th><th>Reviewed By</th><th>Reviewed Date</th>
+                    <th>#</th><th>Student</th><th>Reg No</th><th>Subject</th><th>Status</th><th>Requested Date</th><th>Reason</th><th>Fee Paid</th><th>Reviewed By</th><th>Reviewed Date</th>
                 </tr>
             </thead>
             <tbody>
@@ -31,9 +31,10 @@
                         <td>
                             @if (item.StudentRegistration != null)
                             {
-                                <strong>@item.StudentRegistration.FirstName.GetFullName(item.StudentRegistration.LastName)</strong>
+                                <strong>@item.StudentRegistration.FirstName.GetFullName(item.StudentRegistration.MiddleName, item.StudentRegistration.LastName)</strong>
                             }
                         </td>
+                        <td style="font-size: 11px;">@(item.StudentRegistration?.RegistrationNumber ?? "-")</td>
                         <td>@item.ExamSubjectResult?.SubjectOffering?.SubjectCatalog?.SubjectName</td>
                         <td>@item.Status</td>
                         <td style="font-size: 11px;">@item.RequestedDate.ToString("yyyy-MM-dd")</td>

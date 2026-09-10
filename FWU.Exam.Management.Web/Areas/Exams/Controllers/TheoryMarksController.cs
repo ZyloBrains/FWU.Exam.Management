@@ -17,7 +17,7 @@ public class TheoryMarksController(ITheoryMarksService theoryMarksService) : Con
             Mode = MarksEntryMode.Theory,
             Title = "Theory Marks Entry",
             Subtitle = "Select the exam schedule and subject, then enter theory marks step by step.",
-            Icon = "fa-pen-alt",
+            Icon = "pen-alt",
             ControllerBase = "TheoryMarks",
             SaveAction = "SaveTheoryMarks",
             IsSuperAdmin = page.IsSuperAdmin,

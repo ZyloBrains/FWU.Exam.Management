@@ -93,19 +93,47 @@ public class ESewaService(AppDbContext context, HttpClient httpClient, IConfigur
             };
         }
 
-        try
-        {
-            var url = $"{config.VerifyUrl}?product_code={config.ProductCode}&total_amount={totalAmount:F0}&transaction_uuid={transactionUuid}";
-            var response = await httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
+        return await CallTransactionStatusAsync(transactionUuid, totalAmount);
+    }
 
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ESewaVerifyResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString });
-        }
-        catch
+    public async Task<ESewaVerifyResponse?> QueryTransactionStatusAsync(string transactionUuid, decimal totalAmount)
+    {
+        return await CallTransactionStatusAsync(transactionUuid, totalAmount);
+    }
+
+    private async Task<ESewaVerifyResponse?> CallTransactionStatusAsync(string transactionUuid, decimal totalAmount)
+    {
+        var config = await GetConfigAsync();
+
+        const int maxAttempts = 2;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            return null;
+            try
+            {
+                var url = $"{config.VerifyUrl}?product_code={config.ProductCode}&total_amount={totalAmount:F0}&transaction_uuid={transactionUuid}";
+                var response = await httpClient.GetAsync(url);
+                var json = await response.Content.ReadAsStringAsync();
+                var parsed = JsonSerializer.Deserialize<ESewaVerifyResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString });
+                if (parsed == null)
+                    return null;
+
+                // eSewa returns a non-200 with an error body like { "code": 0, "error_message": "..." }
+                // or { "message": "..." } when the lookup fails (bad amount, unknown uuid, service down).
+                if (!response.IsSuccessStatusCode && string.IsNullOrWhiteSpace(parsed.Status))
+                {
+                    System.Console.WriteLine($"ESewa status check failed ({response.StatusCode}): {json}");
+                    return null;
+                }
+
+                return parsed;
+            }
+            catch (Exception ex) when (attempt < maxAttempts)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2));
+                System.Console.WriteLine($"ESewa status check retry {attempt}: {ex.Message}");
+            }
         }
+        return null;
     }
 
     private static string GenerateSignature(string message, string secretKey)

@@ -18,7 +18,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>#</th><th>Name</th><th>Program</th><th>Academic Year</th><th>Grades</th><th>Status</th>
+                    <th>#</th><th>Name</th><th>Programs</th><th>Grades</th><th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -28,8 +28,13 @@
                     <tr>
                         <td style="text-align: center;">@counter</td>
                         <td><strong>@item.Name</strong></td>
-                        <td>@item.Program?.ProgramName</td>
-                        <td>@item.AcademicYear?.AcademicYearName</td>
+                        <td>
+                            @{
+                                var pdfPrograms = item.ProgramAssignments?.Select(gsp => gsp.Program?.ProgramName ?? "") ?? Enumerable.Empty<string>();
+                                var pdfProgramList = string.Join(", ", pdfPrograms.Where(p => !string.IsNullOrEmpty(p)));
+                            }
+                            @(string.IsNullOrEmpty(pdfProgramList) ? "-" : pdfProgramList)
+                        </td>
                         <td>@(item.GradeDefinitions?.Count ?? 0)</td>
                         <td>@(item.IsActive ? "Active" : "Inactive")</td>
                     </tr>

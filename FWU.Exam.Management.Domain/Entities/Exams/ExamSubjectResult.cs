@@ -104,4 +104,8 @@ public class ExamSubjectResult : IAuditable, ITenantScoped
     public virtual ExamType? ExamType { get; set; }
     public virtual SubjectOffering? SubjectOffering { get; set; }
     public virtual ExamSchedule? ExamSchedule { get; set; }
+
+    [Display(Name = "Grading Scheme")]
+    public int? GradingSchemeId { get; set; }
+    public virtual GradingScheme? GradingScheme { get; set; }
 }

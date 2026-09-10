@@ -291,7 +291,7 @@
                     <span class="info-value">
                         @if (Model.StudentRegistration != null)
                         {
-                            @($"{Model.StudentRegistration.FirstName} {Model.StudentRegistration.LastName}")
+                            @($"{Model.StudentRegistration.FirstName} {Model.StudentRegistration.MiddleName} {Model.StudentRegistration.LastName}".Trim())
                         }
                         else
                         {

@@ -8,8 +8,7 @@ public static class EmailTemplateHelper
     private static string LogoImg()
     {
         if (!string.IsNullOrEmpty(LogoUrl))
-        //    var logoUrl = LogoUrl.Trim();
-            return $@"<img src=""http://localhost:5211/images/fwu-logo.jpg"" alt=""Far-Western University"" style=""max-width:140px;height:auto;display:block;margin:0 auto 10px;border-radius:8px;"" class=""logo-img"" onerror=""this.style.display='none'"" />";
+            return $@"<img src=""{LogoUrl.Trim()}"" alt=""Far-Western University"" style=""max-width:140px;height:auto;display:block;margin:0 auto 10px;border-radius:8px;"" class=""logo-img"" onerror=""this.style.display='none'"" />";
 
         return @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""140"" height=""50"" viewBox=""0 0 140 50"" style=""display:block;margin:0 auto 10px;"">
             <rect width=""140"" height=""50"" rx=""8"" fill=""rgba(255,255,255,0.15)""/>
@@ -27,24 +26,26 @@ public static class EmailTemplateHelper
     <title>{title}</title>
     <style type=""text/css"">
         @@media only screen and (max-width:640px) {{
-            .email-container {{ width:100% !important; max-width:100% !important; }}
-            .email-padding {{ padding:24px 20px !important; }}
-            .header-padding {{ padding:24px 20px !important; }}
-            .footer-padding {{ padding:16px 20px !important; }}
+            .email-container {{ width:100% !important; max-width:100% !important; border-radius:0 !important; }}
+            .email-padding {{ padding:24px 18px !important; }}
+            .header-padding {{ padding:24px 18px !important; }}
+            .footer-padding {{ padding:16px 18px !important; }}
             .content-heading {{ font-size:18px !important; }}
             .content-text {{ font-size:14px !important; }}
             .btn-table {{ width:100% !important; }}
             .btn-td {{ display:block !important; width:100% !important; }}
             .btn-link {{ display:block !important; width:100% !important; padding:14px 20px !important; font-size:15px !important; text-align:center !important; box-sizing:border-box !important; }}
-            .details-table {{ padding:12px 14px !important; }}
-            .details-table td {{ font-size:13px !important; }}
-            .creds-table {{ padding:12px 14px !important; }}
+            .details-table {{ display:block !important; width:100% !important; box-sizing:border-box !important; }}
+            .details-table td {{ display:block !important; padding:4px 0 !important; }}
+            .creds-table {{ display:block !important; width:100% !important; box-sizing:border-box !important; }}
+            .creds-table td {{ display:block !important; padding:4px 0 !important; }}
             .fallback-link {{ word-break:break-all !important; font-size:12px !important; }}
             .footer-text {{ font-size:11px !important; }}
         }}
         @@media only screen and (max-width:480px) {{
-            .email-padding {{ padding:20px 16px !important; }}
-            .header-padding {{ padding:20px 16px !important; }}
+            .email-padding {{ padding:20px 14px !important; }}
+            .header-padding {{ padding:20px 14px !important; }}
+            .footer-padding {{ padding:14px 14px !important; }}
             .content-heading {{ font-size:17px !important; }}
             .content-text {{ font-size:13px !important; }}
             .logo-img {{ max-width:110px !important; }}
@@ -58,7 +59,7 @@ public static class EmailTemplateHelper
                 <!--[if mso]><table role=""presentation"" width=""600"" cellpadding=""0"" cellspacing=""0"" align=""center""><tr><td><![endif]-->
                 <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);"" class=""email-container"">
                     <tr>
-                        <td style=""background:linear-gradient(135deg,#1a5276,#2980b9);padding:28px 32px;text-align:center;"" class=""header-padding"">
+                        <td style=""background:linear-gradient(135deg,#083191,#0a3aa8);padding:28px 32px;text-align:center;"" class=""header-padding"">
                             {LogoImg()}
                             <h1 style=""color:#ffffff;margin:0;font-size:22px;font-weight:600;letter-spacing:0.5px;"" class=""content-heading"">Far-Western University</h1>
                             <p style=""color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:13px;"">Exam Management Information System</p>
@@ -92,14 +93,14 @@ public static class EmailTemplateHelper
         </p>
         <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" style=""margin:24px 0;"" class=""btn-table"">
             <tr>
-                <td align=""center"" style=""background:#2980b9;border-radius:6px;"" class=""btn-td"">
+                <td align=""center"" style=""background:#083191;border-radius:6px;"" class=""btn-td"">
                     <a href=""{callbackUrl}"" style=""display:inline-block;padding:12px 32px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:500;"" class=""btn-link"">Confirm Email Address</a>
                 </td>
             </tr>
         </table>
         <p style=""color:#888;line-height:1.6;margin:20px 0 0;font-size:12px;"">
             If the button above does not work, copy and paste the following link into your browser:<br>
-            <a href=""{callbackUrl}"" style=""color:#2980b9;word-break:break-all;"" class=""fallback-link"">{callbackUrl}</a>
+            <a href=""{callbackUrl}"" style=""color:#083191;word-break:break-all;"" class=""fallback-link"">{callbackUrl}</a>
         </p>
         <p style=""color:#888;line-height:1.6;margin:12px 0 0;font-size:12px;"">
             This link will expire after a limited time. If you did not create this account, please ignore this email.
@@ -113,14 +114,14 @@ public static class EmailTemplateHelper
         </p>
         <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" style=""margin:24px 0;"" class=""btn-table"">
             <tr>
-                <td align=""center"" style=""background:#2980b9;border-radius:6px;"" class=""btn-td"">
+                <td align=""center"" style=""background:#083191;border-radius:6px;"" class=""btn-td"">
                     <a href=""{callbackUrl}"" style=""display:inline-block;padding:12px 32px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:500;"" class=""btn-link"">Confirm Email Change</a>
                 </td>
             </tr>
         </table>
         <p style=""color:#888;line-height:1.6;margin:20px 0 0;font-size:12px;"">
             If the button above does not work, copy and paste this link:<br>
-            <a href=""{callbackUrl}"" style=""color:#2980b9;word-break:break-all;"" class=""fallback-link"">{callbackUrl}</a>
+            <a href=""{callbackUrl}"" style=""color:#083191;word-break:break-all;"" class=""fallback-link"">{callbackUrl}</a>
         </p>
         <p style=""color:#888;line-height:1.6;margin:12px 0 0;font-size:12px;"">
             This link will expire after a limited time. If you did not request this change, please ignore this email.
@@ -134,14 +135,14 @@ public static class EmailTemplateHelper
         </p>
         <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" style=""margin:24px 0;"" class=""btn-table"">
             <tr>
-                <td align=""center"" style=""background:#2980b9;border-radius:6px;"" class=""btn-td"">
+                <td align=""center"" style=""background:#083191;border-radius:6px;"" class=""btn-td"">
                     <a href=""{callbackUrl}"" style=""display:inline-block;padding:12px 32px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:500;"" class=""btn-link"">Reset Password</a>
                 </td>
             </tr>
         </table>
         <p style=""color:#888;line-height:1.6;margin:20px 0 0;font-size:12px;"">
             If the button above does not work, copy and paste this link:<br>
-            <a href=""{callbackUrl}"" style=""color:#2980b9;word-break:break-all;"" class=""fallback-link"">{callbackUrl}</a>
+            <a href=""{callbackUrl}"" style=""color:#083191;word-break:break-all;"" class=""fallback-link"">{callbackUrl}</a>
         </p>
         <p style=""color:#888;line-height:1.6;margin:12px 0 0;font-size:12px;"">
             This link will expire after a limited time. If you did not request a password reset, please ignore this email.
@@ -174,21 +175,21 @@ public static class EmailTemplateHelper
             <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">College:</strong> <span style=""color:#555;font-size:13px;"">{college}</span></td></tr>
             <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Program:</strong> <span style=""color:#555;font-size:13px;"">{program}</span></td></tr>
         </table>
-        <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#eaf2f8;border-radius:8px;padding:16px 20px;margin:20px 0;border-left:4px solid #2980b9;"" class=""creds-table"">
-            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Username:</strong> <span style=""color:#2980b9;font-size:13px;"">{registrationNumber}</span></td></tr>
+        <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#eaf2f8;border-radius:8px;padding:16px 20px;margin:20px 0;border-left:4px solid #083191;"" class=""creds-table"">
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Username:</strong> <span style=""color:#083191;font-size:13px;"">{registrationNumber}</span></td></tr>
             <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Email:</strong> <span style=""color:#555;font-size:13px;"">{email}</span></td></tr>
             <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Password:</strong> <span style=""color:#555;font-size:13px;"">{password}</span></td></tr>
         </table>
         <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" style=""margin:24px 0;"" class=""btn-table"">
             <tr>
-                <td align=""center"" style=""background:#2980b9;border-radius:6px;"" class=""btn-td"">
+                <td align=""center"" style=""background:#083191;border-radius:6px;"" class=""btn-td"">
                     <a href=""{loginUrl}"" style=""display:inline-block;padding:12px 32px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:500;"" class=""btn-link"">Login to Your Account</a>
                 </td>
             </tr>
         </table>
         <p style=""color:#888;line-height:1.6;margin:0 0 12px;font-size:12px;"" class=""content-text"">
             If the button above does not work, copy and paste the following link into your browser:<br>
-            <a href=""{loginUrl}"" style=""color:#2980b9;word-break:break-all;"" class=""fallback-link"">{loginUrl}</a>
+            <a href=""{loginUrl}"" style=""color:#083191;word-break:break-all;"" class=""fallback-link"">{loginUrl}</a>
         </p>
         <p style=""color:#555;line-height:1.6;margin:0 0 12px;font-size:13px;"" class=""content-text"">
             You can sign in using your email address <strong>{email}</strong> or your registration number <strong>{registrationNumber}</strong> along with the password above.

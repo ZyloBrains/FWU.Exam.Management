@@ -1,6 +1,7 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -16,7 +17,11 @@ using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class StudentDashboardService(AppDbContext context, IUserContext userContext, ILogger<StudentDashboardService> logger) : IStudentDashboardService
+public class StudentDashboardService(
+    AppDbContext context,
+    IUserContext userContext,
+    ILogger<StudentDashboardService> logger,
+    IKhaltiService khaltiService) : IStudentDashboardService
 {
     public async Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email)
     {
@@ -777,7 +782,14 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (log == null) return;
 
         log.TransactionId = transactionId;
+        log.ProviderTransactionId = string.IsNullOrEmpty(transactionId) ? log.ProviderTransactionId : transactionId;
         log.PaymentRequestLogStatus = isSuccess ? 1 : 0;
+        log.PaymentStatus = isSuccess ? PaymentStatusValues.Completed : PaymentStatusValues.Failed;
+        if (isSuccess)
+        {
+            log.PaidAt ??= DateTime.UtcNow;
+            log.VerifiedAt ??= DateTime.UtcNow;
+        }
 
         context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
         {
@@ -788,6 +800,17 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             FullResponse = responseData
         });
 
+        await context.SaveChangesAsync();
+    }
+
+    public async Task UpdatePaymentRequestLogTransactionIdAsync(int logId, string transactionId)
+    {
+        var log = await context.Set<PaymentRequestLog>().FirstOrDefaultAsync(prl => prl.Id == logId);
+        if (log == null || string.IsNullOrEmpty(transactionId)) return;
+
+        log.TransactionId = transactionId;
+        if (string.IsNullOrEmpty(log.ProviderReferenceId))
+            log.ProviderReferenceId = transactionId;
         await context.SaveChangesAsync();
     }
 
@@ -804,11 +827,17 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     // Legacy plain-id tokens ("101", no leg suffix) mean both available papers
     // were registered, so their practical legs are charged too — matching how
     // ResolveRegistrationLegs stamps the registration rows.
-    public async Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection)
+    public async Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection, string userId)
     {
         var schedule = await context.ExamSchedules!
             .AsNoTracking().IgnoreQueryFilters()
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+
+        // University fee waiver for disabled students: an admission flagged as
+        // fee-exempt pays no exam fee at all. The exemption is read from the DB
+        // record (never the client), so it cannot be toggled by the student.
+        if (await IsStudentFeeExemptAsync(userId))
+            return 0m;
 
         var examFee = schedule?.ExamFee ?? 0;
         var practicalFee = schedule?.PracticalSubjectFee ?? 0;
@@ -1344,6 +1373,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         var admission = await context.StudentAdmissions!
             .AsNoTracking()
+            .OrderByDescending(sa => sa.IsActive)
+            .ThenByDescending(sa => sa.Id)
             .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
         if (admission != null) return admission;
 
@@ -1366,9 +1397,17 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         return await context.StudentAdmissions!
             .AsNoTracking()
+            .OrderByDescending(sa => sa.IsActive)
+            .ThenByDescending(sa => sa.Id)
             .FirstOrDefaultAsync(sa => sa.CollegeId == sr.CollegeId
                                     && sa.ProgramsId == sr.ProgramId
                                     && sa.IsActive);
+    }
+
+    public async Task<bool> IsStudentFeeExemptAsync(string userId)
+    {
+        var admission = await ResolveStudentAdmissionAsync(userId);
+        return admission?.HasFeeExemption == true;
     }
 
     private async Task<List<int>> GetStudentExamRegistrationIdsAsync(string userId)
@@ -1465,11 +1504,14 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
             FullRequestContent = requestContent,
-            PaymentTypeId = paymentType?.Id ?? 0,
+            PaymentTypeId = paymentType?.Id ?? paymentTypes.FirstOrDefault()?.Id ?? 0,
+            PaymentProvider = PaymentProviders.Normalize(paymentMethod),
+            PaymentStatus = PaymentStatusValues.Created,
             ForwardedTimestamp = DateTime.UtcNow,
             StudentCount = subjectIds.Count,
             SelectedSubjectIds = selectedSubjectIds,
-            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
+            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid,
+            ProviderReferenceId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
         };
 
         context.Set<PaymentRequestLog>().Add(log);
@@ -1518,15 +1560,128 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
             FullRequestContent = requestContent,
-            PaymentTypeId = paymentType?.Id ?? 0,
+            PaymentTypeId = paymentType?.Id ?? paymentTypes.FirstOrDefault()?.Id ?? 0,
+            PaymentProvider = PaymentProviders.Normalize(paymentMethod),
+            PaymentStatus = PaymentStatusValues.Created,
             ForwardedTimestamp = DateTime.UtcNow,
             StudentCount = 1,
-            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
+            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid,
+            ProviderReferenceId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
         };
 
         context.Set<PaymentRequestLog>().Add(log);
         await context.SaveChangesAsync();
         return log.Id;
+    }
+
+    // Initiates the Khalti ePayment request for an already-created log and persists the
+    // returned pidx (ProviderReferenceId) in the same save as the status transition, so the
+    // pidx is recorded BEFORE the payment URL is handed back to the frontend. The Khalti
+    // secret key is used only inside IKhaltiService and is never returned or logged here.
+    public async Task<(string Pidx, string PaymentUrl)?> InitiateKhaltiPaymentAsync(
+        int logId, string returnUrl, string websiteUrl,
+        string? customerFullName = null, string? customerEmail = null, string? customerPhone = null)
+    {
+        var log = await context.Set<PaymentRequestLog>()
+            .FirstOrDefaultAsync(prl => prl.Id == logId);
+        if (log == null)
+            throw new InvalidOperationException($"Payment log {logId} not found.");
+
+        if (string.IsNullOrWhiteSpace(customerEmail))
+            customerEmail = null;
+        else if (!IsValidEmail(customerEmail))
+            customerEmail = null;
+
+        var khaltiRequest = new KhaltiInitiateRequest
+        {
+            ReturnUrl = returnUrl,
+            WebsiteUrl = websiteUrl,
+            Amount = (long)(log.Amount * 100m),
+            PurchaseOrderId = log.InvoiceNumber,
+            PurchaseOrderName = $"Exam Fee #{log.InvoiceNumber}",
+            CustomerInfo = new KhaltiCustomerInfo
+            {
+                Name = string.IsNullOrWhiteSpace(customerFullName) ? null : customerFullName,
+                Email = customerEmail,
+                Phone = string.IsNullOrWhiteSpace(customerPhone) ? null : customerPhone
+            }
+        };
+
+        KhaltiInitiateResponse? response;
+        try
+        {
+            response = await khaltiService.InitiatePaymentAsync(khaltiRequest);
+        }
+        catch (Exception)
+        {
+            log.PaymentStatus = PaymentStatusValues.Failed;
+            log.PaymentRequestLogStatus = PaymentRequestLogStatuses.Failed;
+            context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+            {
+                PaymentRequestLogId = log.Id,
+                ResponseTimestamp = DateTime.UtcNow,
+                IsSuccess = false,
+                ResponseMessage = "Khalti initiate failed.",
+                FullResponse = "Khalti initiate failed."
+            });
+            await context.SaveChangesAsync();
+            throw;
+        }
+
+        if (response?.Pidx == null)
+        {
+            log.PaymentStatus = PaymentStatusValues.Failed;
+            log.PaymentRequestLogStatus = PaymentRequestLogStatuses.Failed;
+            context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+            {
+                PaymentRequestLogId = log.Id,
+                ResponseTimestamp = DateTime.UtcNow,
+                IsSuccess = false,
+                ResponseMessage = "Khalti did not return a pidx.",
+                FullResponse = string.IsNullOrEmpty(response?.PaymentUrl) ? "{ }" : $"{{\"payment_url\":\"{response.PaymentUrl}\"}}"
+            });
+            await context.SaveChangesAsync();
+            return null;
+        }
+
+        // Persist the pidx (and payment URL) with the status transition BEFORE returning to
+        // the caller. The secret key is not part of any of this.
+        log.ProviderReferenceId = response.Pidx;
+        log.TransactionId = response.Pidx;
+        log.PaymentStatus = PaymentStatusValues.Initiated;
+        log.InitiatedAt = DateTime.UtcNow;
+        log.PaymentRequestLogStatus = PaymentRequestLogStatuses.Pending;
+
+        context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+        {
+            PaymentRequestLogId = log.Id,
+            ResponseTimestamp = DateTime.UtcNow,
+            IsSuccess = true,
+            ResponseMessage = "Khalti initiate succeeded.",
+            FullResponse = System.Text.Json.JsonSerializer.Serialize(response)
+        });
+
+        await context.SaveChangesAsync();
+
+        logger.LogInformation("InitiateKhaltiPaymentAsync: logId={LogId}, invoice={Invoice}, providerReferenceId={Pidx}",
+            log.Id, log.InvoiceNumber, response.Pidx);
+
+        return (response.Pidx, response.PaymentUrl ?? string.Empty);
+    }
+
+    private static bool IsValidEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+        try
+        {
+            _ = new System.Net.Mail.MailAddress(email);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<List<AdmitCard>> GetAdmitCardsForStudentAsync(string userId, int studentRegistrationId)
@@ -1583,7 +1738,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .AsNoTracking()
             .Include(prl => prl.PaymentType)
             .Where(prl => prl.StudentRegistrationId == studentRegistrationId
-                       && prl.PaymentRequestLogStatus == 1)
+                       && (prl.PaymentRequestLogStatus == 1 || prl.PaymentRequestLogStatus == 3))
             .OrderByDescending(prl => prl.ForwardedTimestamp)
             .ToListAsync();
 
@@ -1604,6 +1759,19 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .FirstOrDefaultAsync(prl => prl.InvoiceNumber == invoiceNumber);
     }
 
+    public async Task<PaymentRequestLog?> GetPaymentLogByProviderReferenceAsync(string providerReferenceId)
+    {
+        if (string.IsNullOrWhiteSpace(providerReferenceId))
+            return null;
+
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .Where(prl => (prl.ProviderReferenceId != null && prl.ProviderReferenceId == providerReferenceId)
+                       || (prl.TransactionId != null && prl.TransactionId == providerReferenceId))
+            .OrderByDescending(prl => prl.ForwardedTimestamp)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<PaymentRequestLog?> FindPendingPaymentLogByStudentAsync(int studentRegistrationId)
     {
         return await context.Set<PaymentRequestLog>()
@@ -1612,6 +1780,13 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                        && prl.PaymentRequestLogStatus == null)
             .OrderByDescending(prl => prl.ForwardedTimestamp)
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<PaymentRequestLog?> FindPaymentLogByTransactionUuidAsync(string transactionUuid)
+    {
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(prl => prl.TransactionId == transactionUuid);
     }
 
     public async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath)
@@ -1657,5 +1832,148 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             missing.Add("Student Signature");
 
         return missing;
+    }
+
+    // Callback recovery: the gateway confirmed the payment (COMPLETE / Completed)
+    // but the callback could not resolve the originating payment log (e.g. the
+    // session was lost before the callback). Instead of silently dropping the
+    // payment, record an unlinked log flagged as "pending verification" (status 3)
+    // so the exam office can verify the payment receipt against the gateway and
+    // complete the registration manually.
+    public async Task<int> RecordUnresolvedCompletedPaymentAsync(
+        int? examScheduleId,
+        int studentRegistrationId,
+        decimal amount,
+        string paymentMethod,
+        string transactionId,
+        string responseData,
+        string responseMessage,
+        string? invoiceNumber = null,
+        string? selectedSubjectIds = null)
+    {
+        var registration = await context.Set<StudentRegistration>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sr => sr.Id == studentRegistrationId);
+
+        // If the schedule could not be pinned down from the callback, fall back
+        // to the student's most recent pending log so the record stays useful
+        // for admin reconciliation.
+        var resolvedScheduleId = examScheduleId;
+        if (!resolvedScheduleId.HasValue)
+        {
+            var pending = await context.Set<PaymentRequestLog>()
+                .AsNoTracking()
+                .Where(prl => prl.StudentRegistrationId == studentRegistrationId
+                           && prl.PaymentRequestLogStatus == null)
+                .OrderByDescending(prl => prl.ForwardedTimestamp)
+                .FirstOrDefaultAsync();
+            if (pending != null) resolvedScheduleId = pending.ExamScheduleId;
+        }
+
+        var paymentType = await context.Set<PaymentType>()
+            .AsNoTracking()
+            .Where(pt => pt.IsActive && pt.PaymentTypeName != null)
+            .FirstOrDefaultAsync(pt => paymentMethod.Contains(pt.PaymentTypeName, StringComparison.OrdinalIgnoreCase));
+
+        var log = new PaymentRequestLog
+        {
+            ExamScheduleId = resolvedScheduleId ?? 0,
+            StudentRegistrationId = studentRegistrationId,
+            Amount = amount,
+            InvoiceNumber = string.IsNullOrWhiteSpace(invoiceNumber)
+                ? $"UNLINKED-{DateTime.UtcNow:yyyyMMddHHmmss}-{studentRegistrationId}"
+                : invoiceNumber,
+            FullName = registration?.FirstName != null
+                ? registration.FirstName.GetFullName(registration.MiddleName, registration.LastName)
+                : "Unknown Student",
+            Email = registration?.Email,
+            MobileNumber = registration?.ContactNumber ?? registration?.Phone,
+            CollegeId = registration?.CollegeId,
+            DateOfBirthAd = DateTime.TryParse(registration?.DateOfBirthAD, out var dob) ? dob : null,
+            FullRequestContent = responseData,
+            PaymentTypeId = paymentType?.Id ?? 0,
+            PaymentProvider = PaymentProviders.Normalize(paymentMethod),
+            PaymentStatus = PaymentStatusValues.Pending,
+            ForwardedTimestamp = DateTime.UtcNow,
+            StudentCount = string.IsNullOrWhiteSpace(selectedSubjectIds) ? 1 : selectedSubjectIds.Split(',').Length,
+            SelectedSubjectIds = selectedSubjectIds,
+            TransactionId = string.IsNullOrWhiteSpace(transactionId) ? null : transactionId,
+            PaymentRequestLogStatus = 3
+        };
+
+        context.Set<PaymentRequestLog>().Add(log);
+        await context.SaveChangesAsync();
+
+        context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+        {
+            PaymentRequestLogId = log.Id,
+            ResponseTimestamp = DateTime.UtcNow,
+            IsSuccess = false,
+            ResponseMessage = responseMessage,
+            FullResponse = responseData
+        });
+
+        await context.SaveChangesAsync();
+        return log.Id;
+    }
+
+    public async Task<bool> HasPaymentUnderVerificationAsync(int examScheduleId, int studentRegistrationId)
+    {
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .AnyAsync(prl => prl.ExamScheduleId == examScheduleId
+                          && prl.StudentRegistrationId == studentRegistrationId
+                          && (prl.PaymentRequestLogStatus == 3 || prl.PaymentRequestLogStatus == null));
+    }
+
+    public async Task<PaymentRequestLog?> MarkLatestPendingPaymentForVerificationAsync(
+        int studentRegistrationId, string transactionId, string responseData, string responseMessage)
+    {
+        var log = await context.Set<PaymentRequestLog>()
+            .Where(prl => prl.StudentRegistrationId == studentRegistrationId
+                       && prl.PaymentRequestLogStatus == null
+                       && (prl.TransactionId == null || prl.TransactionId == (string.IsNullOrWhiteSpace(transactionId) ? null : transactionId)))
+            .OrderByDescending(prl => prl.ForwardedTimestamp)
+            .FirstOrDefaultAsync();
+        if (log == null) return null;
+
+        log.TransactionId = string.IsNullOrWhiteSpace(transactionId) ? log.TransactionId : transactionId;
+        if (string.IsNullOrEmpty(log.ProviderReferenceId) && !string.IsNullOrWhiteSpace(transactionId))
+            log.ProviderReferenceId = transactionId;
+        log.PaymentRequestLogStatus = 3;
+        log.PaymentStatus = PaymentStatusValues.Pending;
+
+        context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+        {
+            PaymentRequestLogId = log.Id,
+            ResponseTimestamp = DateTime.UtcNow,
+            IsSuccess = false,
+            ResponseMessage = responseMessage,
+            FullResponse = responseData
+        });
+
+        await context.SaveChangesAsync();
+        return log;
+    }
+
+    public async Task<PaymentRequestLog?> MarkPaymentLogPendingVerificationAsync(int logId, string responseData, string responseMessage)
+    {
+        var log = await context.Set<PaymentRequestLog>().FirstOrDefaultAsync(prl => prl.Id == logId);
+        if (log == null) return null;
+
+        log.PaymentRequestLogStatus = 3;
+        log.PaymentStatus = PaymentStatusValues.Pending;
+
+        context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+        {
+            PaymentRequestLogId = logId,
+            ResponseTimestamp = DateTime.UtcNow,
+            IsSuccess = false,
+            ResponseMessage = responseMessage,
+            FullResponse = responseData
+        });
+
+        await context.SaveChangesAsync();
+        return log;
     }
 }

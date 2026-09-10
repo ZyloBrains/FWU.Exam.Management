@@ -27,6 +27,8 @@ public static class Permissions
     public const string GroupPaymentTypes = "paymenttypes";
     public const string GroupBillTitles = "billtitles";
     public const string GroupPaymentVerification = "paymentverification";
+    public const string GroupPaymentReconciliation = "paymentreconciliation";
+    public const string GroupPaymentHistory = "paymenthistory";
     public const string GroupProvinces = "provinces";
     public const string GroupDistricts = "districts";
     public const string GroupLocalLevels = "locallevels";
@@ -56,6 +58,8 @@ public static class Permissions
     public const string GroupMarksEntry = "marksentry";
     public const string GroupTheoryMarks = "theorymarks";
     public const string GroupPracticalMarks = "practicalmarks";
+    public const string GroupInternalTheory = "internaltheory";
+    public const string GroupInternalPractical = "internalpractical";
     public const string GroupReports = "reports";
     public const string GroupAuditLog = "auditlog";
     public const string GroupBackupRestore = "backuprestore";
@@ -198,6 +202,12 @@ public static class Permissions
     // Payment Verification
     public const string PaymentVerificationView = "paymentverification.view";
     public const string PaymentVerificationExport = "paymentverification.export";
+
+    // Payment Reconciliation
+    public const string PaymentReconciliationView = "paymentreconciliation.view";
+
+    // Payment History
+    public const string PaymentHistoryView = "paymenthistory.view";
 
     // Provinces
     public const string ProvincesView = "provinces.view";
@@ -378,6 +388,18 @@ public static class Permissions
     public const string PracticalMarksView = "practicalmarks.view";
     public const string PracticalMarksSubmit = "practicalmarks.submit";
 
+    // Internal Theory Marks Entry
+    public const string InternalTheoryView = "internaltheory.view";
+    public const string InternalTheorySubmit = "internaltheory.submit";
+    public const string InternalTheoryImport = "internaltheory.import";
+    public const string InternalTheoryExport = "internaltheory.export";
+
+    // Internal Practical Marks Entry
+    public const string InternalPracticalView = "internalpractical.view";
+    public const string InternalPracticalSubmit = "internalpractical.submit";
+    public const string InternalPracticalImport = "internalpractical.import";
+    public const string InternalPracticalExport = "internalpractical.export";
+
     // Reports
     public const string ReportsCollegePayments = "reports.collegepayments";
     public const string ReportsSubjectCount = "reports.subjectcount";
@@ -500,6 +522,10 @@ public static class Permissions
 
         (PaymentVerificationView, "View Payment Verification", GroupPaymentVerification, "View student payment verification list"),
         (PaymentVerificationExport, "Export Payment Verification", GroupPaymentVerification, "Export payment verification list"),
+
+        (PaymentReconciliationView, "View Payment Reconciliation", GroupPaymentReconciliation, "View and reconcile stuck pending payments"),
+
+        (PaymentHistoryView, "View Payment History", GroupPaymentHistory, "Search all payment records regardless of status"),
 
         (ProvincesView, "View Provinces", GroupProvinces, "View province list"),
         (ProvincesCreate, "Create Provinces", GroupProvinces, "Create new provinces"),
@@ -661,6 +687,16 @@ public static class Permissions
         (PracticalMarksView, "View Practical Marks Entry", GroupPracticalMarks, "View practical marks entry for exam schedule students"),
         (PracticalMarksSubmit, "Submit Practical Marks", GroupPracticalMarks, "Submit practical marks for exam schedule students"),
 
+        (InternalTheoryView, "View Internal Theory Marks Entry", GroupInternalTheory, "View internal theory marks entry for exam schedule students"),
+        (InternalTheorySubmit, "Submit Internal Theory Marks", GroupInternalTheory, "Submit internal theory marks for exam schedule students"),
+        (InternalTheoryImport, "Import Internal Theory Marks", GroupInternalTheory, "Import internal theory marks from Excel for exam schedule students"),
+        (InternalTheoryExport, "Export Internal Theory Marks", GroupInternalTheory, "Export internal theory marks to Excel for exam schedule students"),
+
+        (InternalPracticalView, "View Internal Practical Marks Entry", GroupInternalPractical, "View internal practical marks entry for exam schedule students"),
+        (InternalPracticalSubmit, "Submit Internal Practical Marks", GroupInternalPractical, "Submit internal practical marks for exam schedule students"),
+        (InternalPracticalImport, "Import Internal Practical Marks", GroupInternalPractical, "Import internal practical marks from Excel for exam schedule students"),
+        (InternalPracticalExport, "Export Internal Practical Marks", GroupInternalPractical, "Export internal practical marks to Excel for exam schedule students"),
+
         (AuditLogView, "View Audit Log", GroupAuditLog, "View audit trail and activity logs"),
 
         (BackupRestoreManage, "Manage Backup & Restore", GroupBackupRestore, "Backup and restore database"),
@@ -692,6 +728,8 @@ public static class Permissions
             ExamTypesView, ExamTypesCreate, ExamTypesEdit,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
             PaymentVerificationView, PaymentVerificationExport,
+            PaymentReconciliationView,
+            PaymentHistoryView,
 
             GradingSchemesView, GradingSchemesCreate, GradingSchemesEdit,
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify, ExamRegistrationApprove,
@@ -701,6 +739,8 @@ public static class Permissions
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
             TheoryMarksView, TheoryMarksSubmit,
             PracticalMarksView, PracticalMarksSubmit,
+            InternalTheoryView, InternalTheorySubmit, InternalTheoryImport, InternalTheoryExport,
+            InternalPracticalView, InternalPracticalSubmit, InternalPracticalImport, InternalPracticalExport,
 
             ExamCentersView, ExamCentersCreate, ExamCentersEdit, ExamCentersDelete,
             ExamCentersGenerateRollNumbers,
@@ -745,6 +785,7 @@ public static class Permissions
             ExamTypesView,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
             PaymentVerificationView, PaymentVerificationExport,
+            PaymentReconciliationView,
 
             GradingSchemesView,
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify,
@@ -753,6 +794,8 @@ public static class Permissions
 
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
             PracticalMarksView, PracticalMarksSubmit,
+            InternalTheoryView, InternalTheorySubmit, InternalTheoryImport, InternalTheoryExport,
+            InternalPracticalView, InternalPracticalSubmit, InternalPracticalImport, InternalPracticalExport,
 
             ExamCentersView,
             AdmitCardsView, AdmitCardsDownload,

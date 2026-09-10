@@ -83,8 +83,12 @@
                 <div>
                     <label class="block text-xs sm:text-sm font-medium text-gray-500">Student Name</label>
                     <p class="mt-1 text-xs sm:text-sm text-gray-900">
-                        @(Model.StudentRegistration != null ? $"{Model.StudentRegistration.FirstName} {Model.StudentRegistration.LastName}" : "-")
+                        @(Model.StudentRegistration != null ? $"{Model.StudentRegistration.FirstName} {Model.StudentRegistration.MiddleName} {Model.StudentRegistration.LastName}".Trim() : "-")
                     </p>
+                </div>
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Registration Number</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900 font-mono">@(Model.StudentRegistration?.RegistrationNumber ?? "-")</p>
                 </div>
                 <div>
                     <label class="block text-xs sm:text-sm font-medium text-gray-500">Subject</label>

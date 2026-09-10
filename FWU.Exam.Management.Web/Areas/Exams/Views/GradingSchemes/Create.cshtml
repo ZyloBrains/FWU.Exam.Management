@@ -2,6 +2,10 @@
 
 @{
     ViewData["Title"] = "Create Grading Scheme";
+    var programs = ViewBag.Programs as SelectList;
+    var academicYears = ViewBag.AcademicYears as SelectList;
+    var selectedProgramIds = ViewBag.SelectedProgramIds as List<int> ?? [];
+    var programAcademicYears = ViewBag.ProgramAcademicYears as Dictionary<int, int?> ?? new();
 }
 
 <div class="space-y-6">
@@ -29,29 +33,21 @@
                         <input asp-for="Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Bachelor Grading 2024" />
                         <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
-                    <div>
-                        <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Program <span class="text-red-500">*</span></label>
-                        <select asp-for="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
-                            <option value="">-- Select Program --</option>
+                    <div class="md:col-span-2">
+                        <label class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Programs <span class="text-red-500">*</span></label>
+                        <select name="selectedPrograms" id="programSelect" multiple class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            @if (programs != null)
+                            {
+                                foreach (var p in programs)
+                                {
+                                    <option value="@p.Value" selected="@(selectedProgramIds.Contains(int.Parse(p.Value)))">@p.Text</option>
+                                }
+                            }
                         </select>
-                        <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
+                        <span class="text-xs text-gray-500 mt-1 block">Hold Ctrl/Cmd to select multiple programs</span>
                     </div>
-                    <div>
-                        <label asp-for="AcademicYearId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Academic Year</label>
-                        <select asp-for="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
-                            <option value="">-- Select Academic Year --</option>
-                        </select>
-                        <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
-                    <div>
-                        <label asp-for="GradeGroupId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Grade Group</label>
-                        <select asp-for="GradeGroupId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.GradeGroupId">
-                            <option value="">-- Select Grade Group (optional) --</option>
-                        </select>
-                        <span asp-validation-for="GradeGroupId" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
-                    <div>
-                        <label asp-for="Description" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                    <div class="md:col-span-2">
+                        <label asp-for="Description" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Description</label>
                         <textarea asp-for="Description" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Optional description"></textarea>
                         <span asp-validation-for="Description" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -137,23 +133,13 @@
     <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
 
     <style>
-        .select2-container--default .select2-selection--single {
-            height: 38px;
+        .select2-container--default .select2-selection--multiple {
             border: 1px solid #d1d5db;
             border-radius: 0.375rem;
-            padding: 0.375rem 0.75rem;
-            font-size: 0.875rem;
+            min-height: 38px;
+            padding: 0.25rem;
         }
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 1.25rem;
-            padding: 0;
-            color: #374151;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 36px;
-        }
-        .select2-container--default .select2-selection--single:focus,
-        .select2-container--default.select2-container--focus .select2-selection--single {
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
             border-color: #6366f1;
             outline: 2px solid transparent;
             outline-offset: 2px;
@@ -163,7 +149,7 @@
 
     <script>
         $(document).ready(function () {
-            $('.select2').select2({ width: 'resolve' });
+            $('#programSelect').select2({ width: 'resolve', placeholder: '-- Select Programs --' });
         });
     </script>
 
@@ -191,6 +177,10 @@
             appendHidden(form, 'isPasses', passes.join(','));
             appendHidden(form, 'displayOrders', orders.join(','));
             appendHidden(form, 'remarks', remarks.join(','));
+
+            var selectedPrograms = $('#programSelect').val() || [];
+            appendHidden(form, 'programIds', selectedPrograms.join(','));
+            appendHidden(form, 'academicYearIds', selectedPrograms.map(function() { return ''; }).join(','));
         }
 
         function appendHidden(form, name, value) {

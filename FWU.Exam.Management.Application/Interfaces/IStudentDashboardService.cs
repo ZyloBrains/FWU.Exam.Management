@@ -30,10 +30,22 @@ public interface IStudentDashboardService
     Task<ExamSchedule?> GetExamScheduleByIdAsync(int examScheduleId);
     Task<List<ExamSchedule>> GetExamSchedulesByIdsAsync(IEnumerable<int> ids);
     Task<StudentAdmission?> GetStudentAdmissionByUserIdAsync(string userId);
+    Task<bool> IsStudentFeeExemptAsync(string userId);
     Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null);
     Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, Dictionary<int, ReExamLegs> subjectSelection, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null);
     Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData, string? responseMessage = null);
-    Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection);
+    Task UpdatePaymentRequestLogTransactionIdAsync(int logId, string transactionId);
+
+    /// <summary>
+    /// Initiates a Khalti payment for an already-created payment log and immediately
+    /// persists the returned pidx on <c>ProviderReferenceId</c> / <c>TransactionId</c> with
+    /// <c>PaymentStatus = Initiated</c> BEFORE the payment URL is returned to the caller.
+    /// Returns (pidx, paymentUrl) or <c>null</c> when Khalti did not return a pidx.
+    /// </summary>
+    Task<(string Pidx, string PaymentUrl)?> InitiateKhaltiPaymentAsync(
+        int logId, string returnUrl, string websiteUrl,
+        string? customerFullName = null, string? customerEmail = null, string? customerPhone = null);
+    Task<decimal> ComputeSelectionFeeAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection, string userId);
     Task<bool> TryCompleteApplyAgainTopUpAsync(int logId, string userId);
     Task SupersedeOpenApplyAgainPaymentsAsync(int examScheduleId, int studentRegistrationId, int exceptLogId);
     Task<bool> HasOpenApplyAgainPaymentAsync(int examScheduleId, int studentRegistrationId);
@@ -55,6 +67,12 @@ public interface IStudentDashboardService
     Task<int?> GetAdmitCardIdForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId);
     Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(int studentRegistrationId);
     Task<PaymentRequestLog?> GetPaymentLogByInvoiceNumberAsync(string invoiceNumber);
+    Task<PaymentRequestLog?> GetPaymentLogByProviderReferenceAsync(string providerReferenceId);
     Task<PaymentRequestLog?> FindPendingPaymentLogByStudentAsync(int studentRegistrationId);
+    Task<PaymentRequestLog?> FindPaymentLogByTransactionUuidAsync(string transactionUuid);
     Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath);
+    Task<int> RecordUnresolvedCompletedPaymentAsync(int? examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string transactionId, string responseData, string responseMessage, string? invoiceNumber = null, string? selectedSubjectIds = null);
+    Task<bool> HasPaymentUnderVerificationAsync(int examScheduleId, int studentRegistrationId);
+    Task<PaymentRequestLog?> MarkLatestPendingPaymentForVerificationAsync(int studentRegistrationId, string transactionId, string responseData, string responseMessage);
+    Task<PaymentRequestLog?> MarkPaymentLogPendingVerificationAsync(int logId, string responseData, string responseMessage);
 }

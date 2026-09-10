@@ -26,6 +26,7 @@
         isSuperAdmin = Model.IsSuperAdmin,
         isFacultyAdmin = Model.IsFacultyAdmin,
         isCollegeAdmin = Model.IsCollegeAdmin,
+        collegeId = Model.CollegeId,
         colleges = Model.Colleges.Select(c => new { id = c.Id, name = c.Name }).ToList(),
         accent = new
         {
@@ -612,7 +613,10 @@
         function init() {
             var collegeSel = $('#CollegeId');
 
-            if (config.colleges && config.colleges.length) {
+            if (config.isCollegeAdmin && config.collegeId) {
+                collegeSel.empty().append('<option value="' + config.collegeId + '">' + (config.colleges.length ? config.colleges[0].name : '') + '</option>');
+                collegeSel.prop('disabled', true);
+            } else if (config.colleges && config.colleges.length) {
                 populateSelect(collegeSel, config.colleges, '-- Select College --', !config.isSuperAdmin);
             } else {
                 clearSelect(collegeSel, '-- Select College --');
@@ -624,7 +628,9 @@
 
             $('.select2').select2({ width: 'resolve' });
 
-            if (config.isCollegeAdmin) {
+            if (config.isCollegeAdmin && config.collegeId) {
+                loadAcademicYears(config.collegeId);
+            } else if (config.isCollegeAdmin) {
                 var first = collegeSel.find('option:not(:first)').first().val();
                 if (first) {
                     collegeSel.val(first);

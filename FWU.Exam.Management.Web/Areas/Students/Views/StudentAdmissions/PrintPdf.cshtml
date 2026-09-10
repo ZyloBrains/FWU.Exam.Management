@@ -159,12 +159,12 @@
         <thead>
             <tr>
                 <th>S.N.</th>
+                <th>Student Name</th>
                 <th>College Roll No.</th>
                 <th>College</th>
                 <th>Program</th>
                 <th>Admission Date</th>
                 <th>Status</th>
-                <th>Active</th>
             </tr>
         </thead>
         <tbody>
@@ -175,6 +175,7 @@
             {
                 <tr>
                     <td>@sn</td>
+                    <td>@(string.Join(" ", new[] { item.FirstName, item.MiddleName, item.LastName }.Where(p => !string.IsNullOrWhiteSpace(p))))</td>
                     <td>@(item.CollegeRollNumber ?? "-")</td>
                     <td>@(item.College?.Name ?? "-")</td>
                     <td>@(item.Program?.ProgramName ?? "-")</td>
@@ -187,16 +188,6 @@
                         else
                         {
                             <span class="pending-badge">Pending</span>
-                        }
-                    </td>
-                    <td>
-                        @if (item.IsActive)
-                        {
-                            <span class="active-badge">Active</span>
-                        }
-                        else
-                        {
-                            <span class="inactive-badge">Inactive</span>
                         }
                     </td>
                 </tr>

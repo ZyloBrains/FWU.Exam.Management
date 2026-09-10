@@ -3,7 +3,6 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
-using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -48,7 +47,7 @@ public class GradingSchemesController(
     [HttpPost]
     [RequirePermission("gradingschemes.create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(GradingScheme gradingScheme, string? gradeLetters, string? minPercentages, string? maxPercentages, string? gradePoints, string? remarks, string? isPasses, string? displayOrders)
+    public async Task<IActionResult> Create(GradingScheme gradingScheme, string? programIds, string? academicYearIds, string? gradeLetters, string? minPercentages, string? maxPercentages, string? gradePoints, string? remarks, string? isPasses, string? displayOrders)
     {
         if (ModelState.IsValid)
         {
@@ -56,7 +55,9 @@ public class GradingSchemesController(
                 gradeLetters, minPercentages, maxPercentages,
                 gradePoints, remarks, isPasses, displayOrders);
 
-            await gradingSchemeService.CreateGradingSchemeAsync(gradingScheme);
+            var parsedPrograms = ParseProgramAssignments(programIds, academicYearIds);
+
+            await gradingSchemeService.CreateGradingSchemeAsync(gradingScheme, parsedPrograms.Keys.ToList(), parsedPrograms);
             TempData["SuccessMessage"] = "Grading scheme created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -82,7 +83,7 @@ public class GradingSchemesController(
     [HttpPost]
     [RequirePermission("gradingschemes.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, GradingScheme gradingScheme, string? gradeLetters, string? minPercentages, string? maxPercentages, string? gradePoints, string? remarks, string? isPasses, string? displayOrders)
+    public async Task<IActionResult> Edit(int id, GradingScheme gradingScheme, string? programIds, string? academicYearIds, string? gradeLetters, string? minPercentages, string? maxPercentages, string? gradePoints, string? remarks, string? isPasses, string? displayOrders)
     {
         if (id != gradingScheme.Id) return NotFound();
 
@@ -94,7 +95,9 @@ public class GradingSchemesController(
                     gradeLetters, minPercentages, maxPercentages,
                     gradePoints, remarks, isPasses, displayOrders, gradingScheme.Id);
 
-                await gradingSchemeService.UpdateGradingSchemeAsync(gradingScheme);
+                var parsedPrograms = ParseProgramAssignments(programIds, academicYearIds);
+
+                await gradingSchemeService.UpdateGradingSchemeAsync(gradingScheme, parsedPrograms.Keys.ToList(), parsedPrograms);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -159,11 +162,12 @@ public class GradingSchemesController(
         var items = await gradingSchemeService.GetFilteredItemsAsync(search);
 
         var sb = new StringBuilder();
-        sb.AppendLine("ID,Name,Program,Academic Year,Description,IsActive");
+        sb.AppendLine("ID,Name,Programs,Description,IsActive");
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{item.Id},{item.Name.EscapeCsv()},{(item.Program?.ProgramName ?? "").EscapeCsv()},{(item.AcademicYear?.AcademicYearName ?? "").EscapeCsv()},{(item.Description ?? "").EscapeCsv()},{(item.IsActive ? "Yes" : "No")}");
+            var programs = string.Join("; ", item.ProgramAssignments?.Select(gsp => gsp.Program?.ProgramName ?? "") ?? []);
+            sb.AppendLine($"{item.Id},{item.Name.EscapeCsv()},{programs.EscapeCsv()},{(item.Description ?? "").EscapeCsv()},{(item.IsActive ? "Yes" : "No")}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -184,7 +188,7 @@ public class GradingSchemesController(
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("GradingSchemes");
 
-        var headers = new[] { "ID", "Name", "Program", "Academic Year", "Description", "IsActive" };
+        var headers = new[] { "ID", "Name", "Programs", "Description", "IsActive" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(1, i + 1);
@@ -196,12 +200,12 @@ public class GradingSchemesController(
         int row = 2;
         foreach (var item in items)
         {
+            var programs = string.Join("; ", item.ProgramAssignments?.Select(gsp => gsp.Program?.ProgramName ?? "") ?? []);
             worksheet.Cell(row, 1).Value = item.Id;
             worksheet.Cell(row, 2).Value = item.Name ?? "";
-            worksheet.Cell(row, 3).Value = item.Program?.ProgramName ?? "";
-            worksheet.Cell(row, 4).Value = item.AcademicYear?.AcademicYearName ?? "";
-            worksheet.Cell(row, 5).Value = item.Description ?? "";
-            worksheet.Cell(row, 6).Value = item.IsActive ? "Yes" : "No";
+            worksheet.Cell(row, 3).Value = programs;
+            worksheet.Cell(row, 4).Value = item.Description ?? "";
+            worksheet.Cell(row, 5).Value = item.IsActive ? "Yes" : "No";
             row++;
         }
 
@@ -231,11 +235,35 @@ public class GradingSchemesController(
 
     private void PopulateDropdowns(GradingSchemeSelectListsDto selectLists, GradingScheme? gradingScheme = null)
     {
-        ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", gradingScheme?.ProgramId);
-        ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", gradingScheme?.AcademicYearId);
-        ViewData["GradeGroupId"] = new SelectList(selectLists.GradeGroups, "Id", "Name", gradingScheme?.GradeGroupId);
+        ViewData["Programs"] = new SelectList(selectLists.Programs, "Id", "Name");
+        ViewData["AcademicYears"] = new SelectList(selectLists.AcademicYears, "Id", "Name");
+        ViewData["SelectedProgramIds"] = gradingScheme?.ProgramAssignments?.Select(gsp => gsp.ProgramId).ToList() ?? [];
+        ViewData["ProgramAcademicYears"] = gradingScheme?.ProgramAssignments?
+            .Where(gsp => gsp.AcademicYearId.HasValue)
+            .ToDictionary(gsp => gsp.ProgramId, gsp => gsp.AcademicYearId) ?? new Dictionary<int, int?>();
     }
 
+    private static Dictionary<int, int?> ParseProgramAssignments(string? programIds, string? academicYearIds)
+    {
+        var result = new Dictionary<int, int?>();
+        if (string.IsNullOrEmpty(programIds)) return result;
+
+        var ids = programIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var ayIds = (academicYearIds ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        for (int i = 0; i < ids.Length; i++)
+        {
+            if (int.TryParse(ids[i], out var programId))
+            {
+                int? ayId = null;
+                if (i < ayIds.Length && int.TryParse(ayIds[i], out var parsedAy))
+                    ayId = parsedAy;
+                result[programId] = ayId;
+            }
+        }
+
+        return result;
+    }
 
     private static List<GradeDefinition> GetDefaultGradeDefinitions()
     {

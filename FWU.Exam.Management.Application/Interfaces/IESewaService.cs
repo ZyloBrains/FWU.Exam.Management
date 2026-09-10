@@ -23,6 +23,8 @@ public class ESewaVerifyResponse
 {
     [JsonPropertyName("transaction_code")]
     public string? TransactionCode { get; set; }
+    [JsonPropertyName("ref_id")]
+    public string? RefId { get; set; }
     [JsonPropertyName("status")]
     public string? Status { get; set; }
     [JsonPropertyName("total_amount")]
@@ -43,4 +45,11 @@ public interface IESewaService
     Task<bool> VerifyResponseSignatureAsync(ESewaVerifyResponse response, string rawJson);
     string GenerateTransactionUuid();
     Task<ESewaVerifyResponse?> VerifyTransactionAsync(string transactionUuid, decimal totalAmount);
+
+    /// <summary>
+    /// Always queries the live eSewa transaction status endpoint (ignores the
+    /// <c>ESewaConfig:SkipVerification</c> development override). Used by the admin
+    /// verification page where a real status is required.
+    /// </summary>
+    Task<ESewaVerifyResponse?> QueryTransactionStatusAsync(string transactionUuid, decimal totalAmount);
 }

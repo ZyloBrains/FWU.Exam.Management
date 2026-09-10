@@ -122,7 +122,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                         $"Login blocked for unconfirmed email {Input.EmailOrRegNumber}",
                         new { username = Input.EmailOrRegNumber, reason = "email_not_confirmed" }, AuditSeverity.Warning);
                     ModelState.AddModelError(string.Empty,
-                        "Please verify your email before logging in with it. You can also log in with your registration number.");
+                        "Please verify your email before logging in with it. You can also log in with your registration number, or resend the verification email.");
                     return Page();
                 }
 

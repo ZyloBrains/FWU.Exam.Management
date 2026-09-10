@@ -82,7 +82,15 @@ public class ResendEmailConfirmationModel(UserManager<AppUser> userManager, INot
                 ["CallbackUrl"] = callbackUrl ?? string.Empty
             };
 
-            await notificationService.SendAsync(Input.Email, null, "confirm_email", context);
+            var result = await notificationService.SendAsync(Input.Email, null, "confirm_email", context);
+
+            if (!result.EmailSent || !string.IsNullOrWhiteSpace(result.EmailError))
+            {
+                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(result.EmailError)
+                    ? "The verification email could not be sent. Please try again later."
+                    : $"The verification email could not be sent: {result.EmailError}");
+                return Page();
+            }
 
             TempData["StatusMessage"] = "Verification email sent. Please check your email.";
             return RedirectToPage();

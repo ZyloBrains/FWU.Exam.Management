@@ -104,6 +104,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<UserAttachment> UserAttachments { get; set; } = null!;
     public DbSet<GradingScheme> GradingSchemes { get; set; } = null!;
     public DbSet<GradeDefinition> GradeDefinitions { get; set; } = null!;
+    public DbSet<GradingSchemeProgram> GradingSchemePrograms { get; set; } = null!;
     public DbSet<GradeGroup> GradeGroups { get; set; } = null!;
     public DbSet<GradePoint> GradePoints { get; set; } = null!;
     public DbSet<EntranceExamApplication> EntranceExamApplications { get; set; } = null!;
@@ -776,23 +777,36 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(bv => bv.BankVoucherUserAttachmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<GradingScheme>()
-            .HasOne(gs => gs.Program)
+        builder.Entity<GradingSchemeProgram>()
+            .HasKey(gsp => new { gsp.GradingSchemeId, gsp.ProgramId });
+
+        builder.Entity<GradingSchemeProgram>()
+            .HasOne(gsp => gsp.GradingScheme)
+            .WithMany(gs => gs.ProgramAssignments)
+            .HasForeignKey(gsp => gsp.GradingSchemeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<GradingSchemeProgram>()
+            .HasOne(gsp => gsp.Program)
             .WithMany()
-            .HasForeignKey(gs => gs.ProgramId)
+            .HasForeignKey(gsp => gsp.ProgramId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<GradingScheme>()
-            .HasOne(gs => gs.AcademicYear)
+        builder.Entity<GradingSchemeProgram>()
+            .HasOne(gsp => gsp.AcademicYear)
             .WithMany()
-            .HasForeignKey(gs => gs.AcademicYearId)
+            .HasForeignKey(gsp => gsp.AcademicYearId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<GradingScheme>()
-            .HasOne(gs => gs.GradeGroup)
+        builder.Entity<GradingSchemeProgram>()
+            .HasIndex(gsp => new { gsp.GradingSchemeId, gsp.ProgramId })
+            .IsUnique();
+
+        builder.Entity<ExamSubjectResult>()
+            .HasOne(esr => esr.GradingScheme)
             .WithMany()
-            .HasForeignKey(gs => gs.GradeGroupId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .HasForeignKey(esr => esr.GradingSchemeId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<GradeGroup>()
             .HasIndex(gg => gg.GradeGroupName);

@@ -181,6 +181,8 @@ public partial class EntryPoint
         builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
         builder.Services.AddScoped<ISemesterEnrollmentService, SemesterEnrollmentService>();
         builder.Services.AddHostedService<SemesterPromotionBackgroundService>();
+        builder.Services.AddScoped<IPaymentReconciliationService, PaymentReconciliationService>();
+        builder.Services.AddHostedService<PaymentReconciliationBackgroundService>();
         builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<ISmsConfigurationService, SmsConfigurationService>();
@@ -224,6 +226,9 @@ public partial class EntryPoint
         builder.Services.AddScoped<IESewaService, ESewaService>();
         builder.Services.AddHttpClient<IESewaService, ESewaService>();
         builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
+        builder.Services.AddScoped<IPaymentStateTokenService, PaymentStateTokenService>();
+        builder.Services.AddScoped<IKhaltiLookupVerificationService, KhaltiLookupVerificationService>();
+        builder.Services.AddScoped<IESewaVerificationService, ESewaVerificationService>();
         builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
         builder.Services.AddScoped<ICountryService, CountryService>();
         builder.Services.AddScoped<IPermissionService, PermissionService>();

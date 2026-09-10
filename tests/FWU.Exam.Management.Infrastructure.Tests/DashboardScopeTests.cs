@@ -1,8 +1,10 @@
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -78,6 +80,43 @@ public class DashboardScopeTests
         ctx.StudentRegistrations.Add(Registration(2, collegeId: TestData.CollegeId, programId: TestData.ProgramId, facultyId: null, tenantId: 1));
         ctx.StudentRegistrations.Add(Registration(3, collegeId: 2, programId: 3, facultyId: 2, tenantId: 2));
         ctx.StudentRegistrations.Add(Registration(4, collegeId: 2, programId: 3, facultyId: null, tenantId: 2));
+
+        // An exam registration row for a different college (2) placed on a program of
+        // this faculty (ProgramId=1 -> FacultyId=1). Under the old FacultyAdmin-first
+        // precedence a CollegeAdmin+FacultyAdmin user would leak it; college scope
+        // must exclude it.
+        ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow), null));
+        ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
+        ctx.ApplicationVouchers.Add(TestData.Voucher(2, 2, 21));
+
+        ctx.ExamRegistrations.Add(new ExamRegistration
+        {
+            Id = 5,
+            TenantId = TestData.TenantId,
+            AcademicYearId = TestData.AcademicYearId,
+            CollegeId = TestData.CollegeId,
+            ExamScheduleId = 21,
+            ApplicationVoucherId = 1,
+            ProgramsId = TestData.ProgramId,
+            RegistrationDate = DateTime.UtcNow,
+            Status = RegistrationStatus.Pending,
+            IsActive = true,
+            IsAppliedByStudent = true
+        });
+        ctx.ExamRegistrations.Add(new ExamRegistration
+        {
+            Id = 6,
+            TenantId = TestData.TenantId,
+            AcademicYearId = TestData.AcademicYearId,
+            CollegeId = 2,
+            ExamScheduleId = 21,
+            ApplicationVoucherId = 2,
+            ProgramsId = TestData.ProgramId,
+            RegistrationDate = DateTime.UtcNow,
+            Status = RegistrationStatus.Pending,
+            IsActive = true,
+            IsAppliedByStudent = true
+        });
     }
 
     private static StudentRegistration Registration(int id, int collegeId, int programId, int? facultyId, int tenantId)
@@ -173,6 +212,30 @@ public class DashboardScopeTests
         Assert.Equal(2, await db.Context.StudentRegistrations.ApplyScope(uc).CountAsync());
         Assert.Equal(1, await db.Context.Colleges.ApplyScope(uc).CountAsync());
         Assert.Empty(await db.Context.Faculties.ApplyScope(uc).ToListAsync());
+    }
+
+    [Fact]
+    public async Task DualRoleCollegeAdmin_IsRestrictedToOwnCollege_NotWholeFaculty()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedMultiTenantData);
+        var uc = new TestUserContext().WithUser(
+            userId: null,
+            facultyId: 1,
+            collegeId: TestData.CollegeId,
+            facultyCollegeIds: [TestData.CollegeId],
+            roles: [Role.CollegeAdmin, Role.FacultyAdmin]);
+
+        // Registration 6 belongs to the other college (2) but sits on a program of this
+        // faculty; the FacultyAdmin-first precedence previously leaked it. College scope
+        // must keep it hidden while the own-college registration stays visible.
+        var visibleRegIds = await db.Context.ExamRegistrations
+            .ApplyScope(uc)
+            .Select(e => e.Id)
+            .ToListAsync();
+        Assert.Equal([5], visibleRegIds);
+
+        Assert.Equal(2, await db.Context.StudentRegistrations.ApplyScope(uc).CountAsync());
+        Assert.Equal(1, await db.Context.Colleges.ApplyScope(uc).CountAsync());
     }
 
     [Fact]

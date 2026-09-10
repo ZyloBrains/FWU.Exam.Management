@@ -217,8 +217,12 @@
                             <i class="fas fa-times text-gray-300"></i>
                         }
                     </div>
-                    <div class="c-fee text-sm font-semibold text-gray-800">
-                        @if (Model.IsRegular)
+                    <div class="c-fee text-sm font-semibold @(Model.IsFeeExempt ? "text-emerald-600" : "text-gray-800")">
+                        @if (Model.IsFeeExempt)
+                        {
+                            <text>Waived</text>
+                        }
+                        else if (Model.IsRegular)
                         {
                             <text>Rs @subj.PracticalFee.ToString("N0")</text>
                         }
@@ -233,7 +237,7 @@
             {
                 <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
                     <span class="text-sm font-semibold text-gray-700">Compulsory Subtotal:</span>
-                    <span class="text-sm font-semibold text-gray-700" id="compPracticalFee">Rs @compulsorySubjects.Sum(s => s.PracticalFee).ToString("N0")</span>
+                    <span class="text-sm font-semibold @(Model.IsFeeExempt ? "text-emerald-600" : "text-gray-700")" id="compPracticalFee">@(Model.IsFeeExempt ? "Waived" : $"Rs {compulsorySubjects.Sum(s => s.PracticalFee):N0}")</span>
                 </div>
             }
         }
@@ -340,8 +344,12 @@
                                     <i class="fas fa-times text-gray-300"></i>
                                 }
                             </div>
-                            <div class="c-fee text-sm font-semibold text-gray-800">
-                                @if (Model.IsRegular)
+                            <div class="c-fee text-sm font-semibold @(Model.IsFeeExempt ? "text-emerald-600" : "text-gray-800")">
+                                @if (Model.IsFeeExempt)
+                                {
+                                    <text>Waived</text>
+                                }
+                                else if (Model.IsRegular)
                                 {
                                     <text>Rs @subj.PracticalFee.ToString("N0")</text>
                                 }
@@ -356,7 +364,7 @@
                     {
                         <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
                             <span class="text-sm font-semibold text-gray-700">Elective Subtotal:</span>
-                            <span class="text-sm font-semibold text-gray-700">Rs @groupSubjects.Sum(s => s.PracticalFee).ToString("N0")</span>
+                            <span class="text-sm font-semibold @(Model.IsFeeExempt ? "text-emerald-600" : "text-gray-700")">@(Model.IsFeeExempt ? "Waived" : $"Rs {groupSubjects.Sum(s => s.PracticalFee):N0}")</span>
                         </div>
                     }
                 </div>
@@ -409,7 +417,30 @@
         </div>
     </div>
 
+        <!-- Fee Waiver (disabled students) -->
+        @if (Model.IsFeeExempt)
+        {
+            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 sm:p-6 mb-6">
+                <div class="flex items-start gap-4 flex-wrap md:flex-nowrap">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+                        <i class="fas fa-ribbon text-white"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h2 class="text-lg font-bold text-emerald-800">Exam Fee Waived</h2>
+                        <p class="text-sm text-emerald-700 mt-1">As a fee-exempt student, you do not need to pay any exam fee. Your exam form will be submitted directly.</p>
+                    </div>
+                    <button type="button" onclick="submitWaivedForm()"
+                            class="submit-waiver-btn inline-flex shrink-0 items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-bold hover:from-blue-700 hover:to-blue-800 active:scale-[0.97] transition-all shadow-lg shadow-blue-600/30">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit Form
+                    </button>
+                </div>
+            </div>
+        }
+
         <!-- Payment Method -->
+        @if (!Model.IsFeeExempt)
+        {
         <div id="paymentMethodSection" class="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
                 <div class="flex items-center gap-3">
@@ -469,6 +500,7 @@
                 }
             </div>
         </div>
+        }
     </div>
 
     <!-- Sticky Bottom Bar (Mobile) -->
@@ -479,15 +511,28 @@
                 <p class="text-lg font-extrabold text-gray-900" id="stickyTotal">Rs @Model.GrandTotal.ToString("N0")</p>
                 <p class="text-[10px] text-gray-400" id="stickyCount">@Model.Subjects.Count(s => s.IsSelected) selected</p>
             </div>
-            <button type="button" onclick="openPaymentModal()"
-                    class="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-bold hover:from-blue-700 hover:to-blue-800 active:scale-[0.97] transition-all shadow-lg shadow-blue-600/30">
-                <i class="fas fa-arrow-right"></i>
-                Continue
-            </button>
+            @if (Model.IsFeeExempt)
+            {
+                <button type="button" onclick="submitWaivedForm()"
+                        class="submit-waiver-btn shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-bold hover:from-blue-700 hover:to-blue-800 active:scale-[0.97] transition-all shadow-lg shadow-blue-600/30">
+                    <i class="fas fa-paper-plane"></i>
+                    Submit Form
+                </button>
+            }
+            else
+            {
+                <button type="button" onclick="openPaymentModal()"
+                        class="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-bold hover:from-blue-700 hover:to-blue-800 active:scale-[0.97] transition-all shadow-lg shadow-blue-600/30">
+                    <i class="fas fa-arrow-right"></i>
+                    Continue
+                </button>
+            }
         </div>
     </div>
 
     <!-- Payment Method Bottom Sheet (Mobile) -->
+    @if (!Model.IsFeeExempt)
+    {
     <div id="paymentSheetBackdrop" class="fixed inset-0 bg-black/50 hidden md:hidden" style="z-index:70"></div>
     <div id="paymentSheet" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl shadow-black/30 hidden md:hidden transition-transform duration-300 translate-y-full" style="z-index:80">
         <div class="px-4 py-5">
@@ -559,6 +604,7 @@
             </div>
         </div>
     </div>
+    }
 </div>
 
 <form id="paymentForm" method="post" style="display:none">
@@ -801,17 +847,69 @@
                 return;
             }
             if (confirm('Pay Rs ' + parseFloat(amount).toLocaleString() + ' via ' + method.charAt(0).toUpperCase() + method.slice(1) + '?')) {
-                var form = document.getElementById('paymentForm');
                 document.getElementById('hfPaymentMethod').value = method;
-                if (method === 'esewa') {
+                if (method === 'khalti') {
+                    initiateKhaltiPayment();
+                } else if (method === 'esewa') {
+                    var form = document.getElementById('paymentForm');
                     form.action = '@Url.Action("ESewaPayment", "StudentDashboard", new { area = "Students" })';
-                } else if (method === 'khalti') {
-                    form.action = '@Url.Action("KhaltiPayment", "StudentDashboard", new { area = "Students" })';
+                    form.submit();
                 } else {
+                    var form = document.getElementById('paymentForm');
                     form.action = '@Url.Action("ProcessPayment", "StudentDashboard", new { area = "Students" })';
+                    form.submit();
                 }
-                form.submit();
             }
+        }
+
+        // Fee-exempt (disabled) students: submit the form directly to the cash
+        // (ProcessPayment) path with no payment method selected, so the server
+        // records a zero-fee waiver and completes the registration immediately.
+        var isFeeExempt = @Model.IsFeeExempt.ToString().ToLowerInvariant();
+        var waiveSubmitting = false;
+        function submitWaivedForm() {
+            if (waiveSubmitting) {
+                return;
+            }
+            updateTotals();
+            var groupError = isRegular ? validateElectiveGroups() : null;
+            if (groupError) {
+                showErrorToast(groupError);
+                return;
+            }
+            // Lock both Submit Form buttons so a fast double-click cannot
+            // fire a second POST and create a duplicate payment record.
+            waiveSubmitting = true;
+            document.querySelectorAll('.submit-waiver-btn').forEach(function (b) {
+                b.disabled = true;
+            });
+            var form = document.getElementById('paymentForm');
+            document.getElementById('hfPaymentMethod').value = 'waiver';
+            form.action = '@Url.Action("ProcessPayment", "StudentDashboard", new { area = "Students" })';
+            form.submit();
+        }
+
+        // KhaltiPayment now returns a JSON payload ({ paymentUrl, pidx, ... }) and
+        // only after the pidx is persisted, so the student is redirected client-side.
+        function initiateKhaltiPayment() {
+            var form = document.getElementById('paymentForm');
+            var url = '@Url.Action("KhaltiPayment", "StudentDashboard", new { area = "Students" })';
+            fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: new FormData(form),
+                headers: { 'Accept': 'application/json' }
+            }).then(function(res) {
+                return res.json();
+            }).then(function(payload) {
+                if (payload && payload.paymentUrl) {
+                    window.location.href = payload.paymentUrl;
+                    return;
+                }
+                window.location.reload();
+            }).catch(function() {
+                window.location.reload();
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function() {

@@ -7,8 +7,8 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface IExamRegistrationService
 {
-    Task<(List<ExamRegistration> Items, int TotalCount)> GetExamRegistrationsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null);
-    Task<List<ExamRegistration>> GetFilteredItemsAsync(string? search);
+    Task<(List<ExamRegistration> Items, int TotalCount)> GetExamRegistrationsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null, int? collegeId = null);
+    Task<List<ExamRegistration>> GetFilteredItemsAsync(string? search, int? collegeId = null);
     Task<ExamRegistration?> GetExamRegistrationByIdAsync(int id);
     Task CreateExamRegistrationAsync(ExamRegistration examRegistration);
     Task UpdateExamRegistrationAsync(ExamRegistration examRegistration);
@@ -22,6 +22,7 @@ public interface IExamRegistrationService
     Task<ExamFormAdminDto?> GetStudentExamFormDetailAsync(int id);
     Task<ExamFormEditableSubjectsDto?> GetEditableSubjectsAsync(int examRegistrationId);
     Task<(bool Success, string Message)> UpdateRegistrationSubjectsAsync(int examRegistrationId, List<int> subjectOfferingIds, Dictionary<int, FWU.Exam.Management.Application.Helpers.ReExamLegs>? subjectLegs = null);
+    Task<List<SelectOption>> GetFilterCollegesAsync();
     Task<List<SelectOption>> GetFilterAcademicYearsAsync();
     Task<List<SelectOption>> GetFilterLevelsAsync(int academicYearId);
     Task<List<SelectOption>> GetFilterExamSchedulesAsync(int academicYearId, int levelId);

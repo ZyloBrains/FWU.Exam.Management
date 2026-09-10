@@ -17,12 +17,13 @@ public class PracticalMarksController(IPracticalMarksService practicalMarksServi
             Mode = MarksEntryMode.Practical,
             Title = "Practical Marks Entry",
             Subtitle = "Select the exam schedule and subject, then enter practical marks step by step.",
-            Icon = "fa-flask",
+            Icon = "flask",
             ControllerBase = "PracticalMarks",
             SaveAction = "SavePracticalMarks",
             IsSuperAdmin = page.IsSuperAdmin,
             IsFacultyAdmin = page.IsFacultyAdmin,
             IsCollegeAdmin = page.IsCollegeAdmin,
+            CollegeId = page.CollegeId,
             Faculties = page.Faculties,
             Colleges = page.Colleges
         };

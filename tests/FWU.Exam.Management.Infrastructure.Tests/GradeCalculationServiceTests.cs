@@ -14,7 +14,6 @@ public class GradeCalculationServiceTests
         {
             Id = id,
             Name = $"Scheme {id}",
-            ProgramId = programId,
             IsActive = true
         };
 
@@ -35,6 +34,16 @@ public class GradeCalculationServiceTests
         }
 
         return scheme;
+    }
+
+    private static GradingSchemeProgram SchemeProgram(int schemeId, int programId)
+    {
+        return new GradingSchemeProgram
+        {
+            GradingSchemeId = schemeId,
+            ProgramId = programId,
+            IsActive = true
+        };
     }
 
     private static SubjectOffering TheoryOffering(bool hasInternal = true, int theoryFull = 100, int? internalFull = null, int theoryPass = 40)
@@ -82,6 +91,7 @@ public class GradeCalculationServiceTests
                 ("B", 60, 79, 3.0m, true),
                 ("C", 40, 59, 2.0m, true),
                 ("F", 0, 39, 0.0m, false)));
+            ctx.GradingSchemePrograms.Add(SchemeProgram(1, TestData.ProgramId));
         });
 
         var service = new GradeCalculationService(db.Context);
@@ -120,6 +130,7 @@ public class GradeCalculationServiceTests
             ctx.GradingSchemes.Add(Scheme(1, TestData.ProgramId,
                 ("A", 80, 100, 4.0m, true),
                 ("F", 0, 39, 0.0m, false)));
+            ctx.GradingSchemePrograms.Add(SchemeProgram(1, TestData.ProgramId));
         });
 
         var service = new GradeCalculationService(db.Context);
@@ -162,6 +173,7 @@ public class GradeCalculationServiceTests
             ctx.GradingSchemes.Add(Scheme(1, TestData.ProgramId,
                 ("A", 80, 100, 4.0m, true),
                 ("F", 0, 39, 0.0m, false)));
+            ctx.GradingSchemePrograms.Add(SchemeProgram(1, TestData.ProgramId));
         });
 
         var service = new GradeCalculationService(db.Context);
@@ -189,6 +201,7 @@ public class GradeCalculationServiceTests
             ctx.GradingSchemes.Add(Scheme(1, TestData.ProgramId,
                 ("A", 80, 100, 4.0m, true),
                 ("F", 0, 39, 0.0m, false)));
+            ctx.GradingSchemePrograms.Add(SchemeProgram(1, TestData.ProgramId));
         });
 
         var service = new GradeCalculationService(db.Context);
@@ -219,6 +232,7 @@ public class GradeCalculationServiceTests
             ctx.GradingSchemes.Add(Scheme(1, TestData.ProgramId,
                 ("A", 80, 100, 4.0m, true),
                 ("F", 0, 39, 0.0m, false)));
+            ctx.GradingSchemePrograms.Add(SchemeProgram(1, TestData.ProgramId));
         });
 
         var service = new GradeCalculationService(db.Context);
@@ -242,6 +256,7 @@ public class GradeCalculationServiceTests
             ctx.GradingSchemes.Add(Scheme(1, TestData.ProgramId,
                 ("A", 80, 100, 4.0m, true),
                 ("F", 0, 39, 0.0m, false)));
+            ctx.GradingSchemePrograms.Add(SchemeProgram(1, TestData.ProgramId));
         });
 
         var service = new GradeCalculationService(db.Context);
@@ -281,6 +296,7 @@ public class GradeCalculationServiceTests
             ctx.GradingSchemes.Add(Scheme(1, TestData.ProgramId,
                 ("A", 80, 100, 4.0m, true),
                 ("F", 0, 39, 0.0m, false)));
+            ctx.GradingSchemePrograms.Add(SchemeProgram(1, TestData.ProgramId));
         });
 
         var service = new GradeCalculationService(db.Context);
@@ -311,18 +327,41 @@ public class GradeCalculationServiceTests
     }
 
     [Fact]
-    public void GetGradePointValue_ReturnsCachedValueFromGradePoints()
+    public void GetGradePointValue_ReturnsCachedValueFromGradeDefinitions()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
-            ctx.GradeGroups.Add(new GradeGroup { Id = 10, GradeGroupName = "Test Group" });
-            ctx.GradePoints.Add(new GradePoint { Id = 1, GradeGroupId = 10, ObtainedMark = 85, Grade = "A+", GradePointValue = 4.0m });
+            var scheme = new GradingScheme
+            {
+                Id = 10,
+                Name = "Test Scheme",
+                IsActive = true
+            };
+            scheme.GradeDefinitions.Add(new GradeDefinition
+            {
+                Id = 1,
+                GradeLetter = "A+",
+                MinPercentage = 90,
+                MaxPercentage = 100,
+                GradePoint = 4.0m,
+                IsPass = true,
+                DisplayOrder = 1,
+                GradingSchemeId = 10
+            });
+            ctx.GradingSchemes.Add(scheme);
+            ctx.GradingSchemePrograms.Add(new GradingSchemeProgram
+            {
+                GradingSchemeId = 10,
+                ProgramId = TestData.ProgramId,
+                IsActive = true
+            });
         });
 
         var service = new GradeCalculationService(db.Context);
+        var schemeFromDb = db.Context.GradingSchemes.First(s => s.Id == 10);
 
-        var value = service.GetGradePointValue("A+", 10);
+        var value = service.GetGradePointValue("A+", schemeFromDb);
 
         Assert.Equal(4.0m, value);
     }
