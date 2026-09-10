@@ -1,6 +1,7 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Web.Authorization;
+using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
@@ -20,6 +21,7 @@ public class PracticalMarksController(IPracticalMarksService practicalMarksServi
             Icon = "flask",
             ControllerBase = "PracticalMarks",
             SaveAction = "SavePracticalMarks",
+            ExportAction = "ExportPracticalMarksPreview",
             IsSuperAdmin = page.IsSuperAdmin,
             IsFacultyAdmin = page.IsFacultyAdmin,
             IsCollegeAdmin = page.IsCollegeAdmin,
@@ -152,5 +154,25 @@ public class PracticalMarksController(IPracticalMarksService practicalMarksServi
         {
             return Json(new { success = false, message = ex.Message });
         }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult ExportPracticalMarksPreview([FromForm] PracticalMarksSaveDto dto, string? format, string? subjectName, string? context)
+    {
+        var rows = dto.Students
+            .Select(s => MarksPreviewRow.Create(s.StudentName, s.RegistrationNumber, s.SymbolNumber, s.Practical))
+            .ToList();
+
+        const string marksColumn = "Practical Marks";
+        var title = string.IsNullOrWhiteSpace(subjectName) ? "Practical Marks Entry" : subjectName;
+        var (contentType, extension) = MarksPreviewExporter.ResolveFormat(format);
+
+        byte[] file = string.Equals(format, "pdf", StringComparison.OrdinalIgnoreCase)
+            ? MarksPreviewExporter.BuildPdf(title, context ?? string.Empty, marksColumn, false, rows)
+            : MarksPreviewExporter.BuildExcel(title, marksColumn, false, rows);
+
+        var fileName = $"{MarksPreviewExporter.SanitizeFileName(title)}_PracticalMarksPreview.{extension}";
+        return File(file, contentType, fileName);
     }
 }

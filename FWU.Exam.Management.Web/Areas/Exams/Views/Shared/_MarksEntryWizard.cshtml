@@ -17,12 +17,15 @@
     var cardCheck = "text-indigo-600";
     var modeKey = isInternal ? "internal" : isPractical ? "practical" : "theory";
     var modeLabel = isInternal ? "Internal" : isPractical ? "Practical" : "Theory";
+    var showSymbol = !isInternal && !isPractical;
 
     var config = new
     {
         mode = modeKey,
+        showSymbol = showSymbol,
         baseUrl = "/Exams/" + Model.ControllerBase,
         saveAction = Model.SaveAction,
+        exportAction = Model.ExportAction,
         isSuperAdmin = Model.IsSuperAdmin,
         isFacultyAdmin = Model.IsFacultyAdmin,
         isCollegeAdmin = Model.IsCollegeAdmin,
@@ -194,13 +197,13 @@
                             class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
                         <i class="fas fa-arrow-left text-xs"></i> Back
                     </button>
-                    <button type="button" id="btnSave"
-                            class="inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors @accentPrimary">
-                        <i class="fas fa-save"></i> Save @modeLabel Marks
+                    <button type="button" id="btnPreview"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-eye text-xs"></i> Preview
                     </button>
-                    <button type="button" id="btnSubmitAll"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
-                        <i class="fas fa-check-double"></i> Submit All
+                    <button type="button" id="btnSubmit"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors @accentPrimary">
+                        <i class="fas fa-check-double"></i> Submit All @modeLabel Marks
                     </button>
                 </div>
             </div>
@@ -211,9 +214,13 @@
                         <tr>
                             <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">S.N</th>
                             <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Registration Number</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Student Name</th>
+                            @if (showSymbol)
+                            {
                             <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Symbol No.</th>
+                            }
                             <th id="wizardMarksHeader" class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Marks</th>
-                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Submit</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                         </tr>
                     </thead>
                     <tbody id="wizardStudentsBody" class="divide-y divide-gray-100"></tbody>
@@ -221,6 +228,63 @@
             </div>
         </div>
     </section>
+
+    <!-- Preview Modal -->
+    <div id="marksPreviewModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60" data-close-marks-preview></div>
+        <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-3xl flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-blue-900/30 rounded-t-xl" style="background:#1940B5">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-eye text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-white text-base">Preview @modeLabel Marks</h2>
+                        <p id="marksPreviewContext" class="text-xs text-blue-100"></p>
+                    </div>
+                </div>
+                <button type="button" class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors" data-close-marks-preview title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="marksPreviewSummary" class="px-5 py-3 text-sm border-b border-gray-100 bg-gray-50"></div>
+            <div class="overflow-y-auto px-5 py-4">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50 rounded-t-lg">
+                        <tr>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">S.N</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Student Name</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Registration Number</th>
+                            @if (showSymbol)
+                            {
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Symbol No.</th>
+                            }
+                            <th id="previewMarksHeader" class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Marks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="marksPreviewBody" class="divide-y divide-gray-100"></tbody>
+                </table>
+                <p id="marksPreviewEmpty" class="hidden text-sm text-gray-500 py-6 text-center"><i class="fas fa-inbox text-gray-300 mr-1"></i> No marks entered yet.</p>
+            </div>
+            <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+                <button type="button" id="btnPreviewDownloadExcel"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-file-excel text-xs"></i> Excel
+                </button>
+                <button type="button" id="btnPreviewDownloadPdf"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-file-pdf text-xs"></i> PDF
+                </button>
+                <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors" data-close-marks-preview>
+                    Close
+                </button>
+                <button type="button" id="btnPreviewSubmit"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 text-white text-sm font-semibold rounded-lg shadow transition-colors @accentPrimary">
+                    <i class="fas fa-check-double text-xs"></i> Submit All @modeLabel Marks
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script type="application/json" id="marksWizardConfig">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(config))</script>
@@ -487,7 +551,10 @@
                 tr.data('examSubjectResultId', s.examSubjectResultId || null);
                 tr.append('<td class="px-4 py-2.5 text-gray-500">' + (i + 1) + '</td>');
                 tr.append('<td class="px-4 py-2.5 font-medium text-gray-800">' + (s.registrationNumber || '-') + '</td>');
-                tr.append('<td class="px-4 py-2.5 text-gray-700">' + (s.symbolNumber || '-') + '</td>');
+                tr.append('<td class="px-4 py-2.5 text-gray-700">' + (s.studentName || '-') + '</td>');
+                if (config.showSymbol) {
+                    tr.append('<td class="px-4 py-2.5 text-gray-500">' + (s.symbolNumber || '-') + '</td>');
+                }
 
                 var td = $('<td class="px-4 py-2.5"></td>');
                 var wrap = $('<div class="flex items-start gap-3"></div>');
@@ -499,16 +566,11 @@
                 td.append(wrap);
                 tr.append(td);
 
-                var submitTd = $('<td class="px-4 py-2.5"></td>');
                 if (s.isSubmitted) {
-                    submitTd.append('<span class="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full bg-green-100 text-green-700"><i class="fas fa-check-circle"></i> Submitted</span>');
+                    tr.append('<td class="px-4 py-2.5"><span class="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full bg-green-100 text-green-700"><i class="fas fa-check-circle"></i> Submitted</span></td>');
                 } else {
-                    var box = $('<label class="inline-flex items-center gap-1.5 cursor-pointer"></label>');
-                    box.append('<input type="checkbox" class="submit-check rounded border-gray-300 ' + config.accent.checkbox + '">');
-                    box.append('<span class="text-[11px] text-gray-500">Submit</span>');
-                    submitTd.append(box);
+                    tr.append('<td class="px-4 py-2.5"></td>');
                 }
-                tr.append(submitTd);
 
                 tbody.append(tr);
             });
@@ -545,7 +607,10 @@
                 var row = {
                     ExamRegistrationId: $row.data('examRegistrationId'),
                     ExamSubjectResultId: $row.data('examSubjectResultId') || null,
-                    IsSubmitted: $row.find('.submit-check').is(':checked')
+                    StudentName: $row.find('td').eq(2).text().trim(),
+                    RegistrationNumber: $row.find('td').eq(1).text().trim(),
+                    SymbolNumber: config.showSymbol ? $row.find('td').eq(3).text().trim() : '',
+                    IsSubmitted: false
                 };
                 if (config.mode === 'internal') {
                     row.TheoryInternal = theoryVal !== '' ? parseFloat(theoryVal) : null;
@@ -557,6 +622,128 @@
                 rows.push(row);
             });
             return rows;
+        }
+
+        function rowMarksInfo($row) {
+            var $input = config.mode === 'practical'
+                ? $row.find('.marks-input[data-col="practical"]')
+                : $row.find('.marks-input[data-col="theory"]');
+            var val = $input.val();
+            var max = parseFloat($input.attr('data-max'));
+            if (isNaN(max)) max = null;
+            var num = (val !== '' && val !== null) ? parseFloat(val) : null;
+            return {
+                value: val,
+                number: num,
+                max: max,
+                over: num !== null && !isNaN(num) && max !== null && num > max
+            };
+        }
+
+        function buildPreviewRows() {
+            var rows = [];
+            $('#wizardStudentsBody tr').each(function () {
+                var $row = $(this);
+                rows.push({
+                    name: $row.find('td').eq(2).text().trim(),
+                    registration: $row.find('td').eq(1).text().trim(),
+                    symbol: config.showSymbol ? $row.find('td').eq(3).text().trim() : '',
+                    info: rowMarksInfo($row)
+                });
+            });
+            return rows;
+        }
+
+        function marksHeaderLabel() {
+            return config.mode === 'internal'
+                ? 'Internal Marks'
+                : config.mode === 'practical' ? 'Practical Marks' : 'Theory Marks';
+        }
+
+        function openPreview() {
+            var rows = buildPreviewRows();
+
+            $('#marksPreviewContext').text($('#subjName').text() + '  ·  ' + $('#step3Context').text());
+            $('#previewMarksHeader').text(marksHeaderLabel());
+
+            var entered = rows.filter(function (r) { return r.info.value !== '' && r.info.value != null; }).length;
+            var overCount = rows.filter(function (r) { return r.info.over; }).length;
+
+            $('#marksPreviewSummary').html(
+                '<i class="fas fa-users text-gray-400 mr-1"></i><b>' + entered + '</b> of <b>' + rows.length + '</b> students have marks entered' +
+                (overCount ? ' &middot; <span class="text-red-600 font-semibold"><i class="fas fa-exclamation-triangle mr-0.5"></i>' + overCount + ' over full marks</span>' : '')
+            );
+
+            var tbody = $('#marksPreviewBody').empty();
+            var any = false;
+            $.each(rows, function (i, r) {
+                var info = r.info;
+                var tr = $('<tr class="' + (info.over ? 'bg-red-50' : 'hover:bg-gray-50') + '"></tr>');
+                tr.append('<td class="px-4 py-2.5 text-gray-500">' + (i + 1) + '</td>');
+                tr.append('<td class="px-4 py-2.5 font-medium text-gray-800">' + (r.name || '-') + '</td>');
+                tr.append('<td class="px-4 py-2.5 text-gray-600">' + (r.registration || '-') + '</td>');
+                if (config.showSymbol) {
+                    tr.append('<td class="px-4 py-2.5 text-gray-500">' + (r.symbol || '-') + '</td>');
+                }
+
+                if (info.value === '' || info.value == null) {
+                    tr.append('<td class="px-4 py-2.5 text-gray-400 italic">Not entered</td>');
+                } else {
+                    tr.append('<td class="px-4 py-2.5 font-semibold ' + (info.over ? 'text-red-600' : 'text-gray-800') + '">' + info.value +
+                        (info.max != null ? ' / ' + info.max : '') +
+                        (info.over ? ' <i class="fas fa-exclamation-triangle text-red-500"></i>' : '') + '</td>');
+                    any = true;
+                }
+                tbody.append(tr);
+            });
+
+            $('#marksPreviewEmpty').toggleClass('hidden', any);
+            $('#marksPreviewModal').removeClass('hidden');
+        }
+
+        function downloadPreview(format) {
+            var payload = {
+                CollegeId: parseInt(getCollegeId(), 10),
+                ExamScheduleId: parseInt(state.scheduleId, 10),
+                SubjectOfferingId: parseInt(state.subjectId, 10),
+                SubmitAll: false,
+                subjectName: (state.subject && state.subject.name) || '',
+                context: $('#step3Context').text(),
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val(),
+                Students: collectRows()
+            };
+
+            if (!payload.CollegeId || !payload.ExamScheduleId || !payload.SubjectOfferingId) {
+                alert('Please select the exam schedule and subject first.');
+                return;
+            }
+
+            var $btn = format === 'pdf' ? $('#btnPreviewDownloadPdf') : $('#btnPreviewDownloadExcel');
+            $btn.prop('disabled', true);
+
+            fetch(tenant(config.baseUrl + '/' + config.exportAction) + '?format=' + format, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                body: $.param(payload)
+            }).then(function (res) {
+                if (!res.ok) throw new Error('Request failed');
+                return res.blob();
+            }).then(function (blob) {
+                var base = ((state.subject && state.subject.name) || 'Marks').replace(/[^A-Za-z0-9\-_ ]+/g, '').trim().replace(/\s+/g, '_');
+                var mode = config.mode === 'internal' ? 'Internal' : config.mode === 'practical' ? 'Practical' : 'Theory';
+                var a = document.createElement('a');
+                var url = URL.createObjectURL(blob);
+                a.href = url;
+                a.download = (base || 'Marks') + '_' + mode + 'Marks_Preview.' + (format === 'pdf' ? 'pdf' : 'xlsx');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }).catch(function () {
+                alert('Download failed. Please try again.');
+            }).finally(function () {
+                $btn.prop('disabled', false);
+            });
         }
 
         function submitSave(submitAll) {
@@ -574,8 +761,12 @@
                 return;
             }
 
-            if ($('#wizardStudentsBody .marks-input[data-invalid="true"]').length > 0) {
+            if ($('#wizardStudentsBody tr').filter(function () { return rowMarksInfo($(this)).over; }).length > 0) {
                 alert('Some marks exceed the full marks. Please correct them before saving.');
+                return;
+            }
+
+            if (submitAll && !confirm('This will submit the entered marks for all students at once. Continue?')) {
                 return;
             }
 
@@ -721,8 +912,17 @@
 
             $(document).on('change', '.marks-input', function () { validateInput(this); });
 
-            $('#btnSave').on('click', function () { submitSave(false); });
-            $('#btnSubmitAll').on('click', function () { submitSave(true); });
+            $('#btnSubmit').on('click', function () { submitSave(true); });
+            $('#btnPreview').on('click', function () { openPreview(); });
+            $('#btnPreviewDownloadExcel').on('click', function () { downloadPreview('excel'); });
+            $('#btnPreviewDownloadPdf').on('click', function () { downloadPreview('pdf'); });
+            $('#btnPreviewSubmit').on('click', function () {
+                $('#marksPreviewModal').addClass('hidden');
+                submitSave(true);
+            });
+            $(document).on('click', '[data-close-marks-preview]', function () {
+                $('#marksPreviewModal').addClass('hidden');
+            });
 
             showStep(1);
         }

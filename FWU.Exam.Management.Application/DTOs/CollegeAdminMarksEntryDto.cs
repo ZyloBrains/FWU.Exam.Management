@@ -54,6 +54,7 @@ public class StudentInternalMarksRowDto
 {
     public int ExamRegistrationId { get; set; }
     public int? ExamSubjectResultId { get; set; }
+    public string StudentName { get; set; } = string.Empty;
     public string RegistrationNumber { get; set; } = string.Empty;
     public string SymbolNumber { get; set; } = string.Empty;
     public float? TheoryInternal { get; set; }

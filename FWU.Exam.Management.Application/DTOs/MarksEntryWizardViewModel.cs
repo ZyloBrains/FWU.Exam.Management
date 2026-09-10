@@ -15,6 +15,7 @@ public class MarksEntryWizardViewModel
     public string Icon { get; set; } = "pen-alt";
     public string ControllerBase { get; set; } = string.Empty;
     public string SaveAction { get; set; } = string.Empty;
+    public string ExportAction { get; set; } = string.Empty;
     public bool IsSuperAdmin { get; set; }
     public bool IsFacultyAdmin { get; set; }
     public bool IsCollegeAdmin { get; set; }
