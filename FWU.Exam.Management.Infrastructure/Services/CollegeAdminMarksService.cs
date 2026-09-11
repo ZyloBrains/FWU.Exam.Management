@@ -177,6 +177,7 @@ public class CollegeAdminMarksService(
 
         var schedule = await ScopedScheduleQuery(effectiveCollege)
             .Include(es => es.SemesterInstance)
+            .Include(es => es.ExamType)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
@@ -185,8 +186,12 @@ public class CollegeAdminMarksService(
             .Select(s => (int?)s.Number)
             .FirstOrDefaultAsync();
 
-        var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
-            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
+        var isReExam = ReExamCurriculumScope.IsReExamSchedule(schedule);
+        var allowedVersionIds = await ReExamCurriculumScope.ResolveVersionIdsAsync(
+            context, schedule, semesterNumber ?? 0);
+        var versionNames = isReExam
+            ? await ReExamCurriculumScope.GetVersionNamesAsync(context, schedule.ProgramId)
+            : new Dictionary<int, string>();
 
         var query = context.SubjectOfferings
             .AsNoTracking()
@@ -199,6 +204,7 @@ public class CollegeAdminMarksService(
              .Select(so => new SubjectOptionDto
              {
                  Id = so.Id,
+                 CurriculumVersionId = so.CurriculumVersionId,
                  Name = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "Subject #" + so.Id,
                  Code = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectCode : "",
                  HasTheory = so.HasTheory,
@@ -207,9 +213,19 @@ public class CollegeAdminMarksService(
                  InternalTheoryFullMarks = so.InternalTheoryFullMarks
              });
 
-        if (curriculumVersionId.HasValue)
+        if (isReExam)
         {
-            var versioned = await project(query.Where(so => so.CurriculumVersionId == curriculumVersionId.Value))
+            var versionedIds = allowedVersionIds.Where(v => v.HasValue).Select(v => v!.Value).ToList();
+            var rows = await project(query.Where(so => so.CurriculumVersionId == null
+                || (so.CurriculumVersionId != null && versionedIds.Contains(so.CurriculumVersionId.Value)))).ToListAsync();
+            ReExamCurriculumScope.ApplyVersionLabels(rows, versionNames);
+            return rows;
+        }
+
+        var resolvedVersionId = allowedVersionIds.FirstOrDefault(v => v.HasValue);
+        if (resolvedVersionId is int resolvedVersion)
+        {
+            var versioned = await project(query.Where(so => so.CurriculumVersionId == resolvedVersion))
                 .ToListAsync();
             if (versioned.Count > 0) return versioned;
         }
@@ -263,12 +279,17 @@ public class CollegeAdminMarksService(
         var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
             context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
 
+        var isReExamSchedule = StudentDashboardService.IsReExamTypeStatic(schedule.ExamType?.Name);
+
         var subjectOffering = await context.SubjectOfferings
             .AsNoTracking()
             .FirstOrDefaultAsync(so => so.Id == subjectOfferingId
                 && so.ProgramId == schedule.ProgramId
                 && so.Semester != null && so.Semester.Number == semesterNumber
-                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value || so.CurriculumVersionId == null))
+                && (isReExamSchedule
+                    || curriculumVersionId == null
+                    || so.CurriculumVersionId == curriculumVersionId.Value
+                    || so.CurriculumVersionId == null))
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var examRegistrations = await context.ExamRegistrations
@@ -290,8 +311,6 @@ public class CollegeAdminMarksService(
             .Where(esr => esr.SubjectOfferingId == subjectOfferingId
                 && esr.ExamScheduleId == examScheduleId)
             .ToListAsync();
-
-        var isReExamSchedule = StudentDashboardService.IsReExamTypeStatic(schedule.ExamType?.Name);
 
         var rows = examRegistrations
             .Select(er => new { er, existing = existingResults.FirstOrDefault(esr => esr.ExamRegistrationId == er.Id) })
@@ -425,6 +444,7 @@ public class CollegeAdminMarksService(
     {
 var schedule = await ScopedScheduleQuery(effectiveCollege)
             .Include(es => es.SemesterInstance)
+            .Include(es => es.ExamType)
             .FirstOrDefaultAsync(es => es.Id == dto.ExamScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
@@ -436,11 +456,16 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
         var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
             context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
 
+        var isReExamSchedule = ReExamCurriculumScope.IsReExamSchedule(schedule);
+
         var subjectOffering = await context.SubjectOfferings
             .FirstOrDefaultAsync(so => so.Id == dto.SubjectOfferingId
                 && so.ProgramId == schedule.ProgramId
                 && so.Semester != null && so.Semester.Number == semesterNumber
-                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value || so.CurriculumVersionId == null))
+                && (isReExamSchedule
+                    || curriculumVersionId == null
+                    || so.CurriculumVersionId == curriculumVersionId.Value
+                    || so.CurriculumVersionId == null))
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var result = new BulkSaveResult { Success = true };
