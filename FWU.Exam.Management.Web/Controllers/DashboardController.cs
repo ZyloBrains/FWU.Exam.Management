@@ -23,14 +23,26 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         var primaryRole = roles.FirstOrDefault() ?? Role.Student;
 
         DashboardStats stats;
+        string? scopeWarning = null;
         if (primaryRole == Role.CollegeAdmin && user.CollegeId.HasValue)
         {
             stats = await dashboardService.GetCollegeDashboardStatsAsync(user.CollegeId.Value);
+        }
+        else if (primaryRole == Role.CollegeAdmin)
+        {
+            scopeWarning = "Your account is not linked to a college. Ask a faculty admin to assign your college, then reload this page.";
+            stats = new DashboardStats();
+        }
+        else if (primaryRole == Role.FacultyAdmin && !user.FacultyId.HasValue)
+        {
+            scopeWarning = "Your account is not linked to a faculty. Ask a super admin to assign your faculty, then reload this page.";
+            stats = new DashboardStats();
         }
         else
         {
             stats = await dashboardService.GetDashboardStatsAsync();
         }
+        ViewData["ScopeWarning"] = scopeWarning;
 
         var vm = new DashboardViewModel
         {
