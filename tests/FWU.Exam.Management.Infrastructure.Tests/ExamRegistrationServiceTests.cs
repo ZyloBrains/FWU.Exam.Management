@@ -884,6 +884,42 @@ public class ExamRegistrationServiceTests
         Assert.False(row.IsPracticalRegistered);
     }
 
+    [Fact]
+    public async Task GetExamRegistrationByIdAsync_ReturnsActiveSubjects_WithLegFlagsAndCatalog()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedForms);
+        var service = CreateService(db);
+
+        var theoryOnly = TestData.Result(50, 1, 101, TestData.Partial, null, 21);
+        theoryOnly.IsTheoryRegistered = true;
+        theoryOnly.IsPracticalRegistered = null;
+
+        var notSelected = TestData.Result(51, 1, 102, TestData.Partial, null, 21);
+        notSelected.IsTheoryRegistered = false;
+        notSelected.IsPracticalRegistered = null;
+
+        var retired = TestData.Result(52, 1, 103, TestData.Partial, null, 21);
+        retired.IsActive = false;
+        retired.IsTheoryRegistered = true;
+
+        db.Context.ExamSubjectResults!.AddRange(theoryOnly, notSelected, retired);
+        db.Context.SaveChanges();
+
+        var registration = await service.GetExamRegistrationByIdAsync(1);
+
+        Assert.NotNull(registration);
+        Assert.Equal(2, registration!.ExamSubjectResults!.Count);
+        Assert.DoesNotContain(registration.ExamSubjectResults, r => r.Id == 52);
+
+        var selected = registration.ExamSubjectResults.Single(r => r.Id == 50);
+        Assert.True(selected.IsTheoryRegistered);
+        Assert.NotNull(selected.SubjectOffering?.SubjectCatalog);
+        Assert.Equal("SUB1", selected.SubjectOffering!.SubjectCatalog!.SubjectCode);
+
+        var unregistered = registration.ExamSubjectResults.Single(r => r.Id == 51);
+        Assert.False(unregistered.IsTheoryRegistered);
+    }
+
     private static void SeedFormsWithExistingResult(AppDbContext ctx)
     {
         SeedForms(ctx);
