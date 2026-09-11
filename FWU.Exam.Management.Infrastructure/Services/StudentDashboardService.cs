@@ -604,7 +604,8 @@ public class StudentDashboardService(
                     carriedPractical = retakesPractical ? null : previousResult.ObtainedMarksPractical;
                     carriedTheory = retakesTheory ? null : previousResult.ObtainedMarksTheory;
                     carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
-                    carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
+                    carriedTheoryInternal = InternalMarksCarryForwardPolicy.ResolveTheoryInternal(
+                        previousResult.ObtainedMarksTheoryInternal, offering);
                 }
             }
 
@@ -1139,7 +1140,8 @@ public class StudentDashboardService(
                     carriedPractical = retakesPractical ? null : previousResult.ObtainedMarksPractical;
                     carriedTheory = retakesTheory ? null : previousResult.ObtainedMarksTheory;
                     carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
-                    carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
+                    carriedTheoryInternal = InternalMarksCarryForwardPolicy.ResolveTheoryInternal(
+                        previousResult.ObtainedMarksTheoryInternal, subjectOffering);
                 }
             }
 

@@ -251,6 +251,7 @@ public class CollegeAdminMarksService(
 
         var schedule = await ScopedScheduleQuery(effectiveCollege)
             .Include(es => es.SemesterInstance)
+            .Include(es => es.ExamType)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
@@ -290,16 +291,18 @@ public class CollegeAdminMarksService(
                 && esr.ExamScheduleId == examScheduleId)
             .ToListAsync();
 
+        var isReExamSchedule = StudentDashboardService.IsReExamTypeStatic(schedule.ExamType?.Name);
+
         var rows = examRegistrations
             .Select(er => new { er, existing = existingResults.FirstOrDefault(esr => esr.ExamRegistrationId == er.Id) })
-            // Leg-aware re-exam forms may register a student for a single paper;
-            // keep the row when either leg is registered (null flags = legacy).
-            .Where(x => x.existing == null
-                     || x.existing.IsTheoryRegistered != false
-                     || x.existing.IsPracticalRegistered != false)
+            // Only students who actually selected (ticked) this subject on their
+            // exam form appear in the grid. Selection is mirrored by a result row.
+            .Where(x => x.existing != null
+                     && (x.existing.IsTheoryRegistered != false
+                      || x.existing.IsPracticalRegistered != false))
             .Select(x =>
         {
-            var existing = x.existing;
+            var existing = x.existing!;
             var er = x.er;
             registrationNumbers.TryGetValue(er.Id, out var regNum);
             studentNames.TryGetValue(er.Id, out var name);
@@ -307,13 +310,15 @@ public class CollegeAdminMarksService(
             return new StudentInternalMarksRowDto
             {
                 ExamRegistrationId = er.Id,
-                ExamSubjectResultId = existing?.Id,
+                ExamSubjectResultId = existing.Id,
                 StudentName = name ?? "",
                 RegistrationNumber = regNum ?? "",
                 SymbolNumber = er.SymbolNumber ?? er.ExamRollNumber ?? "",
-                TheoryInternal = existing?.ObtainedMarksTheoryInternal,
-                PracticalInternal = existing?.ObtainedMarksPracticalInternal,
-                IsSubmitted = existing?.IsSubmitted ?? false
+                TheoryInternal = existing.ObtainedMarksTheoryInternal,
+                PracticalInternal = existing.ObtainedMarksPracticalInternal,
+                IsSubmitted = existing.IsSubmitted,
+                IsPartial = er.IsSupplementary || isReExamSchedule,
+                IsSubjectSelected = true
             };
         }).ToList();
 
@@ -323,6 +328,7 @@ public class CollegeAdminMarksService(
             SubjectOfferingId = subjectOfferingId,
             HasPractical = subjectOffering.HasPractical,
             InternalTheoryFullMarks = subjectOffering.InternalTheoryFullMarks,
+            IsReExamSchedule = isReExamSchedule,
             Students = rows
         };
     }
@@ -417,7 +423,7 @@ public class CollegeAdminMarksService(
 
     private async Task<BulkSaveResult> SaveMarksCoreAsync(BulkMarksSaveDto dto, int effectiveCollege)
     {
-        var schedule = await ScopedScheduleQuery(effectiveCollege)
+var schedule = await ScopedScheduleQuery(effectiveCollege)
             .Include(es => es.SemesterInstance)
             .FirstOrDefaultAsync(es => es.Id == dto.ExamScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");

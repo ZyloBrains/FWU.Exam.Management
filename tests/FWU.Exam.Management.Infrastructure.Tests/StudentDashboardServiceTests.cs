@@ -1496,6 +1496,92 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task ReapplyExamRegistrationAsync_InternalBelowPassMark_IsClearedForReentry()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+            // Previous regular attempt in the same semester with marks to carry.
+            ctx.ExamSchedules.Add(TestData.Schedule(25, 1, TestData.Regular, Past, null));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(9, 1, 25));
+            var previousReg = TestData.ExamRegistration(7, 25, 9);
+            previousReg.CollegeId = TestData.CollegeId;
+            ctx.ExamRegistrations.Add(previousReg);
+
+            var previousResult = TestData.Result(10, 7, 302, TestData.Regular, "C", 25);
+            previousResult.ObtainedMarksPractical = 50f;
+            previousResult.ObtainedMarksPracticalInternal = 45f;
+            previousResult.ObtainedMarksTheoryInternal = 40f;
+            ctx.ExamSubjectResults!.Add(previousResult);
+
+            var offering = TestData.Offering(302, 1, TestData.ProgramId);
+            offering.HasPractical = true;
+            offering.InternalTheoryPassMarks = 90f; // 40 < 90 → below pass
+            ctx.SubjectOfferings.Add(offering);
+
+            // Make the rejected form supplementary so carry-forward kicks in.
+            ctx.ExamRegistrations.Local.Single(e => e.Id == 1).IsSupplementary = true;
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 302 },
+            new Dictionary<int, ReExamLegs> { [302] = ReExamLegs.Theory | ReExamLegs.Practical });
+
+        Assert.True(success, message);
+
+        var row = db.Context.ExamSubjectResults!
+            .Single(r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 302 && r.IsActive);
+        Assert.True(row.IsTheoryRegistered);
+        Assert.True(row.IsPracticalRegistered);
+        // Re-sat practical external cleared; internal below pass mark cleared for
+        // re-entry, practical internal (no pass mark) still carries.
+        Assert.Null(row.ObtainedMarksPractical);
+        Assert.Null(row.ObtainedMarksTheoryInternal);
+        Assert.Equal(45f, row.ObtainedMarksPracticalInternal);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_InternalAtOrAbovePassMark_CarriesForward()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+            ctx.ExamSchedules.Add(TestData.Schedule(25, 1, TestData.Regular, Past, null));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(9, 1, 25));
+            var previousReg = TestData.ExamRegistration(7, 25, 9);
+            previousReg.CollegeId = TestData.CollegeId;
+            ctx.ExamRegistrations.Add(previousReg);
+
+            var previousResult = TestData.Result(10, 7, 302, TestData.Regular, "C", 25);
+            previousResult.ObtainedMarksPractical = 50f;
+            previousResult.ObtainedMarksPracticalInternal = 45f;
+            previousResult.ObtainedMarksTheoryInternal = 40f;
+            ctx.ExamSubjectResults!.Add(previousResult);
+
+            var offering = TestData.Offering(302, 1, TestData.ProgramId);
+            offering.HasPractical = true;
+            offering.InternalTheoryPassMarks = 40f; // 40 >= 40 → carried at the boundary
+            ctx.SubjectOfferings.Add(offering);
+
+            ctx.ExamRegistrations.Local.Single(e => e.Id == 1).IsSupplementary = true;
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 302 },
+            new Dictionary<int, ReExamLegs> { [302] = ReExamLegs.Theory | ReExamLegs.Practical });
+
+        Assert.True(success, message);
+
+        var row = db.Context.ExamSubjectResults!
+            .Single(r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 302 && r.IsActive);
+        Assert.Null(row.ObtainedMarksPractical);
+        Assert.Equal(40f, row.ObtainedMarksTheoryInternal);
+        Assert.Equal(45f, row.ObtainedMarksPracticalInternal);
+    }
+
+    [Fact]
     public async Task CreatePaymentRequestLogWithSubjectsAsync_WritesTokensAndCountsOnlyPracticalLegs()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>

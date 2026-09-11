@@ -226,6 +226,36 @@
                     <tbody id="wizardStudentsBody" class="divide-y divide-gray-100"></tbody>
                 </table>
             </div>
+
+            <div id="partialMarksSection" class="hidden border-t border-gray-100">
+                <div class="px-5 py-3 bg-amber-50 border-b border-amber-100">
+                    <h3 class="text-sm font-bold text-gray-900">
+                        <i class="fas fa-rotate text-amber-600 mr-1"></i>Partial / Re-exam &mdash; Internal Marks
+                    </h3>
+                    <p class="text-xs text-gray-600 mt-0.5">
+                        Students re-sitting this subject. Previous internal marks below the subject's pass mark were
+                        cleared at registration &mdash; re-enter them here.
+                    </p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">S.N</th>
+                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Registration Number</th>
+                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Student Name</th>
+                                @if (showSymbol)
+                                {
+                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Symbol No.</th>
+                                }
+                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Internal Marks</th>
+                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wizardPartialStudentsBody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -535,24 +565,17 @@
             return box;
         }
 
-        function renderStudents(data) {
-            var tbody = $('#wizardStudentsBody').empty();
-            var theoryMax = config.mode === 'internal' ? data.internalTheoryFullMarks : data.theoryFullMarks;
-            var practicalMax = data.practicalFullMarks;
+        function appendStudentRows(students, tbody, theoryMax, practicalMax) {
+            var showSymbol = config.showSymbol;
 
-            $('#wizardMarksHeader').text(config.mode === 'internal'
-                ? 'Internal Marks'
-                : config.mode === 'practical' ? 'Practical Marks' : 'Theory Marks');
-            $('#wizardStudentCount').text(data.students.length + ' student(s)');
-
-            $.each(data.students, function (i, s) {
+            $.each(students, function (i, s) {
                 var tr = $('<tr class="hover:bg-gray-50"></tr>');
                 tr.data('examRegistrationId', s.examRegistrationId);
                 tr.data('examSubjectResultId', s.examSubjectResultId || null);
                 tr.append('<td class="px-4 py-2.5 text-gray-500">' + (i + 1) + '</td>');
                 tr.append('<td class="px-4 py-2.5 font-medium text-gray-800">' + (s.registrationNumber || '-') + '</td>');
                 tr.append('<td class="px-4 py-2.5 text-gray-700">' + (s.studentName || '-') + '</td>');
-                if (config.showSymbol) {
+                if (showSymbol) {
                     tr.append('<td class="px-4 py-2.5 text-gray-500">' + (s.symbolNumber || '-') + '</td>');
                 }
 
@@ -574,6 +597,29 @@
 
                 tbody.append(tr);
             });
+        }
+
+        function renderStudents(data) {
+            var regular = [];
+            var partial = [];
+            $.each(data.students, function (i, s) {
+                (s.isPartial ? partial : regular).push(s);
+            });
+
+            var theoryMax = config.mode === 'internal' ? data.internalTheoryFullMarks : data.theoryFullMarks;
+            var practicalMax = data.practicalFullMarks;
+
+            $('#wizardMarksHeader').text(config.mode === 'internal'
+                ? 'Internal Marks'
+                : config.mode === 'practical' ? 'Practical Marks' : 'Theory Marks');
+            $('#wizardStudentCount').text(data.students.length + ' student(s)');
+
+            appendStudentRows(regular, $('#wizardStudentsBody').empty(), theoryMax, practicalMax);
+            appendStudentRows(partial, $('#wizardPartialStudentsBody').empty(), theoryMax, practicalMax);
+
+            var showPartial = config.mode === 'internal'
+                && (data.isReExamSchedule === true || partial.length > 0);
+            $('#partialMarksSection').toggleClass('hidden', !showPartial);
         }
 
         function nextMarksField(current) {
@@ -600,7 +646,7 @@
 
         function collectRows() {
             var rows = [];
-            $('#wizardStudentsBody tr').each(function () {
+            $('#wizardStudentsBody tr, #wizardPartialStudentsBody tr').each(function () {
                 var $row = $(this);
                 var theoryVal = $row.find('.marks-input[data-col="theory"]').val();
                 var practicalVal = $row.find('.marks-input[data-col="practical"]').val();

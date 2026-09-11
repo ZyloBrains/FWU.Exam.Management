@@ -60,6 +60,8 @@ public class StudentInternalMarksRowDto
     public float? TheoryInternal { get; set; }
     public float? PracticalInternal { get; set; }
     public bool IsSubmitted { get; set; }
+    public bool IsPartial { get; set; }
+    public bool IsSubjectSelected { get; set; }
 }
 
 public class StudentInternalMarksViewModel
@@ -68,6 +70,7 @@ public class StudentInternalMarksViewModel
     public int SubjectOfferingId { get; set; }
     public bool HasPractical { get; set; }
     public float? InternalTheoryFullMarks { get; set; }
+    public bool IsReExamSchedule { get; set; }
     public List<StudentInternalMarksRowDto> Students { get; set; } = [];
 }
 

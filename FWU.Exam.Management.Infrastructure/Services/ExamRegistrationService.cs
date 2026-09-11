@@ -677,7 +677,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                     carriedPractical = practicalSelected ? null : previousResult.ObtainedMarksPractical;
                     carriedTheory = theorySelected ? null : previousResult.ObtainedMarksTheory;
                     carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
-                    carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
+                    carriedTheoryInternal = InternalMarksCarryForwardPolicy.ResolveTheoryInternal(
+                        previousResult.ObtainedMarksTheoryInternal, offering);
                 }
             }
 

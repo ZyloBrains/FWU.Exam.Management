@@ -433,6 +433,52 @@ public class ExamRegistrationServiceTests
     }
 
     [Fact]
+    public async Task UpdateRegistrationSubjectsAsync_InternalBelowPassMark_IsClearedForReentry()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), ctx =>
+        {
+            SeedPartialForm(ctx);
+            ctx.SubjectOfferings.Local.Single(o => o.Id == 101).InternalTheoryPassMarks = 90f; // 40 < 90
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.UpdateRegistrationSubjectsAsync(6, [101]);
+
+        Assert.True(success, message);
+
+        var carried = db.Context.ExamSubjectResults!.Single(r => r.ExamRegistrationId == 6 && r.SubjectOfferingId == 101);
+        Assert.True(carried.IsSupplementary);
+        // Theory leg re-sat → external cleared; internal below pass mark cleared for re-entry.
+        Assert.Null(carried.ObtainedMarksTheory);
+        Assert.Null(carried.ObtainedMarksTheoryInternal);
+        // Practical leg not re-sat → its external and internal still carry.
+        Assert.Equal(50f, carried.ObtainedMarksPractical);
+        Assert.Equal(45f, carried.ObtainedMarksPracticalInternal);
+    }
+
+    [Fact]
+    public async Task UpdateRegistrationSubjectsAsync_LegacyReExamWithoutFlag_StillClearsBelowPassInternal()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), ctx =>
+        {
+            SeedPartialForm(ctx);
+            // Row stamped before the flag shipped: the schedule's "Partial" exam
+            // type must still trigger the re-exam carry rule.
+            ctx.ExamRegistrations.Local.Single(e => e.Id == 6).IsSupplementary = false;
+            ctx.SubjectOfferings.Local.Single(o => o.Id == 101).InternalTheoryPassMarks = 90f;
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.UpdateRegistrationSubjectsAsync(6, [101]);
+
+        Assert.True(success, message);
+
+        var carried = db.Context.ExamSubjectResults!.Single(r => r.ExamRegistrationId == 6 && r.SubjectOfferingId == 101);
+        Assert.Null(carried.ObtainedMarksTheoryInternal);
+        Assert.Equal(45f, carried.ObtainedMarksPracticalInternal);
+    }
+
+    [Fact]
     public async Task UpdateRegistrationSubjectsAsync_RejectsOtherCollegeForm()
     {
         using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedForms);
