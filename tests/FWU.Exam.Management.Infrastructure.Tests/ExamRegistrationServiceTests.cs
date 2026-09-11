@@ -190,6 +190,44 @@ public class ExamRegistrationServiceTests
     }
 
     [Fact]
+    public async Task GetExamRegistrationsAsync_CollegeAdmin_ReturnsOnlyOwnCollege_AndMatchesDashboardMetric()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedForms);
+        var service = CreateService(db);
+
+        var (items, totalCount) = await service.GetExamRegistrationsAsync(1, 50, null, "Id", "asc");
+
+        // Only college 1 rows (er1, er3, er4); er2 belongs to college 2.
+        Assert.Equal(3, totalCount);
+        Assert.Equal(new[] { 1, 3, 4 }, items.Select(e => e.Id).OrderBy(id => id).ToArray());
+        Assert.DoesNotContain(items, e => e.CollegeId == 2);
+
+        // The college dashboard's Exam Registrations card counts the same college
+        // scope (DashboardService.GetCollegeDashboardStatsAsync), so the two must agree.
+        var dashboardMetric = await db.Context.ExamRegistrations
+            .CountAsync(e => e.CollegeId == TestData.CollegeId);
+        Assert.Equal(totalCount, dashboardMetric);
+    }
+
+    [Fact]
+    public async Task GetExamRegistrationsAsync_FacultyAdmin_SeesAllCollegesUnderOwnFaculty()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedForms);
+
+        var bca = db.Context.Programs.Single(p => p.Id == TestData.ProgramId);
+        bca.FacultyId = 1;
+        db.Context.SaveChanges();
+
+        var uc = new TestUserContext().WithUser(AdminUserId, 1, null, [], [Role.FacultyAdmin]);
+        var service = new ExamRegistrationService(db.Context, uc);
+
+        var (items, totalCount) = await service.GetExamRegistrationsAsync(1, 50, null, "Id", "asc");
+
+        Assert.Equal(4, totalCount);
+        Assert.Equal(new[] { 1, 2, 3, 4 }, items.Select(e => e.Id).OrderBy(id => id).ToArray());
+    }
+
+    [Fact]
     public async Task VerifyExamRegistrationAsync_SetsCollegeVerifiedAndApprovalTrail()
     {
         using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedForms);
@@ -928,6 +966,42 @@ public class ExamRegistrationServiceTests
         var row = db.Context.ExamSubjectResults!.Single(r => r.ExamRegistrationId == 1 && r.SubjectOfferingId == 301);
         Assert.True(row.IsTheoryRegistered);
         Assert.False(row.IsPracticalRegistered);
+    }
+
+    [Fact]
+    public async Task GetExamRegistrationByIdAsync_ReturnsActiveSubjects_WithLegFlagsAndCatalog()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedForms);
+        var service = CreateService(db);
+
+        var theoryOnly = TestData.Result(50, 1, 101, TestData.Partial, null, 21);
+        theoryOnly.IsTheoryRegistered = true;
+        theoryOnly.IsPracticalRegistered = null;
+
+        var notSelected = TestData.Result(51, 1, 102, TestData.Partial, null, 21);
+        notSelected.IsTheoryRegistered = false;
+        notSelected.IsPracticalRegistered = null;
+
+        var retired = TestData.Result(52, 1, 103, TestData.Partial, null, 21);
+        retired.IsActive = false;
+        retired.IsTheoryRegistered = true;
+
+        db.Context.ExamSubjectResults!.AddRange(theoryOnly, notSelected, retired);
+        db.Context.SaveChanges();
+
+        var registration = await service.GetExamRegistrationByIdAsync(1);
+
+        Assert.NotNull(registration);
+        Assert.Equal(2, registration!.ExamSubjectResults!.Count);
+        Assert.DoesNotContain(registration.ExamSubjectResults, r => r.Id == 52);
+
+        var selected = registration.ExamSubjectResults.Single(r => r.Id == 50);
+        Assert.True(selected.IsTheoryRegistered);
+        Assert.NotNull(selected.SubjectOffering?.SubjectCatalog);
+        Assert.Equal("SUB1", selected.SubjectOffering!.SubjectCatalog!.SubjectCode);
+
+        var unregistered = registration.ExamSubjectResults.Single(r => r.Id == 51);
+        Assert.False(unregistered.IsTheoryRegistered);
     }
 
     private static void SeedFormsWithExistingResult(AppDbContext ctx)

@@ -61,6 +61,9 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             .Include(e => e.AcademicYear)
             .Include(e => e.Program)
             .Include(e => e.ApplicationVoucher)
+            .Include(e => e.ExamSubjectResults.Where(esr => esr.IsActive))
+                .ThenInclude(esr => esr.SubjectOffering)
+                    .ThenInclude(so => so!.SubjectCatalog)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
