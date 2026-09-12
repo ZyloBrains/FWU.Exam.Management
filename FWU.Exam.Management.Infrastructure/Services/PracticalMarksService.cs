@@ -2,6 +2,7 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Semesters;
+using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
@@ -169,6 +170,7 @@ public class PracticalMarksService(
 
         var schedule = await ScopedScheduleQuery(effectiveCollege)
             .Include(es => es.SemesterInstance)
+            .Include(es => es.ExamType)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
@@ -183,33 +185,72 @@ public class PracticalMarksService(
         var query = context.SubjectOfferings
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
+            .Include(so => so.CurriculumVersion)
+                .ThenInclude(cv => cv!.EffectiveAcademicYear)
             .Where(so => so.ProgramId == schedule.ProgramId
                       && so.Semester != null && so.Semester.Number == semesterNumber
                       && so.HasPractical);
 
-        Func<IQueryable<FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering>, IQueryable<SubjectOptionDto>> project = q =>
-            q.OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id)
-             .Select(so => new SubjectOptionDto
-             {
-                 Id = so.Id,
-                 Name = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "Subject #" + so.Id,
-                 Code = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectCode : "",
-                 HasTheory = so.HasTheory,
-                 HasPractical = so.HasPractical,
-                 TheoryFullMarks = so.TheoryFullMarks ?? 0f,
-                 InternalTheoryFullMarks = so.InternalTheoryFullMarks,
-                 PracticalFullMarks = so.PracticalFullMarks,
-                 PracticalPassMarks = so.PracticalPassMarks
-             });
-
+        List<SubjectOffering> offerings;
         if (curriculumVersionId.HasValue)
         {
-            var versioned = await project(query.Where(so => so.CurriculumVersionId == curriculumVersionId.Value))
+            offerings = await query.Where(so => so.CurriculumVersionId == curriculumVersionId.Value)
+                .OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id)
                 .ToListAsync();
-            if (versioned.Count > 0) return versioned;
+            if (offerings.Count == 0)
+            {
+                offerings = await query.Where(so => so.CurriculumVersionId == null)
+                    .OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id)
+                    .ToListAsync();
+            }
+        }
+        else
+        {
+            offerings = await query.Where(so => so.CurriculumVersionId == null)
+                .OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id)
+                .ToListAsync();
         }
 
-        return await project(query.Where(so => so.CurriculumVersionId == null)).ToListAsync();
+        if (ExamRegistrationBinder.IsReExamSchedule(schedule))
+        {
+            // Partial/re-exam schedules are sat by older cohorts: surface the
+            // offerings actually registered on this schedule (they may belong to
+            // an older curriculum) next to the schedule year's resolution.
+            var registered = await ExamRegistrationBinder.GetRegisteredSubjectOfferingsAsync(context, examScheduleId);
+            foreach (var ro in registered.Where(ro => ro.HasPractical
+                                                   && ro.ProgramId == schedule.ProgramId
+                                                   && ro.Semester?.Number == semesterNumber))
+            {
+                if (offerings.All(o => o.Id != ro.Id))
+                    offerings.Add(ro);
+            }
+
+            offerings = offerings
+                .OrderByDescending(o => curriculumVersionId.HasValue && o.CurriculumVersionId == curriculumVersionId.Value)
+                .ThenBy(o => o.DisplayOrder)
+                .ThenBy(o => o.Id)
+                .ToList();
+        }
+
+        return offerings
+            .Select(so => new SubjectOptionDto
+            {
+                Id = so.Id,
+                Name = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "Subject #" + so.Id,
+                Code = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectCode : "",
+                HasTheory = so.HasTheory,
+                HasPractical = so.HasPractical,
+                TheoryFullMarks = so.TheoryFullMarks ?? 0f,
+                InternalTheoryFullMarks = so.InternalTheoryFullMarks,
+                PracticalFullMarks = so.PracticalFullMarks,
+                PracticalPassMarks = so.PracticalPassMarks,
+                CurriculumVersionId = so.CurriculumVersionId,
+                CurriculumVersionName = so.CurriculumVersion?.Name,
+                IsStaleCohort = curriculumVersionId.HasValue
+                                && so.CurriculumVersionId.HasValue
+                                && so.CurriculumVersionId != curriculumVersionId.Value
+            })
+            .ToList();
     }
 
     public async Task<SubjectDetailDto> GetSubjectDetailAsync(int subjectOfferingId, int collegeId)
@@ -248,8 +289,11 @@ public class PracticalMarksService(
 
         var schedule = await ScopedScheduleQuery(effectiveCollege)
             .Include(es => es.SemesterInstance)
+            .Include(es => es.ExamType)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
+
+        var isReExam = ExamRegistrationBinder.IsReExamSchedule(schedule);
 
         var semesterNumber = await context.Semesters
             .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
@@ -264,7 +308,10 @@ public class PracticalMarksService(
             .FirstOrDefaultAsync(so => so.Id == subjectOfferingId
                 && so.ProgramId == schedule.ProgramId
                 && so.Semester != null && so.Semester.Number == semesterNumber
-                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value || so.CurriculumVersionId == null))
+                && (isReExam
+                    || curriculumVersionId == null
+                    || so.CurriculumVersionId == curriculumVersionId.Value
+                    || so.CurriculumVersionId == null))
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var examRegistrations = await context.ExamRegistrations
@@ -272,23 +319,32 @@ public class PracticalMarksService(
             .Where(er => er.ExamScheduleId == examScheduleId
                 && er.CollegeId == effectiveCollege
                 && er.IsActive
-                && er.Status >= RegistrationStatus.CollegeVerified)
+                && er.Status != RegistrationStatus.Withheld
+                && er.Status != RegistrationStatus.Rejected)
             .OrderBy(er => er.ExamRollNumber)
             .ThenBy(er => er.Id)
             .ToListAsync();
 
         var erIds = examRegistrations.Select(er => er.Id).ToList();
-        var registrationNumbers = await GetRegistrationNumbersForExamRegistrationsAsync(erIds);
-        var studentNames = await StudentNameResolver.ResolveAsync(context, erIds);
+        var identities = await StudentIdentityResolver.ResolveAsync(context, erIds);
 
-        var existingResults = await context.ExamSubjectResults
+        var existingResultsQuery = context.ExamSubjectResults
             .AsNoTracking()
-            .Where(esr => esr.SubjectOfferingId == subjectOfferingId
-                && esr.ExamScheduleId == examScheduleId)
-            .ToListAsync();
+            .Where(esr => esr.ExamScheduleId == examScheduleId
+                       && esr.SubjectOfferingId == subjectOfferingId);
+        if (isReExam)
+        {
+            // Older cohorts pin their marks rows to a cohort-specific offering,
+            // so the student list must be drawn from the rows actually registered
+            // on this schedule rather than every registration on it.
+            existingResultsQuery = existingResultsQuery.Where(esr => erIds.Contains(esr.ExamRegistrationId));
+        }
+
+        var existingResults = await existingResultsQuery.ToListAsync();
 
         var rows = examRegistrations
             .Select(er => new { er, existing = existingResults.FirstOrDefault(esr => esr.ExamRegistrationId == er.Id) })
+            .Where(x => !isReExam || x.existing != null)
             // Leg-aware re-exam forms may register a student for the theory
             // paper only; a null flag keeps legacy rows visible.
             .Where(x => x.existing?.IsPracticalRegistered != false)
@@ -296,16 +352,16 @@ public class PracticalMarksService(
         {
             var existing = x.existing;
             var er = x.er;
-            registrationNumbers.TryGetValue(er.Id, out var regNum);
-            studentNames.TryGetValue(er.Id, out var name);
+            var identity = identities.GetValueOrDefault(er.Id);
 
             return new StudentPracticalMarksRowDto
             {
                 ExamRegistrationId = er.Id,
                 ExamSubjectResultId = existing?.Id,
-                StudentName = name ?? "",
-                RegistrationNumber = regNum ?? "",
+                StudentName = identity?.StudentName ?? "",
+                RegistrationNumber = identity?.RegistrationNumber ?? "",
                 SymbolNumber = er.SymbolNumber ?? er.ExamRollNumber ?? "",
+                AcademicYearName = identity?.AcademicYearName ?? "",
                 Practical = existing?.ObtainedMarksPractical,
                 IsSubmitted = existing?.IsSubmitted ?? false
             };
@@ -333,8 +389,11 @@ public class PracticalMarksService(
 
 var schedule = await ScopedScheduleQuery(effectiveCollege)
             .Include(es => es.SemesterInstance)
+            .Include(es => es.ExamType)
             .FirstOrDefaultAsync(es => es.Id == dto.ExamScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
+
+        var isReExam = ExamRegistrationBinder.IsReExamSchedule(schedule);
 
         var semesterNumber = await context.Semesters
             .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
@@ -348,7 +407,10 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
             .FirstOrDefaultAsync(so => so.Id == dto.SubjectOfferingId
                 && so.ProgramId == schedule.ProgramId
                 && so.Semester != null && so.Semester.Number == semesterNumber
-                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value || so.CurriculumVersionId == null))
+                && (isReExam
+                    || curriculumVersionId == null
+                    || so.CurriculumVersionId == curriculumVersionId.Value
+                    || so.CurriculumVersionId == null))
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var validRegistrationIds = await context.ExamRegistrations
@@ -359,17 +421,38 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
             .Select(er => er.Id)
             .ToHashSetAsync();
 
+        Dictionary<int, int?> batchSchemes = [];
+        if (isReExam)
+        {
+            var regIds = dto.Students.Select(s => s.ExamRegistrationId).Distinct().ToList();
+            var batchYears = await ExamRegistrationBinder.ResolveBatchAcademicYearIdsAsync(context, regIds);
+            batchSchemes = await ExamRegistrationBinder.ResolveBatchSchemeIdsAsync(context, schedule.ProgramId, batchYears);
+        }
+
         foreach (var student in dto.Students)
         {
             try
             {
                 if (!validRegistrationIds.Contains(student.ExamRegistrationId)) continue;
 
-                var entity = await context.ExamSubjectResults
-                    .FirstOrDefaultAsync(esr => esr.ExamRegistrationId == student.ExamRegistrationId
-                        && esr.SubjectOfferingId == dto.SubjectOfferingId
-                        && esr.ExamScheduleId == dto.ExamScheduleId);
+                ExamSubjectResult? entity;
+                if (isReExam)
+                {
+                    entity = await context.ExamSubjectResults
+                        .Include(esr => esr.SubjectOffering)
+                        .FirstOrDefaultAsync(esr => esr.ExamRegistrationId == student.ExamRegistrationId
+                                                 && esr.ExamScheduleId == dto.ExamScheduleId
+                                                 && esr.IsActive);
+                }
+                else
+                {
+                    entity = await context.ExamSubjectResults
+                        .FirstOrDefaultAsync(esr => esr.ExamRegistrationId == student.ExamRegistrationId
+                                                 && esr.SubjectOfferingId == dto.SubjectOfferingId
+                                                 && esr.ExamScheduleId == dto.ExamScheduleId);
+                }
 
+                var gradingOffering = subjectOffering;
                 if (entity == null)
                 {
                     entity = new ExamSubjectResult
@@ -384,10 +467,28 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
                     };
                     context.ExamSubjectResults.Add(entity);
                 }
+                else if (isReExam && entity.SubjectOfferingId != dto.SubjectOfferingId)
+                {
+                    gradingOffering = entity.SubjectOffering ?? subjectOffering;
+                }
 
-                if (student.Practical.HasValue)
+                if (!entity.GradingSchemeId.HasValue)
+                {
+                    if (isReExam && batchSchemes.TryGetValue(student.ExamRegistrationId, out var batchScheme) && batchScheme.HasValue)
+                    {
+                        entity.GradingSchemeId = batchScheme.Value;
+                    }
+                    else
+                    {
+                        var scheduleScheme = gradeCalculationService.ResolveSchemeForProgram(
+                            schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
+                        if (scheduleScheme != null) entity.GradingSchemeId = scheduleScheme.Id;
+                    }
+                }
+
+if (student.Practical.HasValue)
                     entity.ObtainedMarksPractical = student.Practical;
-                gradeCalculationService.AssignGrades(entity, subjectOffering, entity.IsSupplementary);
+                gradeCalculationService.AssignGrades(entity, gradingOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)
                 {
@@ -456,90 +557,5 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
         }
 
         throw new UnauthorizedAccessException("You are not authorized to manage practical marks.");
-    }
-
-    private async Task<Dictionary<int, string>> GetRegistrationNumbersForExamRegistrationsAsync(List<int> examRegistrationIds)
-    {
-        var result = new Dictionary<int, string>();
-
-        var registrations = await context.ExamRegistrations
-            .AsNoTracking()
-            .Where(er => examRegistrationIds.Contains(er.Id) && er.ApplicationVoucherId != null)
-            .Select(er => new { er.Id, er.ApplicationVoucherId })
-            .ToListAsync();
-
-        var voucherIds = registrations
-            .Where(r => r.ApplicationVoucherId.HasValue)
-            .Select(r => r.ApplicationVoucherId!.Value)
-            .Distinct()
-            .ToList();
-
-        if (voucherIds.Count > 0)
-        {
-            var vouchers = await context.ApplicationVouchers!
-                .AsNoTracking()
-                .Where(v => voucherIds.Contains(v.Id) && v.StudentRegistrationId != null)
-                .Select(v => new { v.Id, v.StudentRegistrationId })
-                .ToListAsync();
-
-            var erIdToSrId = registrations
-                .Where(r => r.ApplicationVoucherId.HasValue)
-                .Join(vouchers,
-                    r => r.ApplicationVoucherId!.Value,
-                    v => v.Id,
-                    (r, v) => new { r.Id, SrId = v.StudentRegistrationId!.Value })
-                .ToDictionary(x => x.Id, x => x.SrId);
-
-            var srIds = erIdToSrId.Values.Distinct().ToList();
-            if (srIds.Count > 0)
-            {
-                var regBySr = await context.StudentRegistrations!
-                    .AsNoTracking()
-                    .Where(sr => srIds.Contains(sr.Id) && sr.RegistrationNumber != null)
-                    .ToDictionaryAsync(sr => sr.Id, sr => sr.RegistrationNumber!);
-
-                foreach (var (erId, srId) in erIdToSrId)
-                {
-                    if (regBySr.TryGetValue(srId, out var rn))
-                        result[erId] = rn;
-                }
-            }
-        }
-
-        var semEnrollments = await context.Set<SemesterEnrollment>()
-            .AsNoTracking()
-            .Include(se => se.StudentAdmission)
-            .Include(se => se.ExamRegistrations)
-            .Where(se => se.ExamRegistrations!.Any(er => examRegistrationIds.Contains(er.Id)))
-            .ToListAsync();
-
-        var admissionIds = semEnrollments
-            .Where(se => se.StudentAdmission != null)
-            .Select(se => se.StudentAdmission!.Id)
-            .Distinct()
-            .ToList();
-
-        if (admissionIds.Count > 0)
-        {
-            var regByAdmission = await context.StudentRegistrations!
-                .AsNoTracking()
-                .Where(sr => sr.StudentAdmissionId != null && admissionIds.Contains(sr.StudentAdmissionId!.Value))
-                .Select(sr => new { AdmissionId = sr.StudentAdmissionId!.Value, sr.RegistrationNumber })
-                .Where(x => x.RegistrationNumber != null)
-                .Distinct()
-                .ToDictionaryAsync(x => x.AdmissionId, x => x.RegistrationNumber!);
-
-            foreach (var se in semEnrollments)
-            {
-                if (se.ExamRegistrations == null) continue;
-                var regNum = se.StudentAdmission != null && regByAdmission.TryGetValue(se.StudentAdmission.Id, out var rn) ? rn : "";
-                foreach (var er in se.ExamRegistrations.Where(er => examRegistrationIds.Contains(er.Id)))
-                {
-                    result.TryAdd(er.Id, regNum);
-                }
-            }
-        }
-
-        return result;
     }
 }
