@@ -311,6 +311,11 @@ public class PracticalMarksService(
             };
         }).ToList();
 
+        rows = rows
+            .OrderBy(r => r.StudentName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.RegistrationNumber, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         return new StudentPracticalMarksViewModel
         {
             ExamScheduleId = examScheduleId,

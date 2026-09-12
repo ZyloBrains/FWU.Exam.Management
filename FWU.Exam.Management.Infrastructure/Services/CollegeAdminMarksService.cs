@@ -317,6 +317,11 @@ public class CollegeAdminMarksService(
             };
         }).ToList();
 
+        rows = rows
+            .OrderBy(r => r.StudentName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.RegistrationNumber, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         return new StudentInternalMarksViewModel
         {
             ExamScheduleId = examScheduleId,
