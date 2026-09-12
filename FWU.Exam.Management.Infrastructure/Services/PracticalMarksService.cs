@@ -367,6 +367,11 @@ public class PracticalMarksService(
             };
         }).ToList();
 
+        rows = rows
+            .OrderBy(r => r.StudentName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.RegistrationNumber, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         return new StudentPracticalMarksViewModel
         {
             ExamScheduleId = examScheduleId,
@@ -481,7 +486,8 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
                     }
                 }
 
-                entity.ObtainedMarksPractical = student.Practical;
+if (student.Practical.HasValue)
+                    entity.ObtainedMarksPractical = student.Practical;
                 gradeCalculationService.AssignGrades(entity, gradingOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)

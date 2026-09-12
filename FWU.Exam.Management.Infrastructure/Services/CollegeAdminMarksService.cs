@@ -376,6 +376,11 @@ public class CollegeAdminMarksService(
             };
         }).ToList();
 
+        rows = rows
+            .OrderBy(r => r.StudentName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.RegistrationNumber, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         return new StudentInternalMarksViewModel
         {
             ExamScheduleId = examScheduleId,
@@ -623,8 +628,10 @@ public class CollegeAdminMarksService(
                     }
                 }
 
-                entity.ObtainedMarksTheoryInternal = student.TheoryInternal;
-                entity.ObtainedMarksPracticalInternal = student.PracticalInternal;
+if (student.TheoryInternal.HasValue)
+                    entity.ObtainedMarksTheoryInternal = student.TheoryInternal;
+                if (student.PracticalInternal.HasValue)
+                    entity.ObtainedMarksPracticalInternal = student.PracticalInternal;
                 gradeCalculationService.AssignGrades(entity, gradingOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)

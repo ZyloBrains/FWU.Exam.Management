@@ -349,6 +349,11 @@ public class TheoryMarksService(
             };
         }).ToList();
 
+        rows = rows
+            .OrderBy(r => r.StudentName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.RegistrationNumber, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         return new StudentTheoryMarksViewModel
         {
             ExamScheduleId = examScheduleId,
@@ -470,7 +475,8 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
                     }
                 }
 
-                entity.ObtainedMarksTheory = student.Theory;
+if (student.Theory.HasValue)
+                    entity.ObtainedMarksTheory = student.Theory;
                 gradeCalculationService.AssignGrades(entity, gradingOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)
