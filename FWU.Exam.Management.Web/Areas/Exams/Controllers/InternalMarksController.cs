@@ -5,6 +5,7 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -123,7 +124,8 @@ public class InternalMarksController(
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(so => so.ProgramId == programId && so.SemesterId == semesterId
-                      && so.SubjectCatalog != null)
+                      && so.SubjectCatalog != null
+                      && so.HasInternal)
             .Select(so => new
             {
                 id = so.Id,
@@ -226,6 +228,7 @@ public class InternalMarksController(
             .IgnoreQueryFilters()
             .Include(es => es.SemesterInstance)
                 .ThenInclude(si => si!.AcademicYear)
+            .Include(es => es.ExamType)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
 
         if (subjectOffering == null || examSchedule == null)
@@ -250,47 +253,24 @@ public class InternalMarksController(
 
         var examRegistrations = await examRegistrationsQuery.ToListAsync();
 
-        var erIds = examRegistrations.Select(er => er.Id).ToList();
-
-        var semEnrollments = await context.Set<SemesterEnrollment>()
-            .AsNoTracking()
-            .IgnoreQueryFilters()
-            .Include(se => se.StudentAdmission)
-            .Include(se => se.ExamRegistrations)
-            .Where(se => se.ExamRegistrations!.Any(er => erIds.Contains(er.Id)))
-            .ToListAsync();
-
-        var userIds = semEnrollments
-            .Select(se => se.StudentAdmission?.AppUserId)
-            .Where(id => id != null).Distinct().Cast<string>().ToList();
-
-        var userNames = new Dictionary<string, string>();
-        if (userIds.Count > 0)
+        if (ExamRegistrationBinder.IsReExamSchedule(examSchedule))
         {
-            userNames = await context.Users
-                .AsNoTracking()
-                .Where(u => userIds.Contains(u.Id))
-                .Select(u => new { u.Id, Name = u.FullName ?? u.Email ?? "" })
-                .ToDictionaryAsync(u => u.Id, u => u.Name);
-        }
-
-        var admissionIds = semEnrollments
-            .Where(se => se.StudentAdmission != null)
-            .Select(se => se.StudentAdmission!.Id)
-            .Distinct().ToList();
-
-        var regNumbers = new Dictionary<int, string>();
-        if (admissionIds.Count > 0)
-        {
-            regNumbers = await context.StudentRegistrations!
+            // Re-exam schedules are sat by older cohorts whose marks rows are
+            // pinned to their cohort-specific offering; only students actually
+            // registered on this sheet belong in the list.
+            var pinnedRegIds = await context.ExamSubjectResults
                 .AsNoTracking()
                 .IgnoreQueryFilters()
-                .Where(sr => sr.StudentAdmissionId != null && admissionIds.Contains(sr.StudentAdmissionId!.Value) && sr.RegistrationNumber != null)
-                .Select(sr => new { AdmissionId = sr.StudentAdmissionId!.Value, sr.RegistrationNumber })
-                .Distinct()
-                .GroupBy(x => x.AdmissionId)
-                .ToDictionaryAsync(g => g.Key, g => g.First().RegistrationNumber!);
+                .Where(esr => esr.SubjectOfferingId == subjectOfferingId
+                           && esr.ExamScheduleId == examScheduleId
+                           && esr.IsActive)
+                .Select(esr => esr.ExamRegistrationId)
+                .ToHashSetAsync();
+            examRegistrations = examRegistrations.Where(er => pinnedRegIds.Contains(er.Id)).ToList();
         }
+
+        var erIds = examRegistrations.Select(er => er.Id).ToList();
+        var identities = await StudentIdentityResolver.ResolveAsync(context, erIds);
 
         var existingResults = await context.ExamSubjectResults
             .AsNoTracking()
@@ -302,25 +282,17 @@ public class InternalMarksController(
         var students = new List<InternalMarksStudentDto>();
         foreach (var er in examRegistrations)
         {
-            var se = semEnrollments.FirstOrDefault(s => s.ExamRegistrations!.Any(e => e.Id == er.Id));
-            var appUserId = se?.StudentAdmission?.AppUserId;
-            var name = appUserId != null && userNames.TryGetValue(appUserId, out var n) ? n : "";
-            var regNum = se?.StudentAdmission != null && regNumbers.TryGetValue(se.StudentAdmission.Id, out var rn) ? rn : "";
-
-            if (string.IsNullOrEmpty(name))
-                name = er.ApplicationVoucher?.StudentName ?? "";
-            if (string.IsNullOrEmpty(regNum))
-                regNum = er.ApplicationVoucher?.StudentRegistration?.RegistrationNumber ?? "";
-
+            var identity = identities.GetValueOrDefault(er.Id);
             var existing = existingResults.FirstOrDefault(esr => esr.ExamRegistrationId == er.Id);
 
             students.Add(new InternalMarksStudentDto
             {
                 ExamRegistrationId = er.Id,
                 ExamSubjectResultId = existing?.Id,
-                StudentName = name,
-                RegistrationNumber = regNum,
+                StudentName = identity.StudentName,
+                RegistrationNumber = identity.RegistrationNumber,
                 SymbolNumber = er.ExamRollNumber ?? er.SymbolNumber ?? "",
+                AcademicYearName = identity.AcademicYearName,
                 TheoryInternal = existing?.ObtainedMarksTheoryInternal,
                 PracticalInternal = existing?.ObtainedMarksPracticalInternal
             });

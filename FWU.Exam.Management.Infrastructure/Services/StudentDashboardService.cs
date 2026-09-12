@@ -1084,6 +1084,13 @@ public class StudentDashboardService(
         await context.SaveChangesAsync();
         logger.LogInformation("CreateExamRegistrationAsync: ExamRegistration created. RegId={RegId}, ScheduleId={ScheduleId}, UserId={UserId}, VoucherId={VoucherId}", registration.Id, examScheduleId, userId, voucher.Id);
 
+        // Resolve the batch grading scheme once so every row created below is
+        // graded against the student's cohort scheme rather than the schedule
+        // year's (they differ for partial/re-exam forms from older cohorts).
+        var batchYears = await ExamRegistrationBinder.ResolveBatchAcademicYearIdsAsync(context, new[] { registration.Id });
+        var gradingSchemeId = (await ExamRegistrationBinder.ResolveBatchSchemeIdsAsync(
+            context, programsId, batchYears)).GetValueOrDefault(registration.Id);
+
         var subjectOfferings = await context.SubjectOfferings!
             .AsNoTracking()
             .Where(so => subjectOfferingIds.Contains(so.Id))
@@ -1149,6 +1156,7 @@ public class StudentDashboardService(
                 SubjectOfferingId = subjectOfferingId,
                 ExamScheduleId = examScheduleId,
                 ExamTypeId = schedule.ExamTypeId,
+                GradingSchemeId = gradingSchemeId,
                 IsTheoryRegistered = legs.HasFlag(ReExamLegs.Theory),
                 IsPracticalRegistered = legs.HasFlag(ReExamLegs.Practical),
                 IsActive = true,
@@ -1767,6 +1775,34 @@ public class StudentDashboardService(
         return await context.Set<PaymentRequestLog>()
             .AsNoTracking()
             .FirstOrDefaultAsync(prl => prl.TransactionId == transactionUuid);
+    }
+
+    /// <summary>
+    /// Returns true when the student has at least one active exam registration that has
+    /// moved past college verification (status != Pending and != Rejected). Used to lock
+    /// the student's profile so verified photo/signature and mandatory details cannot be
+    /// changed from the student portal.
+    /// </summary>
+    public async Task<bool> HasVerifiedExamFormAsync(string userId)
+    {
+        var registration = await GetStudentRegistrationByUserIdAsync(userId);
+        if (registration == null) return false;
+
+        var voucherIds = await context.ApplicationVouchers!
+            .AsNoTracking()
+            .Where(av => av.StudentRegistrationId == registration.Id)
+            .Select(av => av.Id)
+            .ToListAsync();
+
+        if (voucherIds.Count == 0) return false;
+
+        return await context.ExamRegistrations!
+            .AsNoTracking()
+            .AnyAsync(er => er.ApplicationVoucherId != null
+                          && voucherIds.Contains(er.ApplicationVoucherId!.Value)
+                          && er.IsActive
+                          && er.Status != RegistrationStatus.Pending
+                          && er.Status != RegistrationStatus.Rejected);
     }
 
     public async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath)

@@ -108,10 +108,21 @@
 
             <!-- Actions -->
             <div class="flex items-center sm:pb-1">
-                <a asp-controller="Profile" asp-action="Edit"
-                   class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-admin-blue to-admin-blue-dark text-white text-sm font-semibold hover:opacity-95 transition-opacity shadow-md">
-                    <i class="fas fa-user-edit"></i> Edit Profile
-                </a>
+                @if (Model.IsProfileLocked)
+                {
+                    <a asp-controller="Profile" asp-action="Edit"
+                       class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold cursor-pointer transition-colors hover:bg-amber-100"
+                       title="Your profile is locked by the exam office">
+                        <i class="fas fa-lock"></i> Profile Locked
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Profile" asp-action="Edit"
+                       class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-admin-blue to-admin-blue-dark text-white text-sm font-semibold hover:opacity-95 transition-opacity shadow-md">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </a>
+                }
             </div>
         </div>
 
