@@ -365,7 +365,8 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
                     context.ExamSubjectResults.Add(entity);
                 }
 
-                entity.ObtainedMarksTheory = student.Theory;
+                if (student.Theory.HasValue)
+                    entity.ObtainedMarksTheory = student.Theory;
                 gradeCalculationService.AssignGrades(entity, subjectOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)

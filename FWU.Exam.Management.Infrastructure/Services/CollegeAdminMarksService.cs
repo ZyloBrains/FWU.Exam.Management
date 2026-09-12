@@ -524,8 +524,10 @@ public class CollegeAdminMarksService(
                     context.ExamSubjectResults.Add(entity);
                 }
 
-                entity.ObtainedMarksTheoryInternal = student.TheoryInternal;
-                entity.ObtainedMarksPracticalInternal = student.PracticalInternal;
+                if (student.TheoryInternal.HasValue)
+                    entity.ObtainedMarksTheoryInternal = student.TheoryInternal;
+                if (student.PracticalInternal.HasValue)
+                    entity.ObtainedMarksPracticalInternal = student.PracticalInternal;
                 gradeCalculationService.AssignGrades(entity, subjectOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)

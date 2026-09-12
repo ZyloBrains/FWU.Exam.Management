@@ -385,7 +385,8 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
                     context.ExamSubjectResults.Add(entity);
                 }
 
-                entity.ObtainedMarksPractical = student.Practical;
+                if (student.Practical.HasValue)
+                    entity.ObtainedMarksPractical = student.Practical;
                 gradeCalculationService.AssignGrades(entity, subjectOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)
