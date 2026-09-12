@@ -6,6 +6,7 @@
     var initials = Model.FullName.GetInitials();
     var fallbackColor = "bg-gradient-to-br from-admin-blue-light to-admin-blue-dark";
     var isStudent = Model.Roles.Contains("Student");
+    var isLocked = Model.IsProfileLocked;
     var currentEmail = Model.Email != null
         && System.Text.RegularExpressions.Regex.IsMatch(Model.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$")
         ? Model.Email
@@ -38,6 +39,19 @@
                 <p class="text-blue-100 text-xs sm:text-sm mt-1">Update your personal information and profile settings.</p>
             </div>
 
+            @if (isLocked && isStudent)
+            {
+                <div class="mx-5 sm:mx-6 mt-4 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-lock text-amber-600 mt-0.5 text-sm"></i>
+                        <div>
+                            <p class="text-sm font-medium text-amber-800">Profile Locked</p>
+                            <p class="text-xs text-amber-700 mt-0.5">Your profile is locked because one of your exam forms has been verified by the exam office. To change your photo, signature, or mandatory details, please contact your college.</p>
+                        </div>
+                    </div>
+                </div>
+            }
+
             <div class="p-5 sm:p-6 space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div class="flex items-center gap-4">
@@ -53,23 +67,32 @@
                         </div>
                         <div class="min-w-0">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Profile Photo</label>
-                            <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-600 hover:border-admin-blue hover:text-admin-blue cursor-pointer transition-colors">
-                                <i class="fas fa-camera"></i> Choose Photo
-                                <input type="file" name="photo" accept=".jpg,.jpeg,.png" class="hidden"
-                                       x-data
-                                       x-on:change="
-                                           const f = $event.target.files[0];
-                                           if (f) {
-                                               const r = new FileReader();
-                                               r.onload = e => {
-                                                   const img = document.getElementById('editAvatarPreview');
-                                                   const ini = document.getElementById('editAvatarInitials');
-                                                   if (img) { img.src = e.target.result; img.classList.remove('hidden'); }
-                                                   if (ini) ini.style.display = 'none';
-                                               };
-                                               r.readAsDataURL(f);
-                                           }" />
-                            </label>
+                            @if (isLocked)
+                            {
+                                <p class="text-xs text-amber-600 inline-flex items-center gap-1">
+                                    <i class="fas fa-lock text-[11px]"></i> Locked by exam office
+                                </p>
+                            }
+                            else
+                            {
+                                <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-600 hover:border-admin-blue hover:text-admin-blue cursor-pointer transition-colors">
+                                    <i class="fas fa-camera"></i> Choose Photo
+                                    <input type="file" name="photo" accept=".jpg,.jpeg,.png" class="hidden"
+                                           x-data
+                                           x-on:change="
+                                               const f = $event.target.files[0];
+                                               if (f) {
+                                                   const r = new FileReader();
+                                                   r.onload = e => {
+                                                       const img = document.getElementById('editAvatarPreview');
+                                                       const ini = document.getElementById('editAvatarInitials');
+                                                       if (img) { img.src = e.target.result; img.classList.remove('hidden'); }
+                                                       if (ini) ini.style.display = 'none';
+                                                   };
+                                                   r.readAsDataURL(f);
+                                               }" />
+                                </label>
+                            }
                             <p class="text-xs text-gray-400 mt-1">JPG or PNG up to 500 KB</p>
                         </div>
                     </div>
@@ -88,23 +111,32 @@
                             </div>
                             <div class="min-w-0">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Signature</label>
-                                <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-600 hover:border-admin-blue hover:text-admin-blue cursor-pointer transition-colors">
-                                    <i class="fas fa-camera"></i> @(string.IsNullOrEmpty(Model.SignaturePath) ? "Upload Signature" : "Change Signature")
-                                    <input type="file" name="signature" accept=".jpg,.jpeg,.png" class="hidden"
-                                           x-data
-                                           x-on:change="
-                                               const f = $event.target.files[0];
-                                               if (f) {
-                                                   const r = new FileReader();
-                                                   r.onload = e => {
-                                                       const img = document.getElementById('editSignaturePreview');
-                                                       const empty = document.getElementById('editSignatureEmpty');
-                                                       if (empty) empty.classList.add('hidden');
-                                                       if (img) { img.src = e.target.result; img.classList.remove('hidden'); }
-                                                   };
-                                                   r.readAsDataURL(f);
-                                               }" />
-                                </label>
+                                @if (isLocked)
+                                {
+                                    <p class="text-xs text-amber-600 inline-flex items-center gap-1">
+                                        <i class="fas fa-lock text-[11px]"></i> Locked by exam office
+                                    </p>
+                                }
+                                else
+                                {
+                                    <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-600 hover:border-admin-blue hover:text-admin-blue cursor-pointer transition-colors">
+                                        <i class="fas fa-camera"></i> @(string.IsNullOrEmpty(Model.SignaturePath) ? "Upload Signature" : "Change Signature")
+                                        <input type="file" name="signature" accept=".jpg,.jpeg,.png" class="hidden"
+                                               x-data
+                                               x-on:change="
+                                                   const f = $event.target.files[0];
+                                                   if (f) {
+                                                       const r = new FileReader();
+                                                       r.onload = e => {
+                                                           const img = document.getElementById('editSignaturePreview');
+                                                           const empty = document.getElementById('editSignatureEmpty');
+                                                           if (empty) empty.classList.add('hidden');
+                                                           if (img) { img.src = e.target.result; img.classList.remove('hidden'); }
+                                                       };
+                                                       r.readAsDataURL(f);
+                                                   }" />
+                                    </label>
+                                }
                                 <p class="text-xs text-gray-400 mt-1">JPG or PNG up to 100 KB</p>
                             </div>
                         </div>
@@ -138,7 +170,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 @(isStudent ? "" : "mt-4")">
                         <div>
                             <label for="phoneNumber" class="block text-sm font-medium text-gray-700 mb-1">Phone Number <span class="text-red-500">*</span></label>
-                            <input name="phoneNumber" id="phoneNumber" value="@Model.PhoneNumber" maxlength="15" inputmode="tel"
+                            <input name="phoneNumber" id="phoneNumber" value="@Model.PhoneNumber" maxlength="15" inputmode="tel" disabled="@(isLocked ? "disabled" : null)"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors" />
                         </div>
                         <div class="sm:col-span-2">
@@ -199,7 +231,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
                             <label for="provinceId" class="block text-sm font-medium text-gray-700 mb-1">Province <span class="text-red-500">*</span></label>
-                            <select id="provinceId" name="provinceId" x-model="provinceId" x-on:change="districtId = 0; localLevelId = 0;"
+                            <select id="provinceId" name="provinceId" x-model="provinceId" x-on:change="districtId = 0; localLevelId = 0;" disabled="@(isLocked ? "disabled" : null)"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
                                 <option value="0">Select Province</option>
                                 <template x-for="p in provinces" :key="p.id">
@@ -209,7 +241,7 @@
                         </div>
                         <div>
                             <label for="districtId" class="block text-sm font-medium text-gray-700 mb-1">District <span class="text-red-500">*</span></label>
-                            <select id="districtId" name="districtId" x-model="districtId" x-on:change="localLevelId = 0;"
+                            <select id="districtId" name="districtId" x-model="districtId" x-on:change="localLevelId = 0;" disabled="@(isLocked ? "disabled" : null)"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
                                 <option value="0">Select District</option>
                                 <template x-for="d in filteredDistricts" :key="d.id">
@@ -219,7 +251,7 @@
                         </div>
                         <div>
                             <label for="localLevelId" class="block text-sm font-medium text-gray-700 mb-1">Local Level <span class="text-red-500">*</span></label>
-                            <select id="localLevelId" name="localLevelId" x-model="localLevelId"
+                            <select id="localLevelId" name="localLevelId" x-model="localLevelId" disabled="@(isLocked ? "disabled" : null)"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
                                 <option value="0">Select Local Level</option>
                                 <template x-for="l in filteredLocalLevels" :key="l.id">
@@ -231,7 +263,7 @@
                         {
                             <div>
                                 <label for="genderId" class="block text-sm font-medium text-gray-700 mb-1">Gender <span class="text-red-500">*</span></label>
-                                <select id="genderId" name="genderId" x-model="genderId"
+                                <select id="genderId" name="genderId" x-model="genderId" disabled="@(isLocked ? "disabled" : null)"
                                         class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
                                     <option value="0">Select Gender</option>
                                     <template x-for="g in genders" :key="g.id">
@@ -241,7 +273,7 @@
                             </div>
                             <div class="sm:col-span-2 lg:col-span-2">
                                 <label for="ethnicityId" class="block text-sm font-medium text-gray-700 mb-1">Ethnicity <span class="text-red-500">*</span></label>
-                                <select id="ethnicityId" name="ethnicityId" x-model="ethnicityId"
+                                <select id="ethnicityId" name="ethnicityId" x-model="ethnicityId" disabled="@(isLocked ? "disabled" : null)"
                                         class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
                                     <option value="0">Select Ethnicity</option>
                                     <template x-for="e in ethnicities" :key="e.id">
@@ -259,10 +291,19 @@
                    class="px-5 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-center">
                     Cancel
                 </a>
-                <button type="submit"
-                        class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-admin-blue to-admin-blue-dark text-white text-sm font-semibold hover:opacity-95 transition-opacity shadow-md">
-                    <i class="fas fa-save"></i> Save Changes
-                </button>
+                @if (isLocked)
+                {
+                    <span class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gray-100 text-sm font-medium text-gray-500 cursor-not-allowed">
+                        <i class="fas fa-lock"></i> Profile locked
+                    </span>
+                }
+                else
+                {
+                    <button type="submit"
+                            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-admin-blue to-admin-blue-dark text-white text-sm font-semibold hover:opacity-95 transition-opacity shadow-md">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                }
             </div>
         </div>
     </form>

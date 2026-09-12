@@ -24,6 +24,7 @@ public class ProfileBaseViewModel
     public string? OrganizationLogo { get; set; }
     public string? CoverImagePath { get; set; }
     public bool CanUploadSignature { get; set; }
+    public bool IsProfileLocked { get; set; }
 }
 
 public class SuperAdminProfileViewModel : ProfileBaseViewModel
