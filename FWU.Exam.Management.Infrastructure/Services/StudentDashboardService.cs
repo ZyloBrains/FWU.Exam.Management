@@ -1777,6 +1777,34 @@ public class StudentDashboardService(
             .FirstOrDefaultAsync(prl => prl.TransactionId == transactionUuid);
     }
 
+    /// <summary>
+    /// Returns true when the student has at least one active exam registration that has
+    /// moved past college verification (status != Pending and != Rejected). Used to lock
+    /// the student's profile so verified photo/signature and mandatory details cannot be
+    /// changed from the student portal.
+    /// </summary>
+    public async Task<bool> HasVerifiedExamFormAsync(string userId)
+    {
+        var registration = await GetStudentRegistrationByUserIdAsync(userId);
+        if (registration == null) return false;
+
+        var voucherIds = await context.ApplicationVouchers!
+            .AsNoTracking()
+            .Where(av => av.StudentRegistrationId == registration.Id)
+            .Select(av => av.Id)
+            .ToListAsync();
+
+        if (voucherIds.Count == 0) return false;
+
+        return await context.ExamRegistrations!
+            .AsNoTracking()
+            .AnyAsync(er => er.ApplicationVoucherId != null
+                          && voucherIds.Contains(er.ApplicationVoucherId!.Value)
+                          && er.IsActive
+                          && er.Status != RegistrationStatus.Pending
+                          && er.Status != RegistrationStatus.Rejected);
+    }
+
     public async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath)
     {
         var missing = new List<string>();
