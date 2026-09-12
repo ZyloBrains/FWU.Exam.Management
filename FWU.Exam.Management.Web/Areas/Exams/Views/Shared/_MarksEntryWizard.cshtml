@@ -215,6 +215,7 @@
                             <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">S.N</th>
                             <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Registration Number</th>
                             <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Student Name</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Academic Year</th>
                             @if (showSymbol)
                             {
                             <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Symbol No.</th>
@@ -254,6 +255,7 @@
                         <tr>
                             <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">S.N</th>
                             <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Student Name</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Academic Year</th>
                             <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Registration Number</th>
                             @if (showSymbol)
                             {
@@ -453,6 +455,8 @@
                 card.attr('data-code', s.code || '');
                 card.attr('data-theoryfull', s.theoryFullMarks != null ? s.theoryFullMarks : '');
                 card.attr('data-internaltheoryfull', s.internalTheoryFullMarks != null ? s.internalTheoryFullMarks : '');
+                if (s.isStaleCohort) card.attr('data-stale', 'true');
+                if (s.curriculumVersionName) card.attr('data-curriculum', s.curriculumVersionName);
 
                 var head = $('<div class="flex items-start justify-between gap-2"></div>');
                 head.append('<span class="font-semibold text-gray-800 text-sm leading-tight">' + s.name + '</span>');
@@ -469,6 +473,9 @@
                     badgeRow.append('<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Practical / ' + fmt(s.practicalFullMarks) + '</span>');
                 } else {
                     badgeRow.append('<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Theory / ' + fmt(s.theoryFullMarks) + '</span>');
+                }
+                if (s.isStaleCohort) {
+                    badgeRow.append('<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">Old Curriculum' + (s.curriculumVersionName ? ' · ' + s.curriculumVersionName : '') + '</span>');
                 }
                 card.append(badgeRow);
 
@@ -506,6 +513,9 @@
             if (subj) {
                 html += ' <span class="text-gray-400">&rsaquo;</span> <span class="font-semibold text-gray-700">' + subj.name + '</span>';
                 if (subj.code) html += ' <span class="text-gray-400">(' + subj.code + ')</span>';
+                if (subj.isStaleCohort) {
+                    html += ' <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">Old Curriculum' + (subj.curriculumVersionName ? ' · ' + subj.curriculumVersionName : '') + '</span>';
+                }
             }
             $('#step3Context').html(html);
         }
@@ -552,6 +562,7 @@
                 tr.append('<td class="px-4 py-2.5 text-gray-500">' + (i + 1) + '</td>');
                 tr.append('<td class="px-4 py-2.5 font-medium text-gray-800">' + (s.registrationNumber || '-') + '</td>');
                 tr.append('<td class="px-4 py-2.5 text-gray-700">' + (s.studentName || '-') + '</td>');
+                tr.append('<td class="px-4 py-2.5 text-gray-500">' + (s.academicYearName || '-') + '</td>');
                 if (config.showSymbol) {
                     tr.append('<td class="px-4 py-2.5 text-gray-500">' + (s.symbolNumber || '-') + '</td>');
                 }
@@ -609,7 +620,7 @@
                     ExamSubjectResultId: $row.data('examSubjectResultId') || null,
                     StudentName: $row.find('td').eq(2).text().trim(),
                     RegistrationNumber: $row.find('td').eq(1).text().trim(),
-                    SymbolNumber: config.showSymbol ? $row.find('td').eq(3).text().trim() : '',
+                    SymbolNumber: config.showSymbol ? $row.find('td').eq(4).text().trim() : '',
                     IsSubmitted: false
                 };
                 if (config.mode === 'internal') {
@@ -647,7 +658,8 @@
                 rows.push({
                     name: $row.find('td').eq(2).text().trim(),
                     registration: $row.find('td').eq(1).text().trim(),
-                    symbol: config.showSymbol ? $row.find('td').eq(3).text().trim() : '',
+                    academicYear: $row.find('td').eq(3).text().trim(),
+                    symbol: config.showSymbol ? $row.find('td').eq(4).text().trim() : '',
                     info: rowMarksInfo($row)
                 });
             });
@@ -681,6 +693,7 @@
                 var tr = $('<tr class="' + (info.over ? 'bg-red-50' : 'hover:bg-gray-50') + '"></tr>');
                 tr.append('<td class="px-4 py-2.5 text-gray-500">' + (i + 1) + '</td>');
                 tr.append('<td class="px-4 py-2.5 font-medium text-gray-800">' + (r.name || '-') + '</td>');
+                tr.append('<td class="px-4 py-2.5 text-gray-600">' + (r.academicYear || '-') + '</td>');
                 tr.append('<td class="px-4 py-2.5 text-gray-600">' + (r.registration || '-') + '</td>');
                 if (config.showSymbol) {
                     tr.append('<td class="px-4 py-2.5 text-gray-500">' + (r.symbol || '-') + '</td>');
@@ -886,7 +899,9 @@
                 state.subjectId = id;
                 state.subject = {
                     name: card.find('.font-semibold').text().trim(),
-                    code: card.attr('data-code')
+                    code: card.attr('data-code'),
+                    isStaleCohort: card.attr('data-stale') === 'true',
+                    curriculumVersionName: card.attr('data-curriculum')
                 };
                 resetStudentsArea();
                 card.addClass(config.accent.cardSelected);

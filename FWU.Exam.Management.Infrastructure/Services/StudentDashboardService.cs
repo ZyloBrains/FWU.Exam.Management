@@ -1084,6 +1084,13 @@ public class StudentDashboardService(
         await context.SaveChangesAsync();
         logger.LogInformation("CreateExamRegistrationAsync: ExamRegistration created. RegId={RegId}, ScheduleId={ScheduleId}, UserId={UserId}, VoucherId={VoucherId}", registration.Id, examScheduleId, userId, voucher.Id);
 
+        // Resolve the batch grading scheme once so every row created below is
+        // graded against the student's cohort scheme rather than the schedule
+        // year's (they differ for partial/re-exam forms from older cohorts).
+        var batchYears = await ExamRegistrationBinder.ResolveBatchAcademicYearIdsAsync(context, new[] { registration.Id });
+        var gradingSchemeId = (await ExamRegistrationBinder.ResolveBatchSchemeIdsAsync(
+            context, programsId, batchYears)).GetValueOrDefault(registration.Id);
+
         var subjectOfferings = await context.SubjectOfferings!
             .AsNoTracking()
             .Where(so => subjectOfferingIds.Contains(so.Id))
@@ -1149,6 +1156,7 @@ public class StudentDashboardService(
                 SubjectOfferingId = subjectOfferingId,
                 ExamScheduleId = examScheduleId,
                 ExamTypeId = schedule.ExamTypeId,
+                GradingSchemeId = gradingSchemeId,
                 IsTheoryRegistered = legs.HasFlag(ReExamLegs.Theory),
                 IsPracticalRegistered = legs.HasFlag(ReExamLegs.Practical),
                 IsActive = true,

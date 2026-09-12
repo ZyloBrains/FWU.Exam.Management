@@ -17,6 +17,7 @@ public class StudentPracticalMarksRowDto
     public string StudentName { get; set; } = string.Empty;
     public string RegistrationNumber { get; set; } = string.Empty;
     public string SymbolNumber { get; set; } = string.Empty;
+    public string AcademicYearName { get; set; } = string.Empty;
     public float? Practical { get; set; }
     public bool IsSubmitted { get; set; }
 }

@@ -562,6 +562,13 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         if (validOfferings.Count != requestedIds.Count)
             return (false, "One or more selected subjects are not offered for this exam schedule.");
 
+        // Resolve the batch grading scheme once so rows created below are graded
+        // against the student's cohort scheme rather than the schedule year's
+        // (they differ for partial/re-exam forms from older cohorts).
+        var batchYears = await ExamRegistrationBinder.ResolveBatchAcademicYearIdsAsync(context, new[] { er.Id });
+        var gradingSchemeId = (await ExamRegistrationBinder.ResolveBatchSchemeIdsAsync(
+            context, schedule.ProgramId, batchYears)).GetValueOrDefault(er.Id);
+
         var matchedLog = await FindConfirmedPaymentLogAsync(er, asNoTracking: false);
         if (matchedLog == null)
             return (false, "Payment has not been confirmed for this form yet.");
@@ -691,6 +698,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 SubjectOfferingId = offeringId,
                 ExamScheduleId = er.ExamScheduleId,
                 ExamTypeId = schedule.ExamTypeId,
+                GradingSchemeId = gradingSchemeId,
                 IsTheoryRegistered = theorySelected,
                 IsPracticalRegistered = practicalSelected,
                 IsActive = true,
