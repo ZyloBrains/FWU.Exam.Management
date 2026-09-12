@@ -291,6 +291,11 @@ public class TheoryMarksService(
             };
         }).ToList();
 
+        rows = rows
+            .OrderBy(r => r.StudentName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.RegistrationNumber, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         return new StudentTheoryMarksViewModel
         {
             ExamScheduleId = examScheduleId,
