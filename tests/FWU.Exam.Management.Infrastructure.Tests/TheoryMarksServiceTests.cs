@@ -118,4 +118,37 @@ public class TheoryMarksServiceTests
 
         Assert.Equal([1, 2, 3], rows.Students.Select(s => s.ExamRegistrationId).OrderBy(id => id).ToArray());
     }
+
+    [Fact]
+    public async Task GetStudents_OnPartialSchedule_IncludesPendingRegistrationsWithPinnedRows()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            MarksEntryTestSeed.SeedPartialContext(ctx);
+            MarksEntryTestSeed.AddOldTheoryOffering(ctx);
+            MarksEntryTestSeed.AddPartialSchedule(ctx);
+            MarksEntryTestSeed.AddReExamStudents(ctx);
+
+            // A re-exam form stays Pending until the college verifies it, but the
+            // student already holds a pinned marks row and must appear in the list.
+            var er4 = TestData.ExamRegistration(4, MarksEntryTestSeed.ScheduleId, 1);
+            er4.SemesterEnrollmentId = 1;
+            ctx.ExamRegistrations.Add(er4);
+
+            ctx.ExamSubjectResults.Add(MarksEntryTestSeed.PinnedResult(1, 1,
+                MarksEntryTestSeed.CurrentOfferingId, MarksEntryTestSeed.ScheduleId, TestData.Partial,
+                theory: true));
+            ctx.ExamSubjectResults.Add(MarksEntryTestSeed.PinnedResult(2, 2,
+                MarksEntryTestSeed.OldTheoryOfferingId, MarksEntryTestSeed.ScheduleId, TestData.Partial,
+                theory: true));
+            ctx.ExamSubjectResults.Add(MarksEntryTestSeed.PinnedResult(10, 4,
+                MarksEntryTestSeed.OldTheoryOfferingId, MarksEntryTestSeed.ScheduleId, TestData.Partial,
+                theory: true));
+        });
+
+        var old = await CreateService(db).GetStudentsForTheoryMarksAsync(
+            MarksEntryTestSeed.ScheduleId, MarksEntryTestSeed.OldTheoryOfferingId, TestData.CollegeId);
+
+        Assert.Equal([2, 4], old.Students.Select(s => s.ExamRegistrationId).OrderBy(id => id).ToArray());
+    }
 }

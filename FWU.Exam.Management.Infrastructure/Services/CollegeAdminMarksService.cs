@@ -325,7 +325,8 @@ public class CollegeAdminMarksService(
             .Where(er => er.ExamScheduleId == examScheduleId
                 && er.CollegeId == effectiveCollege
                 && er.IsActive
-                && er.Status >= RegistrationStatus.CollegeVerified)
+                && er.Status != RegistrationStatus.Withheld
+                && er.Status != RegistrationStatus.Rejected)
             .OrderBy(er => er.ExamRollNumber)
             .ThenBy(er => er.Id)
             .ToListAsync();
@@ -365,10 +366,10 @@ public class CollegeAdminMarksService(
             {
                 ExamRegistrationId = er.Id,
                 ExamSubjectResultId = existing?.Id,
-                StudentName = identity.StudentName,
-                RegistrationNumber = identity.RegistrationNumber,
+                StudentName = identity?.StudentName ?? "",
+                RegistrationNumber = identity?.RegistrationNumber ?? "",
                 SymbolNumber = er.SymbolNumber ?? er.ExamRollNumber ?? "",
-                AcademicYearName = identity.AcademicYearName,
+                AcademicYearName = identity?.AcademicYearName ?? "",
                 TheoryInternal = existing?.ObtainedMarksTheoryInternal,
                 PracticalInternal = existing?.ObtainedMarksPracticalInternal,
                 IsSubmitted = existing?.IsSubmitted ?? false
