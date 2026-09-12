@@ -410,6 +410,52 @@ public class CollegeAdminMarksService(
 
     private async Task<Dictionary<int, string>> GetRegistrationNumbersForExamRegistrationsAsync(List<int> examRegistrationIds)
     {
+        var result = new Dictionary<int, string>();
+
+        var registrations = await context.ExamRegistrations
+            .AsNoTracking()
+            .Where(er => examRegistrationIds.Contains(er.Id) && er.ApplicationVoucherId != null)
+            .Select(er => new { er.Id, er.ApplicationVoucherId })
+            .ToListAsync();
+
+        var voucherIds = registrations
+            .Where(r => r.ApplicationVoucherId.HasValue)
+            .Select(r => r.ApplicationVoucherId!.Value)
+            .Distinct()
+            .ToList();
+
+        if (voucherIds.Count > 0)
+        {
+            var vouchers = await context.ApplicationVouchers!
+                .AsNoTracking()
+                .Where(v => voucherIds.Contains(v.Id) && v.StudentRegistrationId != null)
+                .Select(v => new { v.Id, v.StudentRegistrationId })
+                .ToListAsync();
+
+            var erIdToSrId = registrations
+                .Where(r => r.ApplicationVoucherId.HasValue)
+                .Join(vouchers,
+                    r => r.ApplicationVoucherId!.Value,
+                    v => v.Id,
+                    (r, v) => new { r.Id, SrId = v.StudentRegistrationId!.Value })
+                .ToDictionary(x => x.Id, x => x.SrId);
+
+            var srIds = erIdToSrId.Values.Distinct().ToList();
+            if (srIds.Count > 0)
+            {
+                var regBySr = await context.StudentRegistrations!
+                    .AsNoTracking()
+                    .Where(sr => srIds.Contains(sr.Id) && sr.RegistrationNumber != null)
+                    .ToDictionaryAsync(sr => sr.Id, sr => sr.RegistrationNumber!);
+
+                foreach (var (erId, srId) in erIdToSrId)
+                {
+                    if (regBySr.TryGetValue(srId, out var rn))
+                        result[erId] = rn;
+                }
+            }
+        }
+
         var semEnrollments = await context.Set<SemesterEnrollment>()
             .AsNoTracking()
             .Include(se => se.StudentAdmission)
@@ -423,24 +469,24 @@ public class CollegeAdminMarksService(
             .Distinct()
             .ToList();
 
-        if (admissionIds.Count == 0) return new Dictionary<int, string>();
-
-        var regByAdmission = await context.StudentRegistrations!
-            .AsNoTracking()
-            .Where(sr => sr.StudentAdmissionId != null && admissionIds.Contains(sr.StudentAdmissionId!.Value))
-            .Select(sr => new { AdmissionId = sr.StudentAdmissionId!.Value, sr.RegistrationNumber })
-            .Where(x => x.RegistrationNumber != null)
-            .Distinct()
-            .ToDictionaryAsync(x => x.AdmissionId, x => x.RegistrationNumber!);
-
-        var result = new Dictionary<int, string>();
-        foreach (var se in semEnrollments)
+        if (admissionIds.Count > 0)
         {
-            if (se.ExamRegistrations == null) continue;
-            var regNum = se.StudentAdmission != null && regByAdmission.TryGetValue(se.StudentAdmission.Id, out var rn) ? rn : "";
-            foreach (var er in se.ExamRegistrations.Where(er => examRegistrationIds.Contains(er.Id)))
+            var regByAdmission = await context.StudentRegistrations!
+                .AsNoTracking()
+                .Where(sr => sr.StudentAdmissionId != null && admissionIds.Contains(sr.StudentAdmissionId!.Value))
+                .Select(sr => new { AdmissionId = sr.StudentAdmissionId!.Value, sr.RegistrationNumber })
+                .Where(x => x.RegistrationNumber != null)
+                .Distinct()
+                .ToDictionaryAsync(x => x.AdmissionId, x => x.RegistrationNumber!);
+
+            foreach (var se in semEnrollments)
             {
-                result[er.Id] = regNum;
+                if (se.ExamRegistrations == null) continue;
+                var regNum = se.StudentAdmission != null && regByAdmission.TryGetValue(se.StudentAdmission.Id, out var rn) ? rn : "";
+                foreach (var er in se.ExamRegistrations.Where(er => examRegistrationIds.Contains(er.Id)))
+                {
+                    result.TryAdd(er.Id, regNum);
+                }
             }
         }
 
