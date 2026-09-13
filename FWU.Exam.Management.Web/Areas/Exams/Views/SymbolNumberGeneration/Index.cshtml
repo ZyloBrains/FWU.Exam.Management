@@ -6,6 +6,8 @@
     var allAssigned = Model != null && Model.UnassignedCount == 0;
     var prefix = Model?.Prefix ?? string.Empty;
     var nextExample = Model == null ? "" : SymbolNumberDefaults.Format(prefix, Model.NextStartSequence, Model.SequenceWidth);
+    var selectedYears = ViewData["SelectedAcademicYearIds"] as int[] ?? Array.Empty<int>();
+    bool IsYearSelected(string? value) => int.TryParse(value, out var id) && selectedYears.Contains(id);
 }
 
 <div class="space-y-6">
@@ -70,11 +72,15 @@
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <div class="text-xl sm:text-2xl font-bold text-purple-600">@Model.Blocks.Count</div>
-                <div class="text-xs sm:text-sm text-gray-500 mt-1">College Blocks</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">@(Model.GroupByCohort ? "Distribution Blocks" : "College Blocks")</div>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <form method="get" asp-action="Index" asp-area="Exams">
                     <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                    @foreach (var id in selectedYears)
+                    {
+                        <input type="hidden" name="academicYearIds" value="@id" />
+                    }
                     <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Prefix (manual)</label>
                     <div class="flex items-center gap-1">
                         <input type="text" name="prefix" value="@prefix" maxlength="6" inputmode="numeric"
@@ -92,9 +98,63 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 class="text-sm font-semibold text-gray-700 mb-4">Numbering Plan</h3>
 
+            @if (Model.GroupByCohort)
+            {
+                <form method="get" asp-action="Index" asp-area="Exams" class="flex flex-col sm:flex-row gap-3 items-end mb-4 p-3 rounded-lg bg-purple-50 border border-purple-200">
+                    <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                    <input type="hidden" name="prefix" value="@prefix" />
+                    <input type="hidden" name="startSequence" value="@Model.NextStartSequence" />
+                    <input type="hidden" name="sequenceWidth" value="@Model.SequenceWidth" />
+                    <div class="flex-1 w-full sm:w-auto">
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Academic Years</label>
+                        <select name="academicYearIds" class="select2 w-full sm:w-72" multiple>
+                            @if (ViewData["AcademicYearsFilter"] is SelectList yearList)
+                            {
+@foreach (var item in yearList)
+                                    {
+                                        if (IsYearSelected(item.Value))
+                                        {
+                                            <option value="@item.Value" selected>@item.Text</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                            }
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">Multi-select the partial students' academic years (different students can be in different years).</p>
+                    </div>
+                    <button type="submit" class="px-4 py-2.5 bg-purple-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-filter mr-1"></i> Apply
+                    </button>
+                    <a asp-action="Index" asp-area="Exams"
+                       asp-route-examScheduleId="@Model.ExamScheduleId"
+                       asp-route-prefix="@prefix"
+                       asp-route-startSequence="@Model.NextStartSequence"
+                       asp-route-sequenceWidth="@Model.SequenceWidth"
+                       class="inline-flex items-center gap-1 px-4 py-2.5 bg-gray-100 text-gray-700 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors border border-gray-200">
+                        <i class="fas fa-times mr-1"></i> Clear
+                    </a>
+                </form>
+
+                @if (selectedYears.Length > 0)
+                {
+                    <div class="mb-4 p-3 rounded-lg bg-purple-50 border border-purple-200 text-sm text-purple-700">
+                        <i class="fas fa-filter mr-1"></i>
+                        <strong>Filtered by academic year:</strong> the plan below (and Generate) covers only the selected year(s) across all colleges.
+                        The Start Sequence is manual &mdash; a start that duplicates an already-assigned symbol will be rejected with an error.
+                    </div>
+                }
+            }
+
             <form method="get" asp-action="Index" asp-area="Exams" class="flex flex-col sm:flex-row gap-3 items-end mb-4">
                 <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
                 <input type="hidden" name="prefix" value="@prefix" />
+                @foreach (var id in selectedYears)
+                {
+                    <input type="hidden" name="academicYearIds" value="@id" />
+                }
                 <div>
                     <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Start Sequence</label>
                     <input type="number" name="startSequence" min="1" value="@Model.NextStartSequence"
@@ -146,8 +206,11 @@
                         <tr class="text-left text-xs text-gray-500 uppercase tracking-wide border-b border-gray-200">
                             <th class="py-2 pr-4">Program</th>
                             <th class="py-2 pr-4">College</th>
+                            @if (Model.GroupByCohort)
+                            {
+                                <th class="py-2 pr-4">Academic Year</th>
+                            }
                             <th class="py-2 pr-4 text-center">@(string.IsNullOrWhiteSpace(Model.ExamTypeName) ? "Regular" : Model.ExamTypeName)</th>
-                            <th class="py-2 pr-4 text-center">Supplementary</th>
                             <th class="py-2 pr-4">Symbol Range</th>
                         </tr>
                     </thead>
@@ -157,8 +220,24 @@
                             <tr class="border-b border-gray-100">
                                 <td class="py-2 pr-4 font-medium text-gray-800">@block.ProgramName</td>
                                 <td class="py-2 pr-4 text-gray-700">@block.CollegeName</td>
+                                @if (Model.GroupByCohort)
+                                {
+                                    <td class="py-2 pr-4 text-gray-700">
+                                        @if (!string.IsNullOrEmpty(block.AcademicYearName))
+                                        {
+                                            <div>@block.AcademicYearName</div>
+                                            @if (!string.IsNullOrEmpty(block.CurriculumVersionName))
+                                            {
+                                                <div class="text-[10px] text-gray-400">@block.CurriculumVersionName</div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-gray-400">&mdash;</span>
+                                        }
+                                    </td>
+                                }
                                 <td class="py-2 pr-4 text-center text-gray-700">@block.RegularCount</td>
-                                <td class="py-2 pr-4 text-center text-gray-700">@block.SupplementaryCount</td>
                                 <td class="py-2 pr-4 font-mono text-indigo-700">@block.FromSymbol &ndash; @block.ToSymbol</td>
                             </tr>
                         }
@@ -182,6 +261,10 @@
                     <input type="hidden" name="startSequence" value="@Model.NextStartSequence" />
                     <input type="hidden" name="sequenceWidth" value="@Model.SequenceWidth" />
                     <input type="hidden" name="prefix" value="@prefix" />
+                    @foreach (var id in selectedYears)
+                    {
+                        <input type="hidden" name="academicYearIds" value="@id" />
+                    }
                     <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             @(Model.OverCapacity ? "disabled" : "")
                             onclick="return confirm('Generate symbol numbers for @Model.UnassignedCount student(s)?');">

@@ -349,6 +349,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(er => er.CollegeId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<ExamRegistration>()
+            .HasIndex(er => er.SymbolNumber)
+            .IsUnique()
+            .HasFilter("[SymbolNumber] IS NOT NULL AND [SymbolNumber] <> ''");
+
 
 
         builder.Entity<StudentRegistration>()

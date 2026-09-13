@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -19,11 +20,13 @@ public class SymbolNumberGenerationController(
     ISymbolNumberService symbolNumberService,
     AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int? examScheduleId, int? startSequence, int? sequenceWidth, string? prefix)
+    public async Task<IActionResult> Index(int? examScheduleId, int? startSequence, int? sequenceWidth, string? prefix, int[]? academicYearIds)
     {
         ViewData["ExamScheduleId"] = new SelectList(
             await context.ExamSchedules.AsNoTracking().OrderByDescending(es => es.Id).ToListAsync(),
             "Id", "ExamScheduleName", examScheduleId);
+
+        ViewData["SelectedAcademicYearIds"] = academicYearIds;
 
         if (!examScheduleId.HasValue) return View(null);
 
@@ -52,6 +55,8 @@ public class SymbolNumberGenerationController(
                 })
                 .OrderByDescending(i => i.Text, StringComparer.OrdinalIgnoreCase),
             "Value", "Text");
+
+        SymbolNumberService.FilterForAcademicYears(dto, academicYearIds);
 
         return View(dto);
     }
@@ -210,11 +215,11 @@ public class SymbolNumberGenerationController(
     [HttpPost]
     [RequirePermission("examcenters.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Generate(int examScheduleId, int? startSequence, int? sequenceWidth, string? prefix)
+    public async Task<IActionResult> Generate(int examScheduleId, int? startSequence, int? sequenceWidth, string? prefix, int[]? academicYearIds)
     {
         try
         {
-            var result = await symbolNumberService.GenerateAsync(examScheduleId, startSequence, sequenceWidth, prefix);
+            var result = await symbolNumberService.GenerateAsync(examScheduleId, startSequence, sequenceWidth, prefix, academicYearIds);
             TempData["SuccessMessage"] = result.Message;
         }
         catch (InvalidOperationException ex)
@@ -222,13 +227,13 @@ public class SymbolNumberGenerationController(
             TempData["ErrorMessage"] = ex.Message;
         }
 
-        return RedirectToAction(nameof(Index), new { examScheduleId, startSequence, sequenceWidth, prefix });
+        return RedirectToAction(nameof(Index), new { examScheduleId, startSequence, sequenceWidth, prefix, academicYearIds });
     }
 
     [HttpPost]
     [RequirePermission("examcenters.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateSymbolNumber(int registrationId, string symbolNumber, int examScheduleId)
+    public async Task<IActionResult> UpdateSymbolNumber(int registrationId, string symbolNumber, int examScheduleId, int[]? academicYearIds)
     {
         try
         {
@@ -240,6 +245,6 @@ public class SymbolNumberGenerationController(
             TempData["ErrorMessage"] = ex.Message;
         }
 
-        return RedirectToAction(nameof(Index), new { examScheduleId });
+        return RedirectToAction(nameof(Index), new { examScheduleId, academicYearIds });
     }
 }
