@@ -100,12 +100,12 @@ public static class StudentIdentityResolver
     {
         if (admission != null)
         {
-            if (admission.AppUserId != null && userNames.TryGetValue(admission.AppUserId, out var userName))
-                return userName;
-
             var fullName = admission.FirstName.GetFullName(admission.MiddleName, admission.LastName);
             if (!string.IsNullOrWhiteSpace(fullName))
                 return fullName;
+
+            if (admission.AppUserId != null && userNames.TryGetValue(admission.AppUserId, out var userName))
+                return userName;
         }
 
         return er.ApplicationVoucher?.StudentName ?? "";

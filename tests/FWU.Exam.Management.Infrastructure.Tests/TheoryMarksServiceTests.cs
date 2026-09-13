@@ -1,4 +1,6 @@
 using FWU.Exam.Management.Application.DTOs;
+using FWU.Exam.Management.Domain.Entities.Semesters;
+using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -150,5 +152,51 @@ public class TheoryMarksServiceTests
             MarksEntryTestSeed.ScheduleId, MarksEntryTestSeed.OldTheoryOfferingId, TestData.CollegeId);
 
         Assert.Equal([2, 4], old.Students.Select(s => s.ExamRegistrationId).OrderBy(id => id).ToArray());
+    }
+
+    [Fact]
+    public async Task GetStudents_WhenUserFullNameMissesMiddleName_UsesAdmissionFirstMiddleLast()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            MarksEntryTestSeed.SeedPartialContext(ctx);
+            MarksEntryTestSeed.AddOldTheoryOffering(ctx);
+            MarksEntryTestSeed.AddPartialSchedule(ctx);
+
+            const string userId = "stu-user-9";
+            var sr = TestData.StudentRegistration(9, "stu9@test.com");
+            sr.AcademicYearId = MarksEntryTestSeed.OldYearId;
+            ctx.StudentRegistrations.Add(sr);
+
+            // A legacy/stale user snapshot that omits the middle name.
+            var user = TestData.User(userId, "stu9@test.com");
+            user.FullName = "Ram Thapa";
+            ctx.Users.Add(user);
+
+            var admission = TestData.Admission(9, userId);
+            admission.FirstName = "Ram";
+            admission.MiddleName = "Bahadur";
+            admission.LastName = "Thapa";
+            ctx.StudentAdmissions.Add(admission);
+
+            ctx.Set<SemesterEnrollment>().Add(TestData.Enrollment(9, 9, 1));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(9, 9, MarksEntryTestSeed.ScheduleId));
+
+            var er = TestData.ExamRegistration(9, MarksEntryTestSeed.ScheduleId, 9);
+            er.SemesterEnrollmentId = 9;
+            er.ExamRollNumber = "R109";
+            er.SymbolNumber = "SYM109";
+            ctx.ExamRegistrations.Add(er);
+
+            ctx.ExamSubjectResults.Add(MarksEntryTestSeed.PinnedResult(90, 9,
+                MarksEntryTestSeed.OldTheoryOfferingId, MarksEntryTestSeed.ScheduleId, TestData.Partial,
+                theory: true));
+        });
+
+        var view = await CreateService(db).GetStudentsForTheoryMarksAsync(
+            MarksEntryTestSeed.ScheduleId, MarksEntryTestSeed.OldTheoryOfferingId, TestData.CollegeId);
+
+        var row = Assert.Single(view.Students);
+        Assert.Equal("Ram Bahadur Thapa", row.StudentName);
     }
 }
