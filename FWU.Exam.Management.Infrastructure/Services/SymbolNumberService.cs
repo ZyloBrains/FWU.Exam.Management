@@ -50,6 +50,35 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
 
         var isReExam = StudentDashboardService.IsReExamTypeStatic(schedule?.ExamTypeName);
         var cohort = isReExam ? await ResolveCohortMapAsync(context, registrations) : new Dictionary<int, CohortInfo>();
+        var identities = await StudentIdentityResolver.ResolveAsync(context, registrations.Select(r => r.Id).ToList());
+
+        var availableYears = registrations
+            .Select(r =>
+            {
+                cohort.TryGetValue(r.Id, out var cohortInfo);
+                var identity = identities[r.Id];
+                return new AcademicYearOption
+                {
+                    Id = cohortInfo?.AcademicYearId ?? identity.AcademicYearId,
+                    Name = cohortInfo?.AcademicYearName ?? identity.AcademicYearName ?? "Unknown Academic Year",
+                };
+            })
+            .Where(o => o.Id > 0)
+            .GroupBy(o => o.Id)
+            .Select(g => g.First())
+            .OrderByDescending(o => o.Id)
+            .ToList();
+        var availableColleges = registrations
+            .Where(r => r.CollegeId > 0)
+            .GroupBy(r => r.CollegeId)
+            .Select(g => new CollegeOption
+            {
+                Id = g.Key,
+                Name = g.First().College?.Name ?? "Unknown College",
+            })
+            .OrderBy(o => o.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         if (isReExam) registrations = ApplyAcademicYearFilter(registrations, cohort, academicYearIds);
         registrations = OrderForAssignment(registrations, cohort);
 
@@ -66,6 +95,8 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
             AssignedCount = registrations.Count(r => !string.IsNullOrEmpty(r.SymbolNumber)),
             UnassignedCount = registrations.Count(r => string.IsNullOrEmpty(r.SymbolNumber)),
             NextStartSequence = nextStart,
+            AvailableAcademicYears = availableYears,
+            AvailableColleges = availableColleges,
         };
 
         var maxSeq = SymbolNumberDefaults.MaxSequence(width);
@@ -95,8 +126,6 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
                 ToSymbol = b.ToSymbol,
             });
         }
-
-        var identities = await StudentIdentityResolver.ResolveAsync(context, registrations.Select(r => r.Id).ToList());
 
         foreach (var r in registrations)
         {

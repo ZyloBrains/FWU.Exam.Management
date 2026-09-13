@@ -18,6 +18,20 @@ public class SymbolNumberGenerationDto
     public int NextStartSequence { get; set; }
     public List<SymbolBlockInfo> Blocks { get; set; } = [];
     public List<StudentSymbolInfo> Students { get; set; } = [];
+    public List<AcademicYearOption> AvailableAcademicYears { get; set; } = [];
+    public List<CollegeOption> AvailableColleges { get; set; } = [];
+}
+
+public class AcademicYearOption
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+public class CollegeOption
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
 }
 
 public class SymbolBlockInfo

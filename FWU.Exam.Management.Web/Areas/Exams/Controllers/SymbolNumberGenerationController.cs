@@ -32,28 +32,12 @@ public class SymbolNumberGenerationController(
         var dto = await symbolNumberService.GetOverviewAsync(examScheduleId.Value, startSequence, sequenceWidth, prefix, academicYearIds);
 
         ViewData["CollegesFilter"] = new SelectList(
-            dto.Students
-                .Where(s => s.CollegeId > 0)
-                .GroupBy(s => s.CollegeId)
-                .Select(g => new SelectListItem
-                {
-                    Value = g.Key.ToString(),
-                    Text = g.First().CollegeName ?? "Unknown College",
-                })
-                .OrderBy(i => i.Text, StringComparer.OrdinalIgnoreCase),
-            "Value", "Text");
+            dto.AvailableColleges,
+            "Id", "Name");
 
         ViewData["AcademicYearsFilter"] = new SelectList(
-            dto.Students
-                .Where(s => s.AcademicYearId > 0)
-                .GroupBy(s => s.AcademicYearId)
-                .Select(g => new SelectListItem
-                {
-                    Value = g.Key.ToString(),
-                    Text = g.First().AcademicYearName ?? "Unknown Academic Year",
-                })
-                .OrderByDescending(i => i.Text, StringComparer.OrdinalIgnoreCase),
-            "Value", "Text");
+            dto.AvailableAcademicYears,
+            "Id", "Name");
 
         return View(dto);
     }

@@ -338,6 +338,13 @@ public class SymbolNumberServiceTests
         Assert.Equal(2, dto.Blocks.Count);
         Assert.All(dto.Blocks, b => Assert.Equal(2, b.AcademicYearId));
 
+        Assert.Equal(2, dto.AvailableAcademicYears.Count);
+        Assert.Contains(dto.AvailableAcademicYears, y => y.Id == 2);
+        Assert.Contains(dto.AvailableAcademicYears, y => y.Id == 3);
+        Assert.Equal(2, dto.AvailableColleges.Count);
+        Assert.Contains(dto.AvailableColleges, c => c.Name == "Alpha College");
+        Assert.Contains(dto.AvailableColleges, c => c.Name == "Test College");
+
         var prefix = SymbolNumberDefaults.BuildPrefix(TestData.Partial);
         var alpha = dto.Blocks.First(b => b.CollegeName == "Alpha College");
         Assert.Equal(prefix + "0001", alpha.FromSymbol);
@@ -355,5 +362,7 @@ public class SymbolNumberServiceTests
         Assert.Equal(3, dto.TotalRegistrations);
         Assert.Equal(3, dto.Blocks.Count);
         Assert.Equal(3, dto.Students.Count);
+        Assert.Equal(2, dto.AvailableAcademicYears.Count);
+        Assert.Equal(2, dto.AvailableColleges.Count);
     }
 }
