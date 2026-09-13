@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
-using FWU.Exam.Management.Infrastructure.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -30,33 +29,15 @@ public class SymbolNumberGenerationController(
 
         if (!examScheduleId.HasValue) return View(null);
 
-        var dto = await symbolNumberService.GetOverviewAsync(examScheduleId.Value, startSequence, sequenceWidth, prefix);
+        var dto = await symbolNumberService.GetOverviewAsync(examScheduleId.Value, startSequence, sequenceWidth, prefix, academicYearIds);
 
         ViewData["CollegesFilter"] = new SelectList(
-            dto.Students
-                .Where(s => s.CollegeId > 0)
-                .GroupBy(s => s.CollegeId)
-                .Select(g => new SelectListItem
-                {
-                    Value = g.Key.ToString(),
-                    Text = g.First().CollegeName ?? "Unknown College",
-                })
-                .OrderBy(i => i.Text, StringComparer.OrdinalIgnoreCase),
-            "Value", "Text");
+            dto.AvailableColleges,
+            "Id", "Name");
 
         ViewData["AcademicYearsFilter"] = new SelectList(
-            dto.Students
-                .Where(s => s.AcademicYearId > 0)
-                .GroupBy(s => s.AcademicYearId)
-                .Select(g => new SelectListItem
-                {
-                    Value = g.Key.ToString(),
-                    Text = g.First().AcademicYearName ?? "Unknown Academic Year",
-                })
-                .OrderByDescending(i => i.Text, StringComparer.OrdinalIgnoreCase),
-            "Value", "Text");
-
-        SymbolNumberService.FilterForAcademicYears(dto, academicYearIds);
+            dto.AvailableAcademicYears,
+            "Id", "Name");
 
         return View(dto);
     }
