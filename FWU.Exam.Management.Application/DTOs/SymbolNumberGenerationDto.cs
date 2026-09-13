@@ -40,6 +40,8 @@ public class StudentSymbolInfo
     public string? ProgramName { get; set; }
     public int CollegeId { get; set; }
     public string? CollegeName { get; set; }
+    public int AcademicYearId { get; set; }
+    public string? AcademicYearName { get; set; }
     public bool IsSupplementary { get; set; }
 }
 

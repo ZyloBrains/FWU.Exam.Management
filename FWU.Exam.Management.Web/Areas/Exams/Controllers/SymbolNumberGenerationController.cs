@@ -41,24 +41,40 @@ public class SymbolNumberGenerationController(
                 .OrderBy(i => i.Text, StringComparer.OrdinalIgnoreCase),
             "Value", "Text");
 
+        ViewData["AcademicYearsFilter"] = new SelectList(
+            dto.Students
+                .Where(s => s.AcademicYearId > 0)
+                .GroupBy(s => s.AcademicYearId)
+                .Select(g => new SelectListItem
+                {
+                    Value = g.Key.ToString(),
+                    Text = g.First().AcademicYearName ?? "Unknown Academic Year",
+                })
+                .OrderByDescending(i => i.Text, StringComparer.OrdinalIgnoreCase),
+            "Value", "Text");
+
         return View(dto);
     }
 
     [HttpGet]
-    public async Task<IActionResult> Export(int examScheduleId, int? collegeId, string? prefix, string? format = "excel")
+    public async Task<IActionResult> Export(int examScheduleId, int? collegeId, int? academicYearId, string? prefix, string? format = "excel")
     {
         var dto = await symbolNumberService.GetOverviewAsync(examScheduleId, prefix: prefix);
 
         var students = dto.Students
             .Where(s => !string.IsNullOrWhiteSpace(s.SymbolNumber))
             .Where(s => !collegeId.HasValue || s.CollegeId == collegeId.Value)
+            .Where(s => !academicYearId.HasValue || s.AcademicYearId == academicYearId.Value)
             .ToList();
 
         var collegePart = collegeId.HasValue
             ? (students.FirstOrDefault()?.CollegeName ?? $"College{collegeId.Value}")
             : "All";
+        var yearPart = academicYearId.HasValue
+            ? (students.FirstOrDefault()?.AcademicYearName ?? $"Year{academicYearId.Value}")
+            : "All";
         var schedulePart = string.IsNullOrWhiteSpace(dto.ExamScheduleName) ? dto.ExamScheduleId.ToString() : dto.ExamScheduleName;
-        var baseName = $"SymbolNumbers_{MarksPreviewExporter.SanitizeFileName(schedulePart)}_{MarksPreviewExporter.SanitizeFileName(collegePart)}";
+        var baseName = $"SymbolNumbers_{MarksPreviewExporter.SanitizeFileName(schedulePart)}_{MarksPreviewExporter.SanitizeFileName(collegePart)}_{MarksPreviewExporter.SanitizeFileName(yearPart)}";
         var title = string.IsNullOrWhiteSpace(dto.ExamScheduleName)
             ? $"Symbol Numbers - Schedule {dto.ExamScheduleId}"
             : $"Symbol Numbers - {dto.ExamScheduleName}";
@@ -77,7 +93,7 @@ public class SymbolNumberGenerationController(
         worksheet.Cell(1, 1).Style.Font.Bold = true;
         worksheet.Cell(1, 1).Style.Font.FontSize = 14;
 
-        var headers = new[] { "S.N", "Symbol Number", "Student Name", "Reg. No.", "Program", "College", "Type" };
+        var headers = new[] { "S.N", "Symbol Number", "Student Name", "Reg. No.", "Program", "College", "Academic Year", "Type" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(2, i + 1);
@@ -98,7 +114,8 @@ public class SymbolNumberGenerationController(
             worksheet.Cell(row, 4).Value = s.RegistrationNumber ?? string.Empty;
             worksheet.Cell(row, 5).Value = s.ProgramName ?? string.Empty;
             worksheet.Cell(row, 6).Value = s.CollegeName ?? string.Empty;
-            worksheet.Cell(row, 7).Value = type;
+            worksheet.Cell(row, 7).Value = s.AcademicYearName ?? string.Empty;
+            worksheet.Cell(row, 8).Value = type;
             row++;
         }
 
@@ -137,8 +154,9 @@ public class SymbolNumberGenerationController(
                         columns.RelativeColumn(1.6f);
                         columns.RelativeColumn(2.4f);
                         columns.RelativeColumn(2.2f);
-                        columns.RelativeColumn(2.2f);
-                        columns.RelativeColumn(2.2f);
+                        columns.RelativeColumn(2.0f);
+                        columns.RelativeColumn(2.0f);
+                        columns.RelativeColumn(1.6f);
                         columns.RelativeColumn(1.2f);
                     });
 
@@ -150,6 +168,7 @@ public class SymbolNumberGenerationController(
                         header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Reg. No.").Bold().FontSize(9);
                         header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Program").Bold().FontSize(9);
                         header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("College").Bold().FontSize(9);
+                        header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Academic Year").Bold().FontSize(9);
                         header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Type").Bold().FontSize(9);
                     });
 
@@ -166,6 +185,7 @@ public class SymbolNumberGenerationController(
                         table.Cell().Padding(6).Text(string.IsNullOrEmpty(s.RegistrationNumber) ? "-" : s.RegistrationNumber).FontSize(9);
                         table.Cell().Padding(6).Text(string.IsNullOrEmpty(s.ProgramName) ? "-" : s.ProgramName).FontSize(9);
                         table.Cell().Padding(6).Text(string.IsNullOrEmpty(s.CollegeName) ? "-" : s.CollegeName).FontSize(9);
+                        table.Cell().Padding(6).Text(string.IsNullOrEmpty(s.AcademicYearName) ? "-" : s.AcademicYearName).FontSize(9);
                         table.Cell().Padding(6).Text(type).FontSize(9);
                     }
                 });

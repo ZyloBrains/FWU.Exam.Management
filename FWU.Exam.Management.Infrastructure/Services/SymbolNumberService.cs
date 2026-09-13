@@ -99,6 +99,8 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
                 ProgramName = r.Program?.ProgramName ?? r.Program?.ShortName,
                 CollegeId = r.CollegeId,
                 CollegeName = r.College?.Name,
+                AcademicYearId = identity.AcademicYearId,
+                AcademicYearName = identity.AcademicYearName,
                 IsSupplementary = r.IsSupplementary,
             });
         }
