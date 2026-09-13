@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Extensions;
@@ -10,6 +11,7 @@ public sealed class StudentIdentityItem
     public string StudentName { get; init; } = string.Empty;
     public string RegistrationNumber { get; init; } = string.Empty;
     public string AcademicYearName { get; init; } = string.Empty;
+    public int AcademicYearId { get; init; }
 }
 
 /// <summary>
@@ -54,6 +56,10 @@ public static class StudentIdentityResolver
             var admission = er.SemesterEnrollment?.StudentAdmission;
             var voucherSr = er.ApplicationVoucher?.StudentRegistration;
             var admissionSr = admission?.StudentRegistration;
+            var academicYear = NonEmptyYear(voucherSr?.AcademicYear)
+                            ?? NonEmptyYear(admissionSr?.AcademicYear)
+                            ?? NonEmptyYear(admission?.AcademicYear)
+                            ?? NonEmptyYear(er.AcademicYear);
 
             result[er.Id] = new StudentIdentityItem
             {
@@ -61,11 +67,8 @@ public static class StudentIdentityResolver
                 RegistrationNumber = NonEmpty(voucherSr?.RegistrationNumber)
                                    ?? NonEmpty(admissionSr?.RegistrationNumber)
                                    ?? "",
-                AcademicYearName = NonEmpty(voucherSr?.AcademicYear?.AcademicYearName)
-                                 ?? NonEmpty(admissionSr?.AcademicYear?.AcademicYearName)
-                                 ?? NonEmpty(admission?.AcademicYear?.AcademicYearName)
-                                 ?? NonEmpty(er.AcademicYear?.AcademicYearName)
-                                 ?? ""
+                AcademicYearName = academicYear?.AcademicYearName ?? "",
+                AcademicYearId = academicYear?.Id ?? 0
             };
         }
 
@@ -113,4 +116,9 @@ public static class StudentIdentityResolver
 
     private static string? NonEmpty(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value;
+
+    private static AcademicYear? NonEmptyYear(AcademicYear? academicYear) =>
+        academicYear != null && !string.IsNullOrWhiteSpace(academicYear.AcademicYearName)
+            ? academicYear
+            : null;
 }
