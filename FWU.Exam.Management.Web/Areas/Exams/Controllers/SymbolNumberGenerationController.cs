@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
-using FWU.Exam.Management.Infrastructure.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -30,7 +29,7 @@ public class SymbolNumberGenerationController(
 
         if (!examScheduleId.HasValue) return View(null);
 
-        var dto = await symbolNumberService.GetOverviewAsync(examScheduleId.Value, startSequence, sequenceWidth, prefix);
+        var dto = await symbolNumberService.GetOverviewAsync(examScheduleId.Value, startSequence, sequenceWidth, prefix, academicYearIds);
 
         ViewData["CollegesFilter"] = new SelectList(
             dto.Students
@@ -55,8 +54,6 @@ public class SymbolNumberGenerationController(
                 })
                 .OrderByDescending(i => i.Text, StringComparer.OrdinalIgnoreCase),
             "Value", "Text");
-
-        SymbolNumberService.FilterForAcademicYears(dto, academicYearIds);
 
         return View(dto);
     }

@@ -29,7 +29,7 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
         return max + 1;
     }
 
-    public async Task<SymbolNumberGenerationDto> GetOverviewAsync(int examScheduleId, int? startSequence = null, int? sequenceWidth = null, string? prefix = null)
+    public async Task<SymbolNumberGenerationDto> GetOverviewAsync(int examScheduleId, int? startSequence = null, int? sequenceWidth = null, string? prefix = null, int[]? academicYearIds = null)
     {
         var examTypeId = await GetExamTypeIdAsync(examScheduleId);
         var effectivePrefix = ResolvePrefix(examTypeId, prefix);
@@ -50,6 +50,7 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
 
         var isReExam = StudentDashboardService.IsReExamTypeStatic(schedule?.ExamTypeName);
         var cohort = isReExam ? await ResolveCohortMapAsync(context, registrations) : new Dictionary<int, CohortInfo>();
+        if (isReExam) registrations = ApplyAcademicYearFilter(registrations, cohort, academicYearIds);
         registrations = OrderForAssignment(registrations, cohort);
 
         var dto = new SymbolNumberGenerationDto
@@ -503,25 +504,6 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
             .Where(p => !string.IsNullOrWhiteSpace(p));
         var name = string.Join(" ", parts);
         return string.IsNullOrWhiteSpace(name) ? null : name;
-    }
-
-    /// <summary>
-    /// Filters a numbering-plan DTO to the selected academic years for display.
-    /// Applies to re-exam schedules only; block ranges still come from the full
-    /// global plan. Recomputes the summary cards to reflect the visible subset.
-    /// </summary>
-    public static void FilterForAcademicYears(SymbolNumberGenerationDto dto, int[]? academicYearIds)
-    {
-        var selected = academicYearIds?.Where(id => id > 0).ToHashSet();
-        if (selected is not { Count: > 0 } || !dto.GroupByCohort)
-            return;
-
-        dto.Blocks.RemoveAll(b => !selected.Contains(b.AcademicYearId));
-        dto.Students = dto.Students.Where(s => selected.Contains(s.AcademicYearId)).ToList();
-
-        dto.TotalRegistrations = dto.Students.Count;
-        dto.AssignedCount = dto.Students.Count(s => !string.IsNullOrEmpty(s.SymbolNumber));
-        dto.UnassignedCount = dto.Students.Count(s => string.IsNullOrEmpty(s.SymbolNumber));
     }
 
     private sealed record CohortInfo(int AcademicYearId, string? AcademicYearName, int? CurriculumVersionId, string? CurriculumVersionName);
