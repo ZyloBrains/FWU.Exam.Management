@@ -251,6 +251,40 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
         return old;
     }
 
+    public async Task<string?> UnassignSymbolNumberAsync(int registrationId)
+    {
+        var reg = await context.ExamRegistrations
+            .FirstOrDefaultAsync(er => er.Id == registrationId)
+            ?? throw new InvalidOperationException("Registration not found.");
+
+        if (string.IsNullOrEmpty(reg.SymbolNumber))
+            throw new InvalidOperationException("This student has no symbol number assigned.");
+
+        var old = reg.SymbolNumber;
+        reg.SymbolNumber = null;
+        await context.SaveChangesAsync();
+        return old;
+    }
+
+    public async Task<int> UnassignAllSymbolNumbersAsync(int examScheduleId, IReadOnlyCollection<int> registrationIds)
+    {
+        if (registrationIds.Count == 0) return 0;
+
+        var ids = registrationIds.Distinct().ToList();
+        var regs = await context.ExamRegistrations
+            .Where(er => er.ExamScheduleId == examScheduleId
+                && ids.Contains(er.Id)
+                && er.SymbolNumber != null
+                && er.SymbolNumber != string.Empty)
+            .ToListAsync();
+
+        foreach (var reg in regs)
+            reg.SymbolNumber = null;
+
+        await context.SaveChangesAsync();
+        return regs.Count;
+    }
+
     private async Task<int> GetExamTypeIdAsync(int examScheduleId)
     {
         return await context.ExamSchedules

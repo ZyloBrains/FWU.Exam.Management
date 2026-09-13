@@ -8,4 +8,6 @@ public interface ISymbolNumberService
     Task<SymbolNumberGenerationDto> GetOverviewAsync(int examScheduleId, int? startSequence = null, int? sequenceWidth = null, string? prefix = null);
     Task<SymbolNumberAssignmentResult> GenerateAsync(int examScheduleId, int? startSequence = null, int? sequenceWidth = null, string? prefix = null, int[]? academicYearIds = null);
     Task<string?> UpdateSymbolNumberAsync(int registrationId, string symbolNumber);
+    Task<string?> UnassignSymbolNumberAsync(int registrationId);
+    Task<int> UnassignAllSymbolNumbersAsync(int examScheduleId, IReadOnlyCollection<int> registrationIds);
 }

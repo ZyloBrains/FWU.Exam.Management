@@ -291,7 +291,22 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between mb-4">
                 <h3 class="text-sm font-semibold text-gray-700">Students (<span id="studentCount">@Model.Students.Count</span>)</h3>
-                <form method="get" asp-action="Export" asp-area="Exams" class="flex flex-col sm:flex-row gap-2 items-end">
+                <div class="flex flex-col sm:flex-row gap-2 items-end">
+                    @if (Model.AssignedCount > 0)
+                    {
+                        <form method="post" asp-action="UnassignAll" asp-area="Exams" id="unassignAllForm">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                            @foreach (var id in selectedYears)
+                            {
+                                <input type="hidden" name="academicYearIds" value="@id" />
+                            }
+                            <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-red-50 text-red-700 text-xs sm:text-sm font-medium rounded-lg hover:bg-red-100 transition-colors border border-red-200 shadow-sm">
+                                <i class="fas fa-times mr-1"></i> Unassign All
+                            </button>
+                        </form>
+                    }
+                    <form method="get" asp-action="Export" asp-area="Exams" class="flex flex-col sm:flex-row gap-2 items-end">
                     <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
                     <input type="hidden" name="prefix" value="@prefix" />
                     <div>
@@ -326,7 +341,8 @@
                     <button type="submit" name="format" value="pdf" class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
                         <i class="fas fa-file-pdf mr-1"></i> Export PDF
                     </button>
-                </form>
+                    </form>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
@@ -345,19 +361,37 @@
                     <tbody id="studentsTableBody">
                         @foreach (var s in Model.Students)
                         {
-                            <tr class="border-b border-gray-100" data-college-id="@s.CollegeId" data-academic-year-id="@s.AcademicYearId">
+                            <tr class="border-b border-gray-100" data-college-id="@s.CollegeId" data-academic-year-id="@s.AcademicYearId" data-registration-id="@s.RegistrationId">
                                 <td class="py-2 pr-4">
-                                    <form method="post" asp-action="UpdateSymbolNumber" asp-area="Exams" class="flex items-center gap-1">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="registrationId" value="@s.RegistrationId" />
-                                        <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
-                                        <input type="text" name="symbolNumber" value="@s.SymbolNumber" maxlength="50"
-                                               pattern="[0-9]{7,11}" title="Prefix (BS year + exam type) + 4-5 digit sequence, e.g. 8310585"
-                                               class="w-28 px-2 py-1 text-xs font-mono border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                        <button type="submit" class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md border border-gray-200" title="Save">
-                                            <i class="fas fa-save"></i>
-                                        </button>
-                                    </form>
+                                    <div class="flex items-center gap-1">
+                                        <form method="post" asp-action="UpdateSymbolNumber" asp-area="Exams" class="flex items-center gap-1">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="registrationId" value="@s.RegistrationId" />
+                                            <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                                            <input type="text" name="symbolNumber" value="@s.SymbolNumber" maxlength="50"
+                                                   pattern="[0-9]{7,11}" title="Prefix (BS year + exam type) + 4-5 digit sequence, e.g. 8310585"
+                                                   class="w-28 px-2 py-1 text-xs font-mono border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                            <button type="submit" class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md border border-gray-200" title="Save">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                        </form>
+                                        @if (!string.IsNullOrEmpty(s.SymbolNumber))
+                                        {
+                                            <form method="post" asp-action="UnassignSymbolNumber" asp-area="Exams"
+                                                  onsubmit="return confirm('Unassign symbol number @s.SymbolNumber for @s.StudentName?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="registrationId" value="@s.RegistrationId" />
+                                                <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                                                @foreach (var id in selectedYears)
+                                                {
+                                                    <input type="hidden" name="academicYearIds" value="@id" />
+                                                }
+                                                <button type="submit" class="px-2 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 rounded-md border border-red-200" title="Unassign symbol number">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
                                 </td>
                                 <td class="py-2 pr-4 font-medium text-gray-800">@s.StudentName</td>
                                 <td class="py-2 pr-4 text-gray-600">@s.RegistrationNumber</td>
@@ -399,5 +433,29 @@
         }
 
         $('#collegeFilter, #academicYearFilter').on('change', applyStudentFilters);
+
+        $('#unassignAllForm').on('submit', function (e) {
+            var form = this;
+            var ids = [];
+            $('#studentsTableBody tr:visible').each(function () {
+                var input = $(this).find('input[name="symbolNumber"]');
+                if (input.val() && input.val().trim()) {
+                    ids.push($(this).data('registration-id'));
+                }
+            });
+            if (ids.length === 0) {
+                e.preventDefault();
+                alert('No assigned students are visible on this page.');
+                return;
+            }
+            if (!confirm('Unassign all ' + ids.length + ' symbol number(s) shown on this page? They can be regenerated anytime.')) {
+                e.preventDefault();
+                return;
+            }
+            $(form).find('input[name="registrationId"]').remove();
+            ids.forEach(function (id) {
+                $('<input>').attr({ type: 'hidden', name: 'registrationId', value: id }).appendTo(form);
+            });
+        });
     </script>
 }

@@ -247,4 +247,42 @@ public class SymbolNumberGenerationController(
 
         return RedirectToAction(nameof(Index), new { examScheduleId, academicYearIds });
     }
+
+    [HttpPost]
+    [RequirePermission("examcenters.edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UnassignSymbolNumber(int registrationId, int examScheduleId, int[]? academicYearIds)
+    {
+        try
+        {
+            var removed = await symbolNumberService.UnassignSymbolNumberAsync(registrationId);
+            TempData["SuccessMessage"] = $"Symbol number '{removed}' unassigned.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Index), new { examScheduleId, academicYearIds });
+    }
+
+    [HttpPost]
+    [RequirePermission("examcenters.edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UnassignAll(int examScheduleId, int[]? academicYearIds, int[]? registrationIds)
+    {
+        try
+        {
+            var count = await symbolNumberService.UnassignAllSymbolNumbersAsync(examScheduleId, registrationIds ?? []);
+            TempData["SuccessMessage"] = count > 0
+                ? $"{count} symbol number(s) unassigned."
+                : "No symbol numbers were found to unassign.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Index), new { examScheduleId, academicYearIds });
+    }
 }

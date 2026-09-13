@@ -242,6 +242,88 @@ public class SymbolNumberServiceTests
     }
 
     [Fact]
+    public async Task UnassignSymbolNumberAsync_ClearsAssignedSymbol()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedWithSymbols);
+        var svc = new SymbolNumberService(db.Context);
+
+        var prefix = SymbolNumberDefaults.BuildPrefix(TestData.Regular);
+        var removed = await svc.UnassignSymbolNumberAsync(1);
+
+        Assert.Equal(prefix + "0001", removed);
+        Assert.Null(db.Context.ExamRegistrations.First(er => er.Id == 1).SymbolNumber);
+    }
+
+    [Fact]
+    public async Task UnassignSymbolNumberAsync_WhenNoneAssigned_Throws()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedWithSymbols);
+        var svc = new SymbolNumberService(db.Context);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => svc.UnassignSymbolNumberAsync(2));
+
+        Assert.Contains("no symbol", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UnassignSymbolNumberAsync_ThenGenerateReusesFreedNumber()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedWithSymbols);
+        var svc = new SymbolNumberService(db.Context);
+
+        var prefix = SymbolNumberDefaults.BuildPrefix(TestData.Regular);
+
+        await svc.GenerateAsync(22);   // assign 0002 (reg 2) and 0003 (reg 3)
+
+        await svc.UnassignSymbolNumberAsync(3);   // free the max sequence 0003
+
+        var result = await svc.GenerateAsync(22, startSequence: 3);
+
+        Assert.Equal(1, result.Assigned);
+        Assert.Equal(prefix + "0003", db.Context.ExamRegistrations.First(er => er.Id == 3).SymbolNumber);
+    }
+
+    [Fact]
+    public async Task UnassignAllSymbolNumbersAsync_ClearsOnlyPassedIds()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedWithSymbols);
+        var svc = new SymbolNumberService(db.Context);
+
+        await svc.GenerateAsync(22);   // reg 2 = 0002, reg 3 = 0003
+
+        var count = await svc.UnassignAllSymbolNumbersAsync(22, new[] { 2 });
+
+        Assert.Equal(1, count);
+        Assert.Null(db.Context.ExamRegistrations.First(er => er.Id == 2).SymbolNumber);
+        Assert.NotNull(db.Context.ExamRegistrations.First(er => er.Id == 3).SymbolNumber);
+    }
+
+    [Fact]
+    public async Task UnassignAllSymbolNumbersAsync_IgnoresIdsFromOtherSchedules()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedWithSymbols);
+        var svc = new SymbolNumberService(db.Context);
+
+        await svc.GenerateAsync(22);   // reg 2 = 0002, reg 3 = 0003
+        var count = await svc.UnassignAllSymbolNumbersAsync(22, new[] { 1, 2 });
+
+        Assert.Equal(1, count);        // reg 1 belongs to schedule 21, so untouched
+        Assert.NotNull(db.Context.ExamRegistrations.First(er => er.Id == 1).SymbolNumber);
+        Assert.Null(db.Context.ExamRegistrations.First(er => er.Id == 2).SymbolNumber);
+    }
+
+    [Fact]
+    public async Task UnassignAllSymbolNumbersAsync_WhenNothingAssigned_ReturnsZero()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedWithSymbols);
+        var svc = new SymbolNumberService(db.Context);
+
+        var count = await svc.UnassignAllSymbolNumbersAsync(22, new[] { 2, 3 });
+
+        Assert.Equal(0, count);
+    }
+
+    [Fact]
     public void FilterForAcademicYears_KeepsOnlySelectedYearsForPartialSchedule()
     {
         var dto = new SymbolNumberGenerationDto { GroupByCohort = true };
