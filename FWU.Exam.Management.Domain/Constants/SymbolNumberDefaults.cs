@@ -36,12 +36,12 @@ public static class SymbolNumberDefaults
     }
 
     /// <summary>
-    /// Strict structural validation: {2-digit BS year}{exam type id}{4-5 digit sequence}.
-    /// The year part is free so historical prefixes (e.g. "814…") remain editable.
+    /// Strict structural validation: {prefix digits (BS year + exam type)}{4-5 digit sequence}.
+    /// The prefix part is free-form digits so manual prefixes (e.g. "831…") validate.
     /// </summary>
-    public static bool IsValidStrict(string? symbolNumber, int examTypeId)
+    public static bool IsValidStrict(string? symbolNumber)
     {
         if (string.IsNullOrWhiteSpace(symbolNumber)) return false;
-        return Regex.IsMatch(symbolNumber, $"^\\d{{2}}{Regex.Escape(examTypeId.ToString())}\\d{{{DefaultSequenceDigits},{MaxSequenceDigits}}}$");
+        return Regex.IsMatch(symbolNumber, $"^\\d{{3,6}}\\d{{{DefaultSequenceDigits},{MaxSequenceDigits}}}$");
     }
 }

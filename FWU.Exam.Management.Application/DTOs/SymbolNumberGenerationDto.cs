@@ -5,6 +5,7 @@ public class SymbolNumberGenerationDto
     public int ExamScheduleId { get; set; }
     public string? ExamScheduleName { get; set; }
     public int ExamTypeId { get; set; }
+    public string? ExamTypeName { get; set; }
     public string? Prefix { get; set; }
     public int SequenceWidth { get; set; }
     public long RemainingCapacity { get; set; }
@@ -37,6 +38,7 @@ public class StudentSymbolInfo
     public string? StudentName { get; set; }
     public string? RegistrationNumber { get; set; }
     public string? ProgramName { get; set; }
+    public int CollegeId { get; set; }
     public string? CollegeName { get; set; }
     public bool IsSupplementary { get; set; }
 }
