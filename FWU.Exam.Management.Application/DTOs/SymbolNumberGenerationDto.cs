@@ -11,6 +11,7 @@ public class SymbolNumberGenerationDto
     public long RemainingCapacity { get; set; }
     public bool NearCapacity { get; set; }
     public bool OverCapacity { get; set; }
+    public bool GroupByCohort { get; set; }
     public int TotalRegistrations { get; set; }
     public int AssignedCount { get; set; }
     public int UnassignedCount { get; set; }
@@ -25,6 +26,10 @@ public class SymbolBlockInfo
     public string? ProgramName { get; set; }
     public int CollegeId { get; set; }
     public string? CollegeName { get; set; }
+    public int AcademicYearId { get; set; }
+    public string? AcademicYearName { get; set; }
+    public int? CurriculumVersionId { get; set; }
+    public string? CurriculumVersionName { get; set; }
     public int RegularCount { get; set; }
     public int SupplementaryCount { get; set; }
     public string? FromSymbol { get; set; }
@@ -40,6 +45,8 @@ public class StudentSymbolInfo
     public string? ProgramName { get; set; }
     public int CollegeId { get; set; }
     public string? CollegeName { get; set; }
+    public int AcademicYearId { get; set; }
+    public string? AcademicYearName { get; set; }
     public bool IsSupplementary { get; set; }
 }
 
