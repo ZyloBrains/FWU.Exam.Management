@@ -97,6 +97,7 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
                 StudentName = identity.StudentName,
                 RegistrationNumber = identity.RegistrationNumber,
                 ProgramName = r.Program?.ProgramName ?? r.Program?.ShortName,
+                CollegeId = r.CollegeId,
                 CollegeName = r.College?.Name,
                 IsSupplementary = r.IsSupplementary,
             });
