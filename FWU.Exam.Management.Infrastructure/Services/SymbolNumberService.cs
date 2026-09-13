@@ -85,16 +85,17 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
             });
         }
 
+        var identities = await StudentIdentityResolver.ResolveAsync(context, registrations.Select(r => r.Id).ToList());
+
         foreach (var r in registrations)
         {
+            var identity = identities[r.Id];
             dto.Students.Add(new StudentSymbolInfo
             {
                 RegistrationId = r.Id,
                 SymbolNumber = r.SymbolNumber,
-                StudentName = ComposeName(r.SemesterEnrollment?.StudentAdmission)
-                    ?? r.ApplicationVoucher?.StudentName,
-                RegistrationNumber = r.SemesterEnrollment?.StudentAdmission?.StudentRegistration?.RegistrationNumber
-                    ?? r.ApplicationVoucher?.StudentRegistration?.RegistrationNumber,
+                StudentName = identity.StudentName,
+                RegistrationNumber = identity.RegistrationNumber,
                 ProgramName = r.Program?.ProgramName ?? r.Program?.ShortName,
                 CollegeName = r.College?.Name,
                 IsSupplementary = r.IsSupplementary,
@@ -250,7 +251,7 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
         var registrations = await query.ToListAsync();
 
         return registrations
-            .OrderBy(er => er.College != null ? er.College.Code : "", StringComparer.OrdinalIgnoreCase)
+            .OrderBy(er => er.College != null ? er.College.Name : "", StringComparer.OrdinalIgnoreCase)
             .ThenBy(er => er.ProgramsId)
             .ThenBy(er => er.IsSupplementary)
             .ThenBy(er => ComposeSortName(er), StringComparer.OrdinalIgnoreCase)
