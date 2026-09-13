@@ -84,8 +84,10 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
             {
                 RegistrationId = r.Id,
                 SymbolNumber = r.SymbolNumber,
-                StudentName = ComposeName(r.SemesterEnrollment?.StudentAdmission),
-                RegistrationNumber = r.SemesterEnrollment?.StudentAdmission?.StudentRegistration?.RegistrationNumber,
+                StudentName = ComposeName(r.SemesterEnrollment?.StudentAdmission)
+                    ?? r.ApplicationVoucher?.StudentName,
+                RegistrationNumber = r.SemesterEnrollment?.StudentAdmission?.StudentRegistration?.RegistrationNumber
+                    ?? r.ApplicationVoucher?.StudentRegistration?.RegistrationNumber,
                 ProgramName = r.Program?.ProgramName ?? r.Program?.ShortName,
                 CollegeName = r.College?.Name,
                 IsSupplementary = r.IsSupplementary,
@@ -223,19 +225,22 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
             .Include(er => er.SemesterEnrollment)
                 .ThenInclude(se => se!.StudentAdmission)
                     .ThenInclude(sa => sa!.StudentRegistration)
+            .Include(er => er.ApplicationVoucher)
+                .ThenInclude(v => v!.StudentRegistration)
             .Where(er => er.ExamScheduleId == examScheduleId
                 && er.IsActive
                 && er.Status >= RegistrationStatus.CollegeVerified)
-            .OrderBy(er => er.ProgramsId)
-            .ThenBy(er => er.CollegeId)
-            .ThenBy(er => er.IsSupplementary)
-            .ThenBy(er => er.SemesterEnrollment!.StudentAdmission!.LastName)
-            .ThenBy(er => er.SemesterEnrollment!.StudentAdmission!.FirstName)
-            .ThenBy(er => er.SemesterEnrollment!.StudentAdmission!.MiddleName)
             .AsQueryable();
 
         if (asNoTracking) query = query.AsNoTracking();
-        return await query.ToListAsync();
+        var registrations = await query.ToListAsync();
+
+        return registrations
+            .OrderBy(er => er.College != null ? er.College.Code : "", StringComparer.OrdinalIgnoreCase)
+            .ThenBy(er => er.ProgramsId)
+            .ThenBy(er => er.IsSupplementary)
+            .ThenBy(er => ComposeSortName(er), StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private static void SimulateAssignment(
@@ -280,12 +285,19 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
         }
     }
 
+    private static string ComposeSortName(Domain.Entities.Exams.ExamRegistration er)
+    {
+        var name = ComposeName(er.SemesterEnrollment?.StudentAdmission);
+        return name ?? er.ApplicationVoucher?.StudentName ?? string.Empty;
+    }
+
     private static string? ComposeName(Domain.Entities.Students.StudentAdmission? admission)
     {
         if (admission == null) return null;
         var parts = new[] { admission.FirstName, admission.MiddleName, admission.LastName }
             .Where(p => !string.IsNullOrWhiteSpace(p));
-        return string.Join(" ", parts);
+        var name = string.Join(" ", parts);
+        return string.IsNullOrWhiteSpace(name) ? null : name;
     }
 
     private class BlockAccumulator
