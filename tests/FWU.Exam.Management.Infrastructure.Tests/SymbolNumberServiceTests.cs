@@ -324,43 +324,45 @@ public class SymbolNumberServiceTests
     }
 
     [Fact]
-    public void FilterForAcademicYears_KeepsOnlySelectedYearsForPartialSchedule()
+    public async Task GetOverviewAsync_WithAcademicYearSelection_FiltersPlanToSelectedYear()
     {
-        var dto = new SymbolNumberGenerationDto { GroupByCohort = true };
-        dto.Blocks.Add(new SymbolBlockInfo { AcademicYearId = 2, ProgramName = "P", CollegeName = "C", FromSymbol = "8310001", ToSymbol = "8310002" });
-        dto.Blocks.Add(new SymbolBlockInfo { AcademicYearId = 3, ProgramName = "P", CollegeName = "C", FromSymbol = "8310003", ToSymbol = "8310003" });
-        dto.Students.Add(new StudentSymbolInfo { RegistrationId = 1, AcademicYearId = 2, SymbolNumber = "8310001" });
-        dto.Students.Add(new StudentSymbolInfo { RegistrationId = 2, AcademicYearId = 2, SymbolNumber = "8310002" });
-        dto.Students.Add(new StudentSymbolInfo { RegistrationId = 3, AcademicYearId = 3, SymbolNumber = "8310003" });
-        dto.TotalRegistrations = 3;
-        dto.AssignedCount = 3;
-        dto.UnassignedCount = 0;
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedPartialMultiYear);
+        var svc = new SymbolNumberService(db.Context);
 
-        SymbolNumberService.FilterForAcademicYears(dto, new[] { 2 });
+        var dto = await svc.GetOverviewAsync(30, academicYearIds: new[] { 2 });
 
-        Assert.Single(dto.Blocks);
-        Assert.All(dto.Blocks, b => Assert.Equal(2, b.AcademicYearId));
+        Assert.Equal(2, dto.TotalRegistrations);
+        Assert.Equal(2, dto.UnassignedCount);
         Assert.Equal(2, dto.Students.Count);
         Assert.All(dto.Students, s => Assert.Equal(2, s.AcademicYearId));
-        Assert.Equal(2, dto.TotalRegistrations);
-        Assert.Equal(2, dto.AssignedCount);
-        Assert.Equal(0, dto.UnassignedCount);
+        Assert.Equal(2, dto.Blocks.Count);
+        Assert.All(dto.Blocks, b => Assert.Equal(2, b.AcademicYearId));
+
+        Assert.Equal(2, dto.AvailableAcademicYears.Count);
+        Assert.Contains(dto.AvailableAcademicYears, y => y.Id == 2);
+        Assert.Contains(dto.AvailableAcademicYears, y => y.Id == 3);
+        Assert.Equal(2, dto.AvailableColleges.Count);
+        Assert.Contains(dto.AvailableColleges, c => c.Name == "Alpha College");
+        Assert.Contains(dto.AvailableColleges, c => c.Name == "Test College");
+
+        var prefix = SymbolNumberDefaults.BuildPrefix(TestData.Partial);
+        var alpha = dto.Blocks.First(b => b.CollegeName == "Alpha College");
+        Assert.Equal(prefix + "0001", alpha.FromSymbol);
+        Assert.Equal(prefix + "0001", alpha.ToSymbol);
     }
 
     [Fact]
-    public void FilterForAcademicYears_IsIgnoredForRegularSchedules()
+    public async Task GetOverviewAsync_WithoutAcademicYearSelection_IncludesAllYears()
     {
-        var dto = new SymbolNumberGenerationDto { GroupByCohort = false };
-        dto.Blocks.Add(new SymbolBlockInfo { AcademicYearId = 0, ProgramName = "P", CollegeName = "C", FromSymbol = "8310001", ToSymbol = "8310003" });
-        dto.Students.Add(new StudentSymbolInfo { RegistrationId = 1, AcademicYearId = 1, SymbolNumber = "8310001" });
-        dto.TotalRegistrations = 1;
-        dto.AssignedCount = 1;
-        dto.UnassignedCount = 0;
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedPartialMultiYear);
+        var svc = new SymbolNumberService(db.Context);
 
-        SymbolNumberService.FilterForAcademicYears(dto, new[] { 2 });
+        var dto = await svc.GetOverviewAsync(30);
 
-        Assert.Single(dto.Blocks);
-        Assert.Single(dto.Students);
-        Assert.Equal(1, dto.TotalRegistrations);
+        Assert.Equal(3, dto.TotalRegistrations);
+        Assert.Equal(3, dto.Blocks.Count);
+        Assert.Equal(3, dto.Students.Count);
+        Assert.Equal(2, dto.AvailableAcademicYears.Count);
+        Assert.Equal(2, dto.AvailableColleges.Count);
     }
 }
