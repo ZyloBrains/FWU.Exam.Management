@@ -13,7 +13,7 @@ public class SymbolNumberGenerationController(
     ISymbolNumberService symbolNumberService,
     AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int? examScheduleId, int? startSequence, int? sequenceWidth)
+    public async Task<IActionResult> Index(int? examScheduleId, int? startSequence, int? sequenceWidth, string? prefix)
     {
         ViewData["ExamScheduleId"] = new SelectList(
             await context.ExamSchedules.AsNoTracking().OrderByDescending(es => es.Id).ToListAsync(),
@@ -21,18 +21,18 @@ public class SymbolNumberGenerationController(
 
         if (!examScheduleId.HasValue) return View(null);
 
-        var dto = await symbolNumberService.GetOverviewAsync(examScheduleId.Value, startSequence, sequenceWidth);
+        var dto = await symbolNumberService.GetOverviewAsync(examScheduleId.Value, startSequence, sequenceWidth, prefix);
         return View(dto);
     }
 
     [HttpPost]
     [RequirePermission("examcenters.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Generate(int examScheduleId, int? startSequence, int? sequenceWidth)
+    public async Task<IActionResult> Generate(int examScheduleId, int? startSequence, int? sequenceWidth, string? prefix)
     {
         try
         {
-            var result = await symbolNumberService.GenerateAsync(examScheduleId, startSequence, sequenceWidth);
+            var result = await symbolNumberService.GenerateAsync(examScheduleId, startSequence, sequenceWidth, prefix);
             TempData["SuccessMessage"] = result.Message;
         }
         catch (InvalidOperationException ex)
@@ -40,7 +40,7 @@ public class SymbolNumberGenerationController(
             TempData["ErrorMessage"] = ex.Message;
         }
 
-        return RedirectToAction(nameof(Index), new { examScheduleId, startSequence, sequenceWidth });
+        return RedirectToAction(nameof(Index), new { examScheduleId, startSequence, sequenceWidth, prefix });
     }
 
     [HttpPost]

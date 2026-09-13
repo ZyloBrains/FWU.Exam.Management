@@ -73,8 +73,19 @@
                 <div class="text-xs sm:text-sm text-gray-500 mt-1">College Blocks</div>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-xl sm:text-2xl font-mono font-bold text-indigo-700">@prefix</div>
-                <div class="text-xs sm:text-sm text-gray-500 mt-1">Prefix (BS year + exam type @Model.ExamTypeId)</div>
+                <form method="get" asp-action="Index" asp-area="Exams">
+                    <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Prefix (manual)</label>
+                    <div class="flex items-center gap-1">
+                        <input type="text" name="prefix" value="@prefix" maxlength="6" inputmode="numeric"
+                               pattern="[0-9]{3,6}" title="Prefix = BS year (last 2 digits) + exam type, e.g. 831"
+                               class="w-32 px-2 py-1.5 text-sm font-mono border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <button type="submit" class="px-2.5 py-1.5 text-xs bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-200 hover:bg-indigo-100" title="Apply prefix">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">BS year + exam type, e.g. 831.</p>
+                </form>
             </div>
         </div>
 
@@ -83,6 +94,7 @@
 
             <form method="get" asp-action="Index" asp-area="Exams" class="flex flex-col sm:flex-row gap-3 items-end mb-4">
                 <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                <input type="hidden" name="prefix" value="@prefix" />
                 <div>
                     <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Start Sequence</label>
                     <input type="number" name="startSequence" min="1" value="@Model.NextStartSequence"
@@ -169,6 +181,7 @@
                     <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
                     <input type="hidden" name="startSequence" value="@Model.NextStartSequence" />
                     <input type="hidden" name="sequenceWidth" value="@Model.SequenceWidth" />
+                    <input type="hidden" name="prefix" value="@prefix" />
                     <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             @(Model.OverCapacity ? "disabled" : "")
                             onclick="return confirm('Generate symbol numbers for @Model.UnassignedCount student(s)?');">
@@ -217,7 +230,7 @@
                                         <input type="hidden" name="registrationId" value="@s.RegistrationId" />
                                         <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
                                         <input type="text" name="symbolNumber" value="@s.SymbolNumber" maxlength="50"
-                                               pattern="\d{2}@Model.ExamTypeId\d{4,5}" title="{2-digit BS year}{exam type @Model.ExamTypeId}{4-5 digit sequence}"
+                                               pattern="[0-9]{7,11}" title="Prefix (BS year + exam type) + 4-5 digit sequence, e.g. 8310585"
                                                class="w-28 px-2 py-1 text-xs font-mono border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                                         <button type="submit" class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md border border-gray-200" title="Save">
                                             <i class="fas fa-save"></i>
@@ -229,14 +242,13 @@
                                 <td class="py-2 pr-4 text-gray-700">@s.ProgramName</td>
                                 <td class="py-2 pr-4 text-gray-700">@s.CollegeName</td>
                                 <td class="py-2 pr-4">
-                                    @if (s.IsSupplementary)
-                                    {
-                                        <span class="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Supplementary</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Regular</span>
-                                    }
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="text-xs font-medium text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">@Model.ExamTypeName</span>
+                                        @if (s.IsSupplementary)
+                                        {
+                                            <span class="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Supplementary</span>
+                                        }
+                                    </div>
                                 </td>
                                 <td class="py-2 pr-4"></td>
                             </tr>

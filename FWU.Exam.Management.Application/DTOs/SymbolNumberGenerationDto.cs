@@ -5,6 +5,7 @@ public class SymbolNumberGenerationDto
     public int ExamScheduleId { get; set; }
     public string? ExamScheduleName { get; set; }
     public int ExamTypeId { get; set; }
+    public string? ExamTypeName { get; set; }
     public string? Prefix { get; set; }
     public int SequenceWidth { get; set; }
     public long RemainingCapacity { get; set; }
