@@ -1,8 +1,10 @@
 using FWU.Exam.Management.Application.Helpers;
+using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Web.Authorization;
+using FWU.Exam.Management.Web.Helpers;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -12,7 +14,10 @@ namespace FWU.Exam.Management.Web.Areas.Reports.Controllers;
 
 [Area("Reports")]
 [RequirePermission("reports.summary")]
-public class ReportsController(AppDbContext context, IUserContext userContext) : Controller
+public class ReportsController(
+    AppDbContext context,
+    IUserContext userContext,
+    ISubjectTriplicateService subjectTriplicateService) : Controller
 {
     public IActionResult Index()
     {
@@ -33,11 +38,43 @@ public class ReportsController(AppDbContext context, IUserContext userContext) :
         return View(filter);
     }
 
-    [RequirePermission("reports.examtriplicate")]
-    public async Task<IActionResult> ExamTriplicate(ReportFilterViewModel filter)
+    [RequirePermission("reports.subjecttriplicate")]
+    public async Task<IActionResult> SubjectTriplicate(ReportFilterViewModel filter)
     {
         await PopulateSelectLists(filter);
-        return View(filter);
+
+        ViewData["ShowAcademicYearFilter"] = false;
+        ViewData["ShowProgramFilter"] = false;
+        ViewData["ShowSemesterFilter"] = false;
+        ViewData["ShowExamTypeFilter"] = false;
+
+        if (!filter.CollegeId.HasValue && userContext.CollegeId.HasValue)
+            filter.CollegeId = userContext.CollegeId;
+
+        var report = filter.ExamScheduleId.HasValue
+            ? await subjectTriplicateService.BuildAsync(filter.ExamScheduleId, filter.CollegeId, filter.ProgramId)
+            : null;
+
+        return View(new SubjectTriplicateReportViewModel { Filter = filter, Report = report });
+    }
+
+    [RequirePermission("reports.subjecttriplicate")]
+    public async Task<IActionResult> SubjectTriplicateExport(string format, ReportFilterViewModel filter)
+    {
+        var collegeId = filter.CollegeId ?? userContext.CollegeId;
+        if (!filter.ExamScheduleId.HasValue)
+            return NotFound();
+
+        var report = await subjectTriplicateService.BuildAsync(filter.ExamScheduleId, collegeId, filter.ProgramId);
+        if (report == null) return NotFound();
+
+        var (contentType, extension) = SubjectTriplicateExporter.ResolveFormat(format);
+        var bytes = string.Equals(format, "pdf", StringComparison.OrdinalIgnoreCase)
+            ? SubjectTriplicateExporter.BuildPdf(report)
+            : SubjectTriplicateExporter.BuildExcel(report);
+
+        var fileName = $"SubjectTriplicate_{DateTime.Now:yyyyMMdd_HHmmss}.{extension}";
+        return File(bytes, contentType, fileName);
     }
 
     [RequirePermission("reports.summary")]

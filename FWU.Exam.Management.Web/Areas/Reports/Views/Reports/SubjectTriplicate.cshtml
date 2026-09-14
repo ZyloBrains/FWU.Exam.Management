@@ -1,0 +1,155 @@
+@model SubjectTriplicateReportViewModel
+@{
+    ViewData["Title"] = "Subject Triplicate Report";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <i class="fas fa-arrow-left text-lg"></i>
+        </a>
+        <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-file-invoice text-rose-600"></i>
+        </div>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Subject Triplicate Report</h1>
+            <p class="text-xs sm:text-sm text-gray-500">Students with their selected subjects grouped by college</p>
+        </div>
+    </div>
+
+    <partial name="_ReportFilter" model="Model.Filter" />
+
+    @if (Model.HasReport)
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-800">
+                        @if (!string.IsNullOrWhiteSpace(Model.Report!.CollegeName))
+                        {
+                            <span>@Model.Report!.CollegeName</span>
+                        }
+                        else
+                        {
+                            <span>All Colleges</span>
+                        }
+                    </h3>
+                    <p class="text-xs sm:text-sm text-gray-500">@Model.Report!.ExamScheduleName</p>
+                    @if (!string.IsNullOrWhiteSpace(Model.Report!.ExamScheduleCode))
+                    {
+                        <p class="text-xs text-gray-500">@Model.Report!.ExamScheduleCode</p>
+                    }
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-500">
+                        @if (!string.IsNullOrWhiteSpace(Model.Report.AcademicYearName))
+                        {
+                            <span>Academic Year: <strong>@Model.Report.AcademicYearName</strong></span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Report.LevelName))
+                        {
+                            <span>Level: <strong>@Model.Report.LevelName</strong></span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Report.SemesterName))
+                        {
+                            <span>Semester: <strong>@Model.Report.SemesterName</strong></span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Report.ExamTypeName))
+                        {
+                            <span>Exam Type: <strong>@Model.Report.ExamTypeName</strong></span>
+                        }
+                        <span>Total Students: <strong>@Model.Report.TotalStudents</strong></span>
+                        <span>Colleges: <strong>@Model.Report.Groups.Count</strong></span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <form asp-action="SubjectTriplicateExport" method="get" class="flex items-center gap-2">
+                        <input type="hidden" name="ExamScheduleId" value="@Model.Filter.ExamScheduleId" />
+                        <input type="hidden" name="CollegeId" value="@Model.Filter.CollegeId" />
+                        <button type="submit" name="format" value="pdf"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                            <i class="fas fa-file-pdf text-xs"></i> PDF
+                        </button>
+                        <button type="submit" name="format" value="xlsx"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                            <i class="fas fa-file-excel text-xs"></i> Excel
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            @foreach (var group in Model.Report.Groups)
+            {
+                <div class="mb-6">
+                    <div class="flex items-center justify-between bg-rose-50 border border-rose-200 rounded-lg px-4 py-2.5 mb-2">
+                        <h4 class="text-sm sm:text-base font-semibold text-rose-800">
+                            <i class="fas fa-university text-xs mr-1"></i> @group.CollegeName
+                        </h4>
+                        <span class="text-xs text-rose-700 bg-white rounded-full px-3 py-1 border border-rose-200">
+                            @group.TotalStudents student(s)
+                        </span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">S.N</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Symbol No</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reg No</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Student Name</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Program</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Selected Subjects</th>
+                                    <th class="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">No. of Subjects</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100">
+                                @{
+                                    var serial = 0;
+                                }
+                                @foreach (var student in group.Students)
+                                {
+                                    serial++;
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 text-xs text-gray-600">@serial</td>
+                                        <td class="px-3 py-2 text-xs font-medium text-gray-800">@(student.SymbolNumber ?? "-")</td>
+                                        <td class="px-3 py-2 text-xs text-gray-600">@(student.RegistrationNumber ?? "-")</td>
+                                        <td class="px-3 py-2 text-sm font-medium text-gray-800">@(student.StudentName ?? "-")</td>
+                                        <td class="px-3 py-2 text-xs text-gray-600">@(student.ProgramName ?? "-")</td>
+                                        <td class="px-3 py-2 text-xs text-gray-700 max-w-md align-top">
+                                            @if (student.Subjects.Count == 0)
+                                            {
+                                                <span class="text-gray-400">-</span>
+                                            }
+                                            else
+                                            {
+                                                <ul class="space-y-0.5">
+                                                    @foreach (var subject in student.Subjects)
+                                                    {
+                                                        <li>@subject.Display</li>
+                                                    }
+                                                </ul>
+                                            }
+                                        </td>
+                                        <td class="px-3 py-2 text-center text-xs font-semibold text-gray-700">@student.SubjectCount</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-file-invoice text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-base sm:text-lg font-semibold text-gray-700 mb-2">Subject Triplicate Report</h3>
+            <p class="text-gray-500 text-xs sm:text-sm max-w-md mx-auto">
+                Select a college and exam schedule above and click "Generate Report" to view students
+                with their selected subject list grouped by college.
+            </p>
+        </div>
+    }
+</div>
