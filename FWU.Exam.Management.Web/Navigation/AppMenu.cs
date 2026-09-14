@@ -258,7 +258,7 @@ public static class AppMenu
             [
                 M("College Payments", "fa-money-check-alt", ["reports.collegepayments"], R("Reports", "Reports", "CollegePayments"), ["college payment", "payment report"]),
                 M("Subject Count Report", "fa-chart-bar", ["reports.subjectcount"], R("Reports", "Reports", "SubjectCount"), ["subject count"]),
-                M("Exam Triplicate", "fa-copy", ["reports.examtriplicate"], R("Reports", "Reports", "ExamTriplicate"), ["exam triplicate", "triplicate"]),
+                M("Subject Triplicate", "fa-file-invoice", ["reports.subjecttriplicate"], R("Reports", "Reports", "SubjectTriplicate"), ["subject triplicate"]),
                 M("Summary Report", "fa-chart-pie", ["reports.summary"], R("Reports", "Reports", "Summary"), ["summary"]),
                 M("Tabulation Triplicate", "fa-table", ["reports.tabulationtriplicate"], R("Reports", "Reports", "TabulationTriplicate"), ["tabulation"]),
                 M("Program Wise Student", "fa-user-friends", ["reports.programwisestudent"], R("Reports", "Reports", "ProgramWiseStudent"), ["program wise", "student report"]),
