@@ -403,7 +403,7 @@ public static class Permissions
     // Reports
     public const string ReportsCollegePayments = "reports.collegepayments";
     public const string ReportsSubjectCount = "reports.subjectcount";
-    public const string ReportsExamTriplicate = "reports.examtriplicate";
+    public const string ReportsSubjectTriplicate = "reports.subjecttriplicate";
     public const string ReportsSummary = "reports.summary";
     public const string ReportsTabulationTriplicate = "reports.tabulationtriplicate";
     public const string ReportsProgramWiseStudent = "reports.programwisestudent";
@@ -663,7 +663,7 @@ public static class Permissions
 
         (ReportsCollegePayments, "College Payments Report", GroupReports, "View college payments report"),
         (ReportsSubjectCount, "Subject Count Report", GroupReports, "View subject count report"),
-        (ReportsExamTriplicate, "Exam Triplicate Report", GroupReports, "View exam triplicate report"),
+        (ReportsSubjectTriplicate, "Subject Triplicate Report", GroupReports, "View subject triplicate report grouped by college"),
         (ReportsSummary, "Summary Report", GroupReports, "View summary report"),
         (ReportsTabulationTriplicate, "Tabulation Triplicate Report", GroupReports, "View tabulation triplicate report"),
         (ReportsProgramWiseStudent, "Program Wise Student Report", GroupReports, "View program wise student report"),
@@ -767,6 +767,9 @@ public static class Permissions
 
             SmsView, SmsCreate, SmsEdit, SmsDelete,
             GumpNowEmailView, GumpNowEmailCreate, GumpNowEmailEdit, GumpNowEmailDelete,
+
+            ReportsSummary,
+            ReportsSubjectTriplicate,
 
             AuditLogView,
             BackupRestoreManage,
