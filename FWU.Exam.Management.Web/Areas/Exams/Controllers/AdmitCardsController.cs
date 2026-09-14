@@ -8,6 +8,7 @@ using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -19,7 +20,8 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("admitcards.view")]
 public class AdmitCardsController(
     IAdmitCardService admitCardService,
-    AppDbContext context) : Controller
+    AppDbContext context,
+    IWebHostEnvironment environment) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
     {
@@ -104,7 +106,8 @@ public class AdmitCardsController(
         admitCard.DownloadedDate = DateTime.UtcNow;
         await admitCardService.UpdateAdmitCardAsync(admitCard);
 
-        return View("PrintAdmitCard", admitCard);
+        var pdf = FWU.Exam.Management.Web.Helpers.AdmitCardPdfExporter.Build(admitCard, environment);
+        return File(pdf, "application/pdf", FWU.Exam.Management.Web.Helpers.AdmitCardPdfExporter.SuggestFileName(admitCard));
     }
 
     [RequirePermission("admitcards.delete")]

@@ -15,6 +15,7 @@ using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Web.Authorization;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
@@ -38,7 +39,8 @@ public class StudentDashboardController(
     FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper,
     AppDbContext context,
     IAuditLogWriter auditLogWriter,
-    IGradeCalculationService gradeCalculationService)
+    IGradeCalculationService gradeCalculationService,
+    IWebHostEnvironment environment)
     : Controller
 {
     // Canonical student-facing messages for a payment confirmed at the gateway
@@ -398,7 +400,8 @@ public class StudentDashboardController(
         admitCard.DownloadedDate = DateTime.UtcNow;
         await admitCardService.UpdateAdmitCardAsync(admitCard);
 
-        return View("~/Areas/Exams/Views/AdmitCards/PrintAdmitCard.cshtml", admitCard);
+        var pdf = FWU.Exam.Management.Web.Helpers.AdmitCardPdfExporter.Build(admitCard, environment);
+        return File(pdf, "application/pdf", FWU.Exam.Management.Web.Helpers.AdmitCardPdfExporter.SuggestFileName(admitCard));
     }
 
     public async Task<IActionResult> PaymentHistory()
