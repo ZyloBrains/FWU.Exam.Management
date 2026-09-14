@@ -161,6 +161,46 @@ public static class SubjectTriplicateExporter
         ws.Range(headerRow, 1, row - 1, headers.Length).SetAutoFilter();
         ws.Columns().AdjustToContents();
 
+        var summary = workbook.Worksheets.Add("Subject Summary");
+
+        summary.Cell(1, 1).Value = "Far Western University - Subject Summary Report";
+        summary.Cell(1, 1).Style.Font.Bold = true;
+        summary.Cell(1, 1).Style.Font.FontSize = 14;
+
+        summary.Cell(2, 1).Value = $"College: {report.CollegeName ?? "All"}    |    Exam Schedule: {report.ExamScheduleName ?? "-"}";
+
+        summary.Cell(4, 1).Value = $"Total Students: {report.TotalStudents}";
+        summary.Cell(5, 1).Value = $"Total Subjects: {report.TotalSubjects}";
+        summary.Cell(6, 1).Value = $"Generated: {report.GeneratedDate:yyyy-MM-dd}";
+        summary.Cell(6, 1).Style.Font.Italic = true;
+
+        var summaryHeaders = new[] { "S.N", "Subject Code", "Subject Name", "No. of Students" };
+        var summaryHeaderRow = 8;
+        for (var c = 0; c < summaryHeaders.Length; c++)
+        {
+            var cell = summary.Cell(summaryHeaderRow, c + 1);
+            cell.Value = summaryHeaders[c];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#1a5276");
+            cell.Style.Font.FontColor = XLColor.White;
+        }
+
+        var s = summaryHeaderRow + 1;
+        var summarySerial = 0;
+        foreach (var entry in report.SubjectSummary)
+        {
+            summarySerial++;
+            summary.Cell(s, 1).Value = summarySerial;
+            summary.Cell(s, 2).Value = entry.SubjectCode ?? "-";
+            summary.Cell(s, 3).Value = entry.SubjectName ?? "-";
+            summary.Cell(s, 4).Value = entry.StudentCount;
+            s++;
+        }
+
+        summary.Range(summaryHeaderRow, 1, s - 1, summaryHeaders.Length).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+        summary.Range(summaryHeaderRow, 1, s - 1, summaryHeaders.Length).SetAutoFilter();
+        summary.Columns().AdjustToContents();
+
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
         return stream.ToArray();
