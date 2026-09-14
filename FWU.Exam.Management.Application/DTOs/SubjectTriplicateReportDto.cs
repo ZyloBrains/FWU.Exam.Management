@@ -20,6 +20,29 @@ public class SubjectTriplicateReportDto
     };
 
     public int TotalStudents => Groups.Sum(g => g.Students.Count);
+
+    public List<SubjectSummaryEntry> SubjectSummary =>
+        Groups
+            .SelectMany(g => g.Students)
+            .SelectMany(s => s.Subjects)
+            .GroupBy(s => new { s.SubjectCode, s.SubjectName })
+            .Select(g => new SubjectSummaryEntry
+            {
+                SubjectCode = g.Key.SubjectCode,
+                SubjectName = g.Key.SubjectName,
+                StudentCount = g.Count()
+            })
+            .OrderBy(s => s.SubjectCode)
+            .ToList();
+
+    public int TotalSubjects => SubjectSummary.Count;
+}
+
+public class SubjectSummaryEntry
+{
+    public string? SubjectCode { get; set; }
+    public string? SubjectName { get; set; }
+    public int StudentCount { get; set; }
 }
 
 public class SubjectTriplicateCollegeGroupDto
