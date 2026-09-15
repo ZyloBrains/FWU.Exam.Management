@@ -354,6 +354,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .IsUnique()
             .HasFilter("[SymbolNumber] IS NOT NULL AND [SymbolNumber] <> ''");
 
+        builder.Entity<ExamRegistration>()
+            .HasIndex(er => new { er.ExamScheduleId, er.CollegeId, er.IsActive, er.Status });
+
+        builder.Entity<ExamRegistration>()
+            .HasIndex(er => new { er.ExamScheduleId, er.ProgramsId, er.IsActive });
+
+        builder.Entity<ExamRegistration>()
+            .HasIndex(er => er.SemesterEnrollmentId)
+            .HasFilter("[SemesterEnrollmentId] IS NOT NULL");
+
 
 
         builder.Entity<StudentRegistration>()
@@ -615,6 +625,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(esr => esr.ExamScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<ExamSubjectResult>()
+            .HasIndex(esr => new { esr.ExamScheduleId, esr.SubjectOfferingId, esr.IsActive })
+            .HasFilter("[ExamScheduleId] IS NOT NULL");
+
+        builder.Entity<ExamSubjectResult>()
+            .HasIndex(esr => new { esr.ExamRegistrationId, esr.ExamScheduleId, esr.IsActive })
+            .HasFilter("[ExamScheduleId] IS NOT NULL");
+
         builder.Entity<ExamSlot>()
             .HasOne(ess => ess.ExamSchedule)
             .WithMany(es => es.ExamSlots)
@@ -656,6 +674,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .WithMany()
             .HasForeignKey(tsa => tsa.ExamScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<CollegeAdminSubjectAssignment>()
+            .HasIndex(tsa => new { tsa.SubjectOfferingId, tsa.ExamScheduleId });
 
         builder.Entity<ExamCenterCollege>()
             .HasOne(ecc => ecc.ExamCenter)
@@ -751,6 +772,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .WithMany()
             .HasForeignKey(prl => prl.CollegeId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PaymentRequestLog>()
+            .HasIndex(prl => new { prl.ExamScheduleId, prl.StudentRegistrationId, prl.PaymentRequestLogStatus });
 
         builder.Entity<PaymentResponseLog>()
             .HasOne(prl => prl.PaymentRequestLog)
@@ -1065,6 +1089,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .WithMany(si => si.SemesterEnrollments)
             .HasForeignKey(se => se.SemesterInstanceId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SemesterEnrollment>()
+            .HasIndex(se => new { se.StudentAdmissionId, se.SemesterInstanceId });
+
+        builder.Entity<SemesterEnrollment>()
+            .HasIndex(se => new { se.StudentAdmissionId, se.EnrollmentStatus });
 
         builder.Entity<StudentRegistration>()
             .HasIndex(sr => new { sr.TenantId, sr.RegistrationNumber })

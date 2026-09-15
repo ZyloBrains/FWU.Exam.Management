@@ -46,13 +46,59 @@ public class PublishResultsService(
 
         var subjectOfferingMap = subjectOfferings.ToDictionary(so => so.Id);
 
+        // Pre-load lookup data once instead of issuing per-registration queries.
+        var genderIds = registrations
+            .Select(r => r.SemesterEnrollment?.StudentAdmission?.GenderId)
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+
+        var genderMap = genderIds.Count > 0
+            ? await context.Genders
+                .AsNoTracking()
+                .Where(g => genderIds.Contains(g.Id))
+                .ToDictionaryAsync(g => g.Id, g => g.GenderName)
+            : new Dictionary<int, string>();
+
+        var admissionIds = registrations
+            .Select(r => r.SemesterEnrollment?.StudentAdmissionId)
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+
+        var regNumberMap = admissionIds.Count > 0
+            ? await context.StudentRegistrations
+                .AsNoTracking()
+                .Where(sr => sr.StudentAdmissionId != null && admissionIds.Contains(sr.StudentAdmissionId.Value))
+                .Select(sr => new { sr.StudentAdmissionId, sr.RegistrationNumber })
+                .GroupBy(x => x.StudentAdmissionId!.Value)
+                .ToDictionaryAsync(g => g.Key, g => g.First().RegistrationNumber ?? "")
+            : new Dictionary<int, string>();
+
+        var fallbackUserIds = registrations
+            .Where(r => r.SemesterEnrollment?.StudentAdmission == null)
+            .Select(r => r.SemesterEnrollment?.StudentAdmission?.AppUserId)
+            .Where(id => !string.IsNullOrEmpty(id))
+            .Select(id => id!)
+            .Distinct()
+            .ToList();
+
+        var userFullNameMap = fallbackUserIds.Count > 0
+            ? await context.Users
+                .AsNoTracking()
+                .Where(u => fallbackUserIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u.FullName ?? "")
+            : new Dictionary<string, string>();
+
         var students = new List<PublishResultsStudentDto>();
 
         foreach (var reg in registrations)
         {
-            var studentName = await GetStudentNameAsync(reg);
+            var studentName = GetStudentName(reg, userFullNameMap);
             var dob = GetStudentDobAsync(reg);
-            var sex = GetStudentSex(reg);
+            var sex = GetStudentSex(reg, genderMap);
 
             var subjectDtos = new List<PublishResultsSubjectDto>();
             decimal totalWeightedPoints = 0;
@@ -124,7 +170,7 @@ public class PublishResultsService(
                 ExamRegistrationId = reg.Id,
                 StudentName = studentName,
                 SymbolNumber = reg.SymbolNumber,
-                RegistrationNumber = await GetRegistrationNumberAsync(reg),
+                RegistrationNumber = GetRegistrationNumber(reg, regNumberMap),
                 DateOfBirthBs = dob,
                 Sex = sex,
                 Subjects = subjectDtos,
@@ -264,7 +310,7 @@ public class PublishResultsService(
             .ToListAsync();
     }
 
-    private async Task<string> GetStudentNameAsync(Domain.Entities.Exams.ExamRegistration reg)
+    private static string GetStudentName(Domain.Entities.Exams.ExamRegistration reg, IReadOnlyDictionary<string, string> userFullNameMap)
     {
         var admission = reg.SemesterEnrollment?.StudentAdmission;
         if (admission != null)
@@ -273,20 +319,15 @@ public class PublishResultsService(
         if (reg.ApplicationVoucher?.StudentName is { Length: > 0 } voucherName)
             return voucherName;
 
-        if (reg.SemesterEnrollment?.StudentAdmission?.AppUserId is { Length: > 0 } userId)
-        {
-            var user = await context.Users
-                .AsNoTracking()
-                .Where(u => u.Id == userId)
-                .Select(u => u.FullName)
-                .FirstOrDefaultAsync();
-            if (!string.IsNullOrEmpty(user)) return user;
-        }
+        if (reg.SemesterEnrollment?.StudentAdmission?.AppUserId is { Length: > 0 } userId
+            && userFullNameMap.TryGetValue(userId, out var userFullName)
+            && !string.IsNullOrEmpty(userFullName))
+            return userFullName;
 
         return "";
     }
 
-    private string? GetStudentDobAsync(Domain.Entities.Exams.ExamRegistration reg)
+    private static string? GetStudentDobAsync(Domain.Entities.Exams.ExamRegistration reg)
     {
         var admission = reg.SemesterEnrollment?.StudentAdmission;
         if (admission?.DateOfBirthBS is { Length: > 0 } dob)
@@ -295,32 +336,22 @@ public class PublishResultsService(
         return null;
     }
 
-    private string? GetStudentSex(Domain.Entities.Exams.ExamRegistration reg)
+    private static string? GetStudentSex(Domain.Entities.Exams.ExamRegistration reg, IReadOnlyDictionary<int, string> genderMap)
     {
-        var admission = reg.SemesterEnrollment?.StudentAdmission;
-        if (admission?.GenderId.HasValue == true)
-        {
-            return context.Genders
-                .AsNoTracking()
-                .Where(g => g.Id == admission.GenderId.Value)
-                .Select(g => g.GenderName)
-                .FirstOrDefault();
-        }
+        var genderId = reg.SemesterEnrollment?.StudentAdmission?.GenderId;
+        if (genderId.HasValue && genderMap.TryGetValue(genderId.Value, out var gender))
+            return gender;
+
         return null;
     }
 
-    private async Task<string?> GetRegistrationNumberAsync(Domain.Entities.Exams.ExamRegistration reg)
+    private static string? GetRegistrationNumber(Domain.Entities.Exams.ExamRegistration reg, IReadOnlyDictionary<int, string> regNumberMap)
     {
         var admissionId = reg.SemesterEnrollment?.StudentAdmissionId;
-        if (admissionId.HasValue)
-        {
-            var regNum = await context.StudentRegistrations
-                .AsNoTracking()
-                .Where(sr => sr.StudentAdmissionId == admissionId.Value)
-                .Select(sr => sr.RegistrationNumber)
-                .FirstOrDefaultAsync();
-            if (!string.IsNullOrEmpty(regNum)) return regNum;
-        }
+        if (admissionId.HasValue && regNumberMap.TryGetValue(admissionId.Value, out var regNum)
+            && !string.IsNullOrEmpty(regNum))
+            return regNum;
+
         return null;
     }
 

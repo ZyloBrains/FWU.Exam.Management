@@ -429,28 +429,35 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
             batchSchemes = await ExamRegistrationBinder.ResolveBatchSchemeIdsAsync(context, schedule.ProgramId, batchYears);
         }
 
+        var studentRegIds = dto.Students.Select(s => s.ExamRegistrationId).Distinct().ToList();
+        IQueryable<ExamSubjectResult> existingResultsQuery = context.ExamSubjectResults
+            .Where(esr => esr.ExamScheduleId == dto.ExamScheduleId
+                       && studentRegIds.Contains(esr.ExamRegistrationId));
+        if (isReExam)
+        {
+            existingResultsQuery = existingResultsQuery
+                .Where(esr => esr.IsActive)
+                .Include(esr => esr.SubjectOffering);
+        }
+        var existingResults = await existingResultsQuery.ToListAsync();
+
+        var resultsByRegistration = existingResults
+            .GroupBy(esr => esr.ExamRegistrationId)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        var resultsByOfferingKey = existingResults
+            .GroupBy(esr => (esr.ExamRegistrationId, esr.SubjectOfferingId))
+            .ToDictionary(g => g.Key, g => g.First());
+
         foreach (var student in dto.Students)
         {
             try
             {
                 if (!validRegistrationIds.Contains(student.ExamRegistrationId)) continue;
 
-                ExamSubjectResult? entity;
-                if (isReExam)
-                {
-                    entity = await context.ExamSubjectResults
-                        .Include(esr => esr.SubjectOffering)
-                        .FirstOrDefaultAsync(esr => esr.ExamRegistrationId == student.ExamRegistrationId
-                                                 && esr.ExamScheduleId == dto.ExamScheduleId
-                                                 && esr.IsActive);
-                }
-                else
-                {
-                    entity = await context.ExamSubjectResults
-                        .FirstOrDefaultAsync(esr => esr.ExamRegistrationId == student.ExamRegistrationId
-                                                 && esr.SubjectOfferingId == dto.SubjectOfferingId
-                                                 && esr.ExamScheduleId == dto.ExamScheduleId);
-                }
+                ExamSubjectResult? entity = isReExam
+                    ? resultsByRegistration.GetValueOrDefault(student.ExamRegistrationId)
+                    : resultsByOfferingKey.GetValueOrDefault((student.ExamRegistrationId, dto.SubjectOfferingId));
 
                 var gradingOffering = subjectOffering;
                 if (entity == null)
@@ -466,6 +473,10 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
                         IsSubmitted = false
                     };
                     context.ExamSubjectResults.Add(entity);
+                    if (isReExam)
+                        resultsByRegistration[student.ExamRegistrationId] = entity;
+                    else
+                        resultsByOfferingKey[(student.ExamRegistrationId, dto.SubjectOfferingId)] = entity;
                 }
                 else if (isReExam && entity.SubjectOfferingId != dto.SubjectOfferingId)
                 {
@@ -486,7 +497,7 @@ var schedule = await ScopedScheduleQuery(effectiveCollege)
                     }
                 }
 
-if (student.Practical.HasValue)
+                if (student.Practical.HasValue)
                     entity.ObtainedMarksPractical = student.Practical;
                 gradeCalculationService.AssignGrades(entity, gradingOffering, entity.IsSupplementary);
 
