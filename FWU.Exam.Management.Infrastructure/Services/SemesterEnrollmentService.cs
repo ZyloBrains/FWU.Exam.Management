@@ -302,6 +302,100 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             .Where(se => se.EnrollmentStatus == StudentEnrollmentStatus.Active)
             .ToListAsync();
 
+        var programIds = activeEnrollments
+            .Select(e => e.StudentAdmission?.ProgramsId)
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+
+        var semesterIds = activeEnrollments
+            .Select(e => e.SemesterInstance?.Semester?.Id)
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+
+        // 1. Pre-fetch main exam schedules for all (ProgramId, SemesterInstanceId) pairs.
+        var mainSchedules = await context.ExamSchedules
+            .AsNoTracking()
+            .Include(es => es.ExamType)
+            .Where(es => es.IsActive
+                      && programIds.Contains(es.ProgramId)
+                      && semesterIds.Contains(es.SemesterInstanceId)
+                      && es.ExamType != null
+                      && es.ExamType.Name != "Entrance"
+                      && es.ExamType.Name != "Supplementary"
+                      && es.ExamType.Name != "Partial"
+                      && es.ExamType.Name != "Chance"
+                      && es.ExamType.Name != "Special Chance")
+            .ToListAsync();
+
+        var mainScheduleMap = mainSchedules
+            .GroupBy(es => (es.ProgramId, es.SemesterInstanceId))
+            .ToDictionary(
+                g => g.Key,
+                g => g
+                    .OrderBy(es => es.ExamType!.Name == "Regular" ? 0 : 1)
+                    .ThenByDescending(es => es.Id)
+                    .FirstOrDefault());
+
+        // 2. Pre-fetch which enrollments already have an exam form submitted.
+        var enrollmentIds = activeEnrollments.Select(e => e.Id).Distinct().ToList();
+        var enrollmentWithExamForm = await context.ExamRegistrations
+            .AsNoTracking()
+            .Where(er => er.SemesterEnrollmentId != null
+                      && enrollmentIds.Contains(er.SemesterEnrollmentId.Value)
+                      && er.IsActive
+                      && er.Status != RegistrationStatus.Rejected)
+            .Select(er => er.SemesterEnrollmentId!.Value)
+            .Distinct()
+            .ToHashSetAsync();
+
+        // 3. Pre-fetch program semesters for all programs.
+        var programSemesters = await context.ProgramSemesters
+            .AsNoTracking()
+            .Where(ps => programIds.Contains(ps.ProgramId) && ps.IsActive)
+            .Include(ps => ps.Semester)
+            .OrderBy(ps => ps.DisplayOrder)
+            .ToListAsync();
+
+        var programSemesterMap = programSemesters
+            .GroupBy(ps => ps.ProgramId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(ps => ps.DisplayOrder).ToList());
+
+        // 4. Pre-fetch semester instances matching (AcademicYearId, ProgramId) pairs.
+        var academicYearIds = activeEnrollments
+            .Select(e => e.SemesterInstance?.AcademicYearId)
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+
+        var semesterInstances = await context.SemesterInstances
+            .AsNoTracking()
+            .Where(si => academicYearIds.Contains(si.AcademicYearId)
+                      && programIds.Contains(si.ProgramId))
+            .ToListAsync();
+
+        var semesterInstanceMap = semesterInstances
+            .GroupBy(si => (si.SemesterId, si.AcademicYearId, si.ProgramId))
+            .ToDictionary(g => g.Key, g => g.First());
+
+        // 5. Pre-fetch existing enrollments to rule out duplicates.
+        var admissionIds = activeEnrollments
+            .Select(e => e.StudentAdmission?.Id)
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+
+        var existingEnrollmentKeys = await context.SemesterEnrollments
+            .AsNoTracking()
+            .Where(se => admissionIds.Contains(se.StudentAdmissionId))
+            .Select(se => se.StudentAdmissionId + "_" + se.SemesterInstanceId)
+            .ToHashSetAsync();
+
         foreach (var enrollment in activeEnrollments)
         {
             var admission = enrollment.StudentAdmission;
@@ -309,7 +403,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             var semester = semesterInstance?.Semester;
             if (admission == null || semesterInstance == null || semester == null) continue;
 
-            var mainSchedule = await GetMainExamScheduleAsync(admission.ProgramsId, semester.Id);
+            var mainSchedule = mainScheduleMap.GetValueOrDefault((admission.ProgramsId, semester.Id));
             if (mainSchedule == null) continue;
 
             var endedDate = mainSchedule.EndDate;
@@ -327,37 +421,24 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                 continue;
             }
 
-            var submittedExamForm = await context.ExamRegistrations
-                .AsNoTracking()
-                .AnyAsync(er => er.SemesterEnrollmentId == enrollment.Id
-                             && er.IsActive
-                             && er.Status != RegistrationStatus.Rejected);
-            if (!submittedExamForm) continue;
+            if (!enrollmentWithExamForm.Contains(enrollment.Id)) continue;
 
-            var programSemesters = await context.ProgramSemesters
-                .AsNoTracking()
-                .Where(ps => ps.ProgramId == admission.ProgramsId && ps.IsActive)
-                .Include(ps => ps.Semester)
-                .OrderBy(ps => ps.DisplayOrder)
-                .ToListAsync();
+            if (!programSemesterMap.TryGetValue(admission.ProgramsId, out var programSemesterList))
+                continue;
 
-            var currentOrder = programSemesters.FirstOrDefault(ps => ps.SemesterId == semester.Id)?.DisplayOrder ?? 0;
-            var nextProgramSemester = programSemesters.FirstOrDefault(ps => ps.DisplayOrder == currentOrder + 1);
+            var currentOrder = programSemesterList.FirstOrDefault(ps => ps.SemesterId == semester.Id)?.DisplayOrder ?? 0;
+            var nextProgramSemester = programSemesterList.FirstOrDefault(ps => ps.DisplayOrder == currentOrder + 1);
             if (nextProgramSemester == null) continue;
 
             var nextSemester = nextProgramSemester.Semester;
             if (nextSemester == null) continue;
 
-            var nextSemesterInstance = await context.SemesterInstances
-                .AsNoTracking()
-                .FirstOrDefaultAsync(si => si.SemesterId == nextSemester.Id
-                                        && si.AcademicYearId == semesterInstance.AcademicYearId
-                                        && si.ProgramId == admission.ProgramsId);
-            if (nextSemesterInstance == null) continue;
+            if (!semesterInstanceMap.TryGetValue(
+                    (nextSemester.Id, semesterInstance.AcademicYearId, admission.ProgramsId),
+                    out var nextSemesterInstance))
+                continue;
 
-            var alreadyEnrolled = await context.SemesterEnrollments
-                .AnyAsync(se => se.StudentAdmissionId == admission.Id && se.SemesterInstanceId == nextSemesterInstance.Id);
-            if (alreadyEnrolled) continue;
+            if (existingEnrollmentKeys.Contains(admission.Id + "_" + nextSemesterInstance.Id)) continue;
 
             context.SemesterEnrollments.Add(new SemesterEnrollment
             {
@@ -382,27 +463,6 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             await context.SaveChangesAsync();
 
         return created;
-    }
-
-    private async Task<Domain.Entities.Exams.ExamSchedule?> GetMainExamScheduleAsync(int programId, int semesterId)
-    {
-        var schedules = await context.ExamSchedules
-            .AsNoTracking()
-            .Include(es => es.ExamType)
-            .Where(es => es.IsActive
-                      && es.ProgramId == programId
-                      && es.SemesterInstanceId == semesterId
-                      && es.ExamType != null
-                      && es.ExamType.Name != "Entrance"
-                      && es.ExamType.Name != "Supplementary"
-                      && es.ExamType.Name != "Partial"
-                      && es.ExamType.Name != "Chance"
-                      && es.ExamType.Name != "Special Chance")
-            .OrderBy(es => es.ExamType!.Name == "Regular" ? 0 : 1)
-            .ThenByDescending(es => es.Id)
-            .ToListAsync();
-
-        return schedules.FirstOrDefault();
     }
 
     private IQueryable<SemesterEnrollment> BuildQuery(string? search, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null)
