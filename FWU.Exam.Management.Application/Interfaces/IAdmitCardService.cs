@@ -17,4 +17,11 @@ public interface IAdmitCardService
     Task<AdmitCard> GenerateAdmitCardAsync(int examRegistrationId);
     Task<List<AdmitCard>> GenerateBulkAdmitCardsAsync(int examScheduleId);
     Task<AdmitCardSelectListsDto> GetSelectListDataAsync(AdmitCard? admitCard = null);
+    Task<(List<AdmitCardListDto> Items, int TotalCount)> GetPagedDataAsync(
+        string searchTerm, int page, int pageSize, string sort, string sortDir,
+        int? examScheduleId = null, int? collegeId = null, int? levelId = null,
+        int? programId = null, string? status = null);
+    Task<List<AdmitCard>> GetAdmitCardsForDownloadAsync(
+        int? examScheduleId = null, int? collegeId = null, int? levelId = null,
+        int? programId = null, string? status = null, string? search = null);
 }
