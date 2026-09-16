@@ -452,9 +452,9 @@
                 e.preventDefault();
                 return;
             }
-            $(form).find('input[name="registrationId"]').remove();
+            $(form).find('input[name="registrationIds"]').remove();
             ids.forEach(function (id) {
-                $('<input>').attr({ type: 'hidden', name: 'registrationId', value: id }).appendTo(form);
+                $('<input>').attr({ type: 'hidden', name: 'registrationIds', value: id }).appendTo(form);
             });
         });
     </script>
