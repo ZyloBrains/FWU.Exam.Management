@@ -255,7 +255,6 @@ public class ExamSchedulesController(
                 if (existing is null) return NotFound();
                 examSchedule.TenantId = existing.TenantId;
                 await examScheduleService.UpdateExamScheduleAsync(examSchedule);
-                await examScheduleService.DeactivateExpiredSchedulesAsync();
             }
             catch (InvalidOperationException ex)
             {
