@@ -736,7 +736,6 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             try
             {
                 await examScheduleService.UpdateExamScheduleAsync(model);
-                await examScheduleService.DeactivateExpiredSchedulesAsync();
                 await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Entrance exam schedule {model.Id} updated", new { scheduleId = model.Id, code = model.ExamScheduleCode, programId = model.ProgramId, semesterInstanceId = model.SemesterInstanceId, type = "Entrance" }, entityName: "ExamSchedule", entityId: model.Id.ToString());
                 TempData["SuccessMessage"] = "Entrance exam schedule updated successfully!";
                 return RedirectToAction(nameof(ManageSchedule));
