@@ -360,6 +360,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
         var registration = await context.ExamRegistrations
             .Include(er => er.ExamSchedule)
             .Include(er => er.College)
+            .ApplyScope(userContext)
             .FirstOrDefaultAsync(er => er.Id == examRegistrationId)
             ?? throw new InvalidOperationException("Exam registration not found.");
 
@@ -419,6 +420,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
     {
         var registrations = await context.ExamRegistrations
             .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= Domain.Enums.RegistrationStatus.CollegeVerified)
+            .ApplyScope(userContext)
             .Include(er => er.College)
             .ToListAsync();
 
@@ -533,6 +535,155 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
             ExamRegistrations = examRegistrations.Select(er => new SelectOption { Id = er.Id, Name = $"Reg #{er.Id}" }).ToList(),
             ExamCenters = examCenters.Select(ec => new SelectOption { Id = ec.Id, Name = $"Center {ec.Code}" }).ToList()
         };
+    }
+
+    public async Task<(List<AdmitCardListDto> Items, int TotalCount)> GetPagedDataAsync(
+        string searchTerm, int page, int pageSize, string sort, string sortDir,
+        int? examScheduleId = null, int? collegeId = null, int? levelId = null,
+        int? programId = null, string? status = null)
+    {
+        var query = context.AdmitCards
+            .AsNoTracking()
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.College)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.Program)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.Level)
+            .Include(e => e.StudentRegistration)
+            .Where(e => e.IsActive)
+            .ApplyScope(userContext);
+
+        if (examScheduleId.HasValue)
+            query = query.Where(e => e.ExamScheduleId == examScheduleId.Value);
+
+        if (collegeId.HasValue)
+            query = query.Where(e => e.ExamRegistration != null && e.ExamRegistration.CollegeId == collegeId.Value);
+
+        if (levelId.HasValue)
+            query = query.Where(e => e.ExamSchedule != null && e.ExamSchedule.LevelId == levelId.Value);
+
+        if (programId.HasValue)
+            query = query.Where(e => e.ExamSchedule != null && e.ExamSchedule.ProgramId == programId.Value);
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            bool isActive = string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase);
+            query = query.Where(e => e.IsActive == isActive);
+        }
+
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            var search = searchTerm.Trim();
+            query = query.Where(e =>
+                (e.AdmitCardNumber != null && e.AdmitCardNumber.Contains(search)) ||
+                (e.ExamSchedule != null && e.ExamSchedule.ExamScheduleName != null && e.ExamSchedule.ExamScheduleName.Contains(search)) ||
+                (e.StudentRegistration != null && e.StudentRegistration.RegistrationNumber != null && e.StudentRegistration.RegistrationNumber.Contains(search)) ||
+                (e.StudentRegistration != null && (e.StudentRegistration.FirstName + (e.StudentRegistration.MiddleName != null ? " " + e.StudentRegistration.MiddleName : "") + (e.StudentRegistration.LastName != null ? " " + e.StudentRegistration.LastName : "")).Contains(search)));
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var descending = sortDir.Equals("desc", StringComparison.OrdinalIgnoreCase);
+        query = sort.ToLower() switch
+        {
+            "admitcardnumber" => descending ? query.OrderByDescending(e => e.AdmitCardNumber) : query.OrderBy(e => e.AdmitCardNumber),
+            "schedule" => descending
+                ? query.OrderByDescending(e => e.ExamSchedule != null ? e.ExamSchedule.ExamScheduleName : string.Empty)
+                : query.OrderBy(e => e.ExamSchedule != null ? e.ExamSchedule.ExamScheduleName : string.Empty),
+            "date" => descending ? query.OrderByDescending(e => e.GeneratedDate) : query.OrderBy(e => e.GeneratedDate),
+            _ => descending ? query.OrderByDescending(e => e.Id) : query.OrderBy(e => e.Id)
+        };
+
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(e => new AdmitCardListDto
+            {
+                Id = e.Id,
+                AdmitCardNumber = e.AdmitCardNumber ?? string.Empty,
+                ExamScheduleName = e.ExamSchedule != null ? (e.ExamSchedule.ExamScheduleName ?? string.Empty) : string.Empty,
+                StudentName = e.StudentRegistration != null
+                    ? (e.StudentRegistration.FirstName
+                       + (e.StudentRegistration.MiddleName != null ? " " + e.StudentRegistration.MiddleName : "")
+                       + (e.StudentRegistration.LastName != null ? " " + e.StudentRegistration.LastName : "")).Trim()
+                    : string.Empty,
+                RegistrationNumber = e.StudentRegistration != null ? e.StudentRegistration.RegistrationNumber : string.Empty,
+                GeneratedDate = e.GeneratedDate,
+                IsActive = e.IsActive
+            })
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    public async Task<List<AdmitCard>> GetAdmitCardsForDownloadAsync(
+        int? examScheduleId = null, int? collegeId = null, int? levelId = null,
+        int? programId = null, string? status = null, string? search = null)
+    {
+        var query = context.AdmitCards
+            .AsNoTracking()
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.College)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.ExamCenter)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.Program)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.ApplicationVoucher)
+                    .ThenInclude(v => v!.StudentRegistration)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.SemesterInstance).ThenInclude(si => si!.Semester)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.Program)
+                    .ThenInclude(p => p!.Level)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.Level)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.ExamType)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.SemesterInstance).ThenInclude(si => si!.AcademicYear)
+            .Include(e => e.StudentRegistration)
+            .Where(e => e.IsActive)
+            .ApplyScope(userContext);
+
+        if (examScheduleId.HasValue)
+            query = query.Where(e => e.ExamScheduleId == examScheduleId.Value);
+
+        if (collegeId.HasValue)
+            query = query.Where(e => e.ExamRegistration != null && e.ExamRegistration.CollegeId == collegeId.Value);
+
+        if (levelId.HasValue)
+            query = query.Where(e => e.ExamSchedule != null && e.ExamSchedule.LevelId == levelId.Value);
+
+        if (programId.HasValue)
+            query = query.Where(e => e.ExamSchedule != null && e.ExamSchedule.ProgramId == programId.Value);
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            bool isActive = string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase);
+            query = query.Where(e => e.IsActive == isActive);
+        }
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            var searchTrimmed = search.Trim();
+            query = query.Where(e =>
+                (e.AdmitCardNumber != null && e.AdmitCardNumber.Contains(searchTrimmed)) ||
+                (e.ExamSchedule != null && e.ExamSchedule.ExamScheduleName != null && e.ExamSchedule.ExamScheduleName.Contains(searchTrimmed)) ||
+                (e.StudentRegistration != null && e.StudentRegistration.RegistrationNumber != null && e.StudentRegistration.RegistrationNumber.Contains(searchTrimmed)) ||
+                (e.StudentRegistration != null && (e.StudentRegistration.FirstName + (e.StudentRegistration.MiddleName != null ? " " + e.StudentRegistration.MiddleName : "") + (e.StudentRegistration.LastName != null ? " " + e.StudentRegistration.LastName : "")).Contains(searchTrimmed)));
+        }
+
+        var admitCards = await query
+            .OrderBy(ac => ac.ExamRegistration != null ? ac.ExamRegistration.SymbolNumber : string.Empty)
+            .ThenBy(ac => ac.AdmitCardNumber)
+            .ToListAsync();
+
+        foreach (var admitCard in admitCards)
+            await EnrichAdmitCardAsync(admitCard);
+
+        return admitCards;
     }
 
     private IQueryable<AdmitCard> BuildQuery(string? search, string sort, string sortDir, int? examScheduleId = null)

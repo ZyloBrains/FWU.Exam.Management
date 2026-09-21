@@ -32,6 +32,9 @@ public class SubjectOptionDto
     public float? InternalTheoryFullMarks { get; set; }
     public float? PracticalFullMarks { get; set; }
     public float? PracticalPassMarks { get; set; }
+    public int? CurriculumVersionId { get; set; }
+    public string? CurriculumVersionName { get; set; }
+    public bool IsStaleCohort { get; set; }
 }
 
 public class SubjectDetailDto
@@ -57,6 +60,7 @@ public class StudentInternalMarksRowDto
     public string StudentName { get; set; } = string.Empty;
     public string RegistrationNumber { get; set; } = string.Empty;
     public string SymbolNumber { get; set; } = string.Empty;
+    public string AcademicYearName { get; set; } = string.Empty;
     public float? TheoryInternal { get; set; }
     public float? PracticalInternal { get; set; }
     public bool IsSubmitted { get; set; }

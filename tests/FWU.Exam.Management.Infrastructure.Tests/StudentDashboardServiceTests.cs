@@ -60,6 +60,69 @@ public class StudentDashboardServiceTests
         Assert.Empty(result);
     }
 
+    [Theory]
+    [InlineData(RegistrationStatus.Pending, false)]
+    [InlineData(RegistrationStatus.CollegeVerified, true)]
+    [InlineData(RegistrationStatus.AdminVerified, true)]
+    [InlineData(RegistrationStatus.Registered, true)]
+    [InlineData(RegistrationStatus.Withheld, true)]
+    [InlineData(RegistrationStatus.Rejected, false)]
+    public async Task HasVerifiedExamFormAsync_MatchesStatusThreshold(RegistrationStatus status, bool expected)
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Future, null));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 11));
+            var er = TestData.ExamRegistration(1, 11, 1);
+            er.Status = status;
+            ctx.ExamRegistrations.Add(er);
+        });
+
+        var service = CreateService(db);
+
+        var result = await service.HasVerifiedExamFormAsync(UserId);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public async Task HasVerifiedExamFormAsync_ReturnsFalse_WhenStudentHasNoVouchers()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+        });
+
+        var service = CreateService(db);
+
+        var result = await service.HasVerifiedExamFormAsync(UserId);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task HasVerifiedExamFormAsync_ReturnsFalse_WhenStudentHasNoRegistration()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+        });
+
+        var service = CreateService(db);
+
+        var result = await service.HasVerifiedExamFormAsync(UserId);
+
+        Assert.False(result);
+    }
+
     [Fact]
     public async Task GetExamSchedulesForStudentAsync_ReturnsSchedulesForAllEnrolledSemesters()
     {

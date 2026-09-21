@@ -186,8 +186,8 @@ public class ExamScheduleServiceTests
         var service = CreateService(db);
 
         var schedule = TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.Today.AddDays(30)), null);
-        schedule.StartDate = DateOnly.FromDateTime(new DateTime(2026, 9, 1));
-        schedule.EndDate = DateOnly.FromDateTime(new DateTime(2026, 9, 15));
+        schedule.StartDate = DateOnly.FromDateTime(DateTime.Today.AddDays(30));
+        schedule.EndDate = DateOnly.FromDateTime(DateTime.Today.AddDays(44));
         schedule.StartDateBs = null;
         schedule.EndDateBs = null;
 

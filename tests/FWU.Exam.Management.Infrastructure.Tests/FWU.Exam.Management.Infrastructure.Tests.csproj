@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="SQLite" Version="3.53.4" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
@@ -23,6 +27,7 @@
     <ProjectReference Include="..\..\FWU.Exam.Management.Infrastructure\FWU.Exam.Management.Infrastructure.csproj" />
     <ProjectReference Include="..\..\FWU.Exam.Management.Application\FWU.Exam.Management.Application.csproj" />
     <ProjectReference Include="..\..\FWU.Exam.Management.Domain\FWU.Exam.Management.Domain.csproj" />
+    <ProjectReference Include="..\..\FWU.Exam.Management.Web\FWU.Exam.Management.Web.csproj" />
   </ItemGroup>
 
 </Project>

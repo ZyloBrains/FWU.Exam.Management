@@ -5,6 +5,14 @@
 }
 
 <div class="space-y-6">
+    @if (ViewData["ScopeWarning"] is string scopeWarning)
+    {
+        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3">
+            <i class="fas fa-exclamation-triangle text-amber-500 mt-0.5"></i>
+            <p class="text-sm text-amber-800">@scopeWarning</p>
+        </div>
+    }
+
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">

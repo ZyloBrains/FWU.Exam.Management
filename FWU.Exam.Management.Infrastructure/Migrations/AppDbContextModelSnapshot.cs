@@ -361,9 +361,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("ExamScheduleId");
 
-                    b.HasIndex("SubjectOfferingId");
-
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("SubjectOfferingId", "ExamScheduleId");
 
                     b.ToTable("CollegeAdminSubjectAssignments");
                 });
@@ -1252,13 +1252,20 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("ExamCenterId");
 
-                    b.HasIndex("ExamScheduleId");
-
                     b.HasIndex("ProgramsId");
 
-                    b.HasIndex("SemesterEnrollmentId");
+                    b.HasIndex("SemesterEnrollmentId")
+                        .HasFilter("[SemesterEnrollmentId] IS NOT NULL");
+
+                    b.HasIndex("SymbolNumber")
+                        .IsUnique()
+                        .HasFilter("[SymbolNumber] IS NOT NULL AND [SymbolNumber] <> ''");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("ExamScheduleId", "ProgramsId", "IsActive");
+
+                    b.HasIndex("ExamScheduleId", "CollegeId", "IsActive", "Status");
 
                     b.ToTable("ExamRegistrations");
                 });
@@ -1581,10 +1588,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExamRegistrationId");
-
-                    b.HasIndex("ExamScheduleId");
-
                     b.HasIndex("ExamTypeId");
 
                     b.HasIndex("GradingSchemeId");
@@ -1592,6 +1595,12 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("SubjectOfferingId");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("ExamRegistrationId", "ExamScheduleId", "IsActive")
+                        .HasFilter("[ExamScheduleId] IS NOT NULL");
+
+                    b.HasIndex("ExamScheduleId", "SubjectOfferingId", "IsActive")
+                        .HasFilter("[ExamScheduleId] IS NOT NULL");
 
                     b.ToTable("ExamSubjectResults");
                 });
@@ -2699,13 +2708,13 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("CollegeId");
 
-                    b.HasIndex("ExamScheduleId");
-
                     b.HasIndex("PaymentTypeId");
 
                     b.HasIndex("StudentRegistrationId");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("ExamScheduleId", "StudentRegistrationId", "PaymentRequestLogStatus");
 
                     b.ToTable("PaymentRequestLogs");
                 });
@@ -3198,9 +3207,11 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("SemesterInstanceId");
 
-                    b.HasIndex("StudentAdmissionId");
-
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("StudentAdmissionId", "EnrollmentStatus");
+
+                    b.HasIndex("StudentAdmissionId", "SemesterInstanceId");
 
                     b.ToTable("SemesterEnrollments");
                 });

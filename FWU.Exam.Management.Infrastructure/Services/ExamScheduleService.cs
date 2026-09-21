@@ -377,6 +377,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext,
         if (schedule == null) return null;
 
         var registrations = await context.ExamRegistrations
+            .ApplyScope(userContext)
             .Where(r => r.ExamScheduleId == id)
             .ToListAsync();
 
@@ -577,6 +578,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext,
     public async Task<Dictionary<int, int>> GetRegistrationCountsAsync(List<int> scheduleIds)
     {
         return await context.ExamRegistrations
+            .ApplyScope(userContext)
             .Where(r => scheduleIds.Contains(r.ExamScheduleId))
             .GroupBy(r => r.ExamScheduleId)
             .Select(g => new { ScheduleId = g.Key, Count = g.Count() })
@@ -585,7 +587,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext,
 
     public async Task<int> GetRegistrationCountAsync(int scheduleId)
     {
-        return await context.ExamRegistrations.CountAsync(r => r.ExamScheduleId == scheduleId);
+        return await context.ExamRegistrations.ApplyScope(userContext).CountAsync(r => r.ExamScheduleId == scheduleId);
     }
 
     private IQueryable<ExamSchedule> BuildQuery(string? search, string sort, string sortDir, string? examTypeName = null)

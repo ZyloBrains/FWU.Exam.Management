@@ -69,6 +69,12 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
+        if (await dashboardService.HasVerifiedExamFormAsync(user.Id))
+        {
+            TempData["ErrorMessage"] = "Your profile is locked because one of your exam forms has been verified by the exam office. To change your photo, signature or mandatory details, contact your college.";
+            return RedirectToAction("Edit", "Profile", new { area = "" });
+        }
+
         if (photo != null && photo.Length > 0)
         {
             try
@@ -132,6 +138,12 @@ public class StudentDashboardController(
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
+
+        if (await dashboardService.HasVerifiedExamFormAsync(user.Id))
+        {
+            TempData["ErrorMessage"] = "Your profile is locked because one of your exam forms has been verified by the exam office. To change your photo, signature or mandatory details, contact your college.";
+            return RedirectToAction("Edit", "Profile", new { area = "" });
+        }
 
         if (string.IsNullOrWhiteSpace(newEmail))
         {

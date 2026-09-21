@@ -44,11 +44,10 @@ internal static class StudentNameResolver
             var name = "";
             if (admission != null)
             {
-                var appUserId = admission.AppUserId;
-                if (appUserId != null && userNames.TryGetValue(appUserId, out var n))
+                name = admission.FirstName.GetFullName(admission.MiddleName, admission.LastName);
+                if (string.IsNullOrWhiteSpace(name) && admission.AppUserId != null
+                    && userNames.TryGetValue(admission.AppUserId, out var n))
                     name = n;
-                if (string.IsNullOrWhiteSpace(name))
-                    name = admission.FirstName.GetFullName(admission.MiddleName, admission.LastName);
             }
             foreach (var er in se.ExamRegistrations.Where(er => examRegistrationIds.Contains(er.Id)))
             {

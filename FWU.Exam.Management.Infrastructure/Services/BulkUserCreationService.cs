@@ -186,8 +186,21 @@ public class BulkUserCreationService(
                         }
 
                         // Check pre-loaded sets instead of individual DB queries
-                        if (existingUserNameSet.Contains(loginId)
-                            || (reg.Email != null && existingEmailSet.Contains(reg.Email)))
+                        var loginIdTaken = existingUserNameSet.Contains(loginId)
+                            || (reg.Email != null && existingEmailSet.Contains(reg.Email));
+
+                        // Check the live database to close the race window between the
+                        // job-start snapshot and now (prevents duplicate user accounts).
+                        if (!loginIdTaken)
+                        {
+                            loginIdTaken = await scopedContext.Users.AnyAsync(u =>
+                                (u.UserName != null && u.UserName != ""
+                                    && u.UserName.ToLower() == loginId.ToLower())
+                                || (reg.Email != null && reg.Email != ""
+                                    && u.Email != null && u.Email.ToLower() == reg.Email.ToLower()));
+                        }
+
+                        if (loginIdTaken)
                         {
                             job.FailedCount++;
                             job.ProcessedCount++;

@@ -83,6 +83,7 @@ public class ProfileController(
             OrganizationLogo = baseVm.OrganizationLogo,
             CoverImagePath = baseVm.CoverImagePath,
             CanUploadSignature = baseVm.CanUploadSignature,
+            IsProfileLocked = baseVm.IsProfileLocked,
         };
 
         vm.Provinces = await context.Provinces
@@ -243,6 +244,12 @@ public class ProfileController(
         var isStudent = roles.Contains(Role.Student);
         var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
         var errors = new List<string>();
+
+        if (isStudent && await studentDashboardService.HasVerifiedExamFormAsync(user.Id))
+        {
+            var lockError = "Your profile is locked because one of your exam forms has been verified by the exam office. To change your photo, signature or mandatory details, contact your college.";
+            return isAjax ? Json(new { success = false, errors = new List<string> { lockError } }) : BadRequestResponse([lockError]);
+        }
 
         if (!isStudent)
         {
@@ -634,6 +641,7 @@ public class ProfileController(
             OrganizationLogo = orgLogo,
             CoverImagePath = string.IsNullOrEmpty(bannerImagePath) ? "/images/oce.png" : bannerImagePath,
             CanUploadSignature = primaryRole == Role.SuperAdmin || primaryRole == Role.FacultyAdmin || primaryRole == Role.Student,
+            IsProfileLocked = roles.Contains(Role.Student) && await studentDashboardService.HasVerifiedExamFormAsync(user.Id),
         };
     }
 
@@ -822,6 +830,7 @@ public class ProfileController(
             OrganizationLogo = baseVm.OrganizationLogo,
             CoverImagePath = baseVm.CoverImagePath,
             CanUploadSignature = baseVm.CanUploadSignature,
+            IsProfileLocked = baseVm.IsProfileLocked,
         };
 
         var registration = await studentDashboardService.GetStudentRegistrationByUserIdAsync(user.Id);

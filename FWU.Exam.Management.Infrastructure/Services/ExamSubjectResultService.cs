@@ -2,6 +2,7 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Semesters;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -301,24 +302,32 @@ public class ExamSubjectResultService(AppDbContext context, IUserContext userCon
             .Cast<string>()
             .ToList();
 
+        var userNames = new Dictionary<string, string>();
         if (userIds.Count > 0)
         {
-            var userNames = await context.Users
+            userNames = await context.Users
                 .AsNoTracking()
                 .Where(u => userIds.Contains(u.Id))
                 .Select(u => new { u.Id, Name = u.FullName ?? u.Email ?? "" })
                 .ToDictionaryAsync(u => u.Id, u => u.Name);
+        }
 
-            foreach (var se in semEnrollments)
+        foreach (var se in semEnrollments)
+        {
+            if (se.ExamRegistrations == null) continue;
+            var admission = se.StudentAdmission;
+            var name = "";
+            if (admission != null)
             {
-                if (se.ExamRegistrations == null) continue;
-                var appUserId = se.StudentAdmission?.AppUserId;
-                var name = appUserId != null && userNames.TryGetValue(appUserId, out var n) ? n : "";
-                foreach (var er in se.ExamRegistrations.Where(er => examRegistrationIds.Contains(er.Id)))
-                {
-                    if (!string.IsNullOrEmpty(name))
-                        names[er.Id] = name;
-                }
+                name = admission.FirstName.GetFullName(admission.MiddleName, admission.LastName);
+                if (string.IsNullOrWhiteSpace(name) && admission.AppUserId != null
+                    && userNames.TryGetValue(admission.AppUserId, out var n))
+                    name = n;
+            }
+            foreach (var er in se.ExamRegistrations.Where(er => examRegistrationIds.Contains(er.Id)))
+            {
+                if (!string.IsNullOrEmpty(name))
+                    names[er.Id] = name;
             }
         }
 

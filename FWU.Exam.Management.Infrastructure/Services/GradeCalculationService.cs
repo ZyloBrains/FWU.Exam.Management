@@ -83,6 +83,22 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
 
     public void AssignGrades(ExamSubjectResult result, SubjectOffering offering, bool isSupplementary = false)
     {
+        // A stored scheme (persisted from the student's batch academic year)
+        // wins; without one the newest program-wide scheme still applies.
+        Domain.Entities.GradingScheme? gradingScheme = null;
+        if (result.GradingSchemeId.HasValue)
+        {
+            gradingScheme = context.GradingSchemes
+                .AsNoTracking()
+                .Include(s => s.GradeDefinitions)
+                .FirstOrDefault(s => s.Id == result.GradingSchemeId.Value);
+        }
+
+        AssignGradesWithScheme(result, offering, gradingScheme, isSupplementary);
+    }
+
+    private void AssignGradesWithScheme(ExamSubjectResult result, SubjectOffering offering, Domain.Entities.GradingScheme? gradingScheme, bool isSupplementary)
+    {
         result.GradeLetterTheory = null;
         result.GradeLetterPractical = null;
         result.GradeLetter = null;
@@ -91,13 +107,13 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
 
         if (offering.HasTheory && result.ObtainedMarksTheory.HasValue)
         {
-            var theoryGrade = CalculateTheoryGrade(result.ObtainedMarksTheory, result.ObtainedMarksTheoryInternal, offering);
+            var theoryGrade = CalculateTheoryGrade(result.ObtainedMarksTheory, result.ObtainedMarksTheoryInternal, offering, gradingScheme);
             result.GradeLetterTheory = theoryGrade.GradeLetter;
         }
 
         if (offering.HasPractical && result.ObtainedMarksPractical.HasValue)
         {
-            var practicalGrade = CalculatePracticalGrade(result.ObtainedMarksPractical, offering);
+            var practicalGrade = CalculatePracticalGrade(result.ObtainedMarksPractical, offering, gradingScheme);
             result.GradeLetterPractical = practicalGrade.GradeLetter;
         }
 
@@ -114,7 +130,7 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
 
             result.ObtainedMarks = totalMarks;
 
-            var overall = CalculateGrade(totalMarks, offering);
+            var overall = CalculateGrade(totalMarks, offering, gradingScheme);
             result.GradeLetter = overall.GradeLetter;
 
             if (isSupplementary)

@@ -25,6 +25,20 @@ namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 [RequirePermission("students.view")]
 public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context, IFileUploadHelper fileUploadHelper, IUserContext userContext, ITenantContext tenantContext) : Controller
 {
+    /// <summary>
+    /// Resolves the AppUser for a student whose UserName (or legacy Email) equals the
+    /// registration number. Photo and signature live on the AppUser row and are edited
+    /// by the exam office from the student registration page.
+    /// </summary>
+    private async Task<AppUser?> ResolveStudentAppUserAsync(string? registrationNumber)
+    {
+        if (string.IsNullOrWhiteSpace(registrationNumber)) return null;
+
+        return await userManager.Users.FirstOrDefaultAsync(u =>
+            (u.UserName != null && u.UserName == registrationNumber)
+            || (u.Email != null && u.Email == registrationNumber));
+    }
+
     private async Task<List<int>> GetUserCollegeIdsAsync()
     {
         var user = await userManager.GetUserAsync(User);
@@ -136,12 +150,17 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
         var selectLists = await studentRegistrationService.GetSelectListDataAsync(studentRegistration);
         await PopulateSelectListsAsync(selectLists, studentRegistration);
+
+        var appUser = await ResolveStudentAppUserAsync(studentRegistration.RegistrationNumber);
+        ViewBag.ProfilePath = appUser?.ProfilePath;
+        ViewBag.SignaturePath = appUser?.SignaturePath;
+
         return View(studentRegistration);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,IsActive,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId,PermanentAddressId,StudentAdmissionId")] StudentRegistration studentRegistration)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,IsActive,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId,PermanentAddressId,StudentAdmissionId")] StudentRegistration studentRegistration, IFormFile? photo = null, IFormFile? signature = null)
     {
         if (id != studentRegistration.Id) return NotFound();
 
@@ -163,6 +182,38 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                 await studentRegistrationService.UpdateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
                 await SaveQualificationsFromFormAsync(id);
                 await SaveGuardiansFromFormAsync(id);
+
+                if ((photo != null && photo.Length > 0) || (signature != null && signature.Length > 0))
+                {
+                    try
+                    {
+                        var appUser = await ResolveStudentAppUserAsync(studentRegistration.RegistrationNumber);
+                        if (appUser != null)
+                        {
+                            if (photo != null && photo.Length > 0)
+                            {
+                                var photoPath = await fileUploadHelper.UploadAsync(photo, "uploads/photos", Helpers.FileUploadHelper.MaxPhotoSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
+                                if (photoPath != null)
+                                    appUser.ProfilePath = photoPath;
+                            }
+
+                            if (signature != null && signature.Length > 0)
+                            {
+                                var signaturePath = await fileUploadHelper.UploadAsync(signature, "uploads/signatures", Helpers.FileUploadHelper.MaxSignatureSizeBytes, Helpers.FileUploadHelper.ImageOnlyExtensions);
+                                if (signaturePath != null)
+                                    appUser.SignaturePath = signaturePath;
+                            }
+
+                            await userManager.UpdateAsync(appUser);
+                        }
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        TempData["ErrorMessage"] = ex.Message;
+                        return RedirectToAction(nameof(Edit), new { id });
+                    }
+                }
+
                 TempData["SuccessMessage"] = "Student registration updated successfully!";
             }
             catch (DbUpdateConcurrencyException)

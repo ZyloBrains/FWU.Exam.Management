@@ -110,7 +110,10 @@ public class PermissionService(AppDbContext context, IMemoryCache cache, IAuditL
             .ToListAsync();
 
         foreach (var uid in userIds)
+        {
             cache.Remove(UserCacheKey(uid));
+            cache.Remove(CacheKeys.UserContext(uid));
+        }
     }
 
     public async Task<List<Permission>> GetAllPermissionsAsync()

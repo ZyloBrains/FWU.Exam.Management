@@ -7,6 +7,7 @@ public class InternalMarksStudentDto
     public string StudentName { get; set; } = string.Empty;
     public string RegistrationNumber { get; set; } = string.Empty;
     public string SymbolNumber { get; set; } = string.Empty;
+    public string AcademicYearName { get; set; } = string.Empty;
     public float? TheoryInternal { get; set; }
     public float? PracticalInternal { get; set; }
 }
