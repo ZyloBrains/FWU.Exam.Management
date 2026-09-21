@@ -323,11 +323,6 @@ public class PublishResultsService(
             && userFullNameMap.TryGetValue(userId, out var userFullName)
             && !string.IsNullOrEmpty(userFullName))
             return userFullName;
-                .Where(u => u.Id == userId)
-                .Select(u => u.FullName)
-                .FirstOrDefaultAsync();
-            if (!string.IsNullOrEmpty(user)) return user;
-        }
 
         return "";
     }
@@ -348,28 +343,16 @@ public class PublishResultsService(
             return gender;
 
         return null;
+    }
+
+    private static string? GetRegistrationNumber(Domain.Entities.Exams.ExamRegistration reg, IReadOnlyDictionary<int, string> regNumberMap)
+    {
+        var admissionId = reg.SemesterEnrollment?.StudentAdmissionId;
         if (admissionId.HasValue && regNumberMap.TryGetValue(admissionId.Value, out var regNum)
             && !string.IsNullOrEmpty(regNum))
             return regNum;
 
-                .Where(sr => sr.StudentAdmissionId == admissionId.Value)
-                .Select(sr => sr.RegistrationNumber)
-                .FirstOrDefaultAsync();
-            if (!string.IsNullOrEmpty(regNum)) return regNum;
-        }
         return null;
-    }
-
-    private async Task<Domain.Entities.Students.StudentAdmission?> GetAdmissionFallbackAsync(Domain.Entities.Exams.ExamRegistration reg)
-    {
-        if (reg.ProgramsId == null) return null;
-
-        return await context.StudentAdmissions
-            .AsNoTracking()
-            .FirstOrDefaultAsync(sa =>
-                sa.CollegeId == reg.CollegeId &&
-                sa.ProgramsId == reg.ProgramsId &&
-                sa.AcademicYearId == reg.AcademicYearId);
     }
 
     private static string FormatMarks(float? marks)
