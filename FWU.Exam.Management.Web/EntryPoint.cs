@@ -273,6 +273,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IBulkUserCreationService, BulkUserCreationService>();
         builder.Services.AddScoped<IPaymentVerificationService, PaymentVerificationService>();
         builder.Services.AddScoped<ISubjectTriplicateService, SubjectTriplicateService>();
+        builder.Services.AddScoped<IAttendanceSheetService, AttendanceSheetService>();
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
