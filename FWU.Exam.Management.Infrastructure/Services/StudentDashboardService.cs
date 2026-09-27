@@ -72,7 +72,8 @@ public class StudentDashboardService(
     {
         var enrolledSemesterInstanceIds = await context.SemesterEnrollments!
             .AsNoTracking()
-            .Where(se => se.StudentAdmissionId == student.StudentAdmissionId)
+            .Where(se => se.StudentAdmissionId == student.StudentAdmissionId
+                      && se.EnrollmentStatus == StudentEnrollmentStatus.Active)
             .Select(se => (int?)se.SemesterInstanceId)
             .Distinct()
             .ToListAsync();
@@ -693,6 +694,22 @@ public class StudentDashboardService(
         {
             if (rr.ExamScheduleId.HasValue)
                 rr.ExamSchedule = schedules.FirstOrDefault(s => s.Id == rr.ExamScheduleId.Value);
+        }
+
+        // RegistrationNumber survives a transfer, so the query above would keep serving the
+        // old program's marksheets. ResultRecord carries its own immutable ProgramsId, so
+        // filter on that: the student's CURRENT program only. Staff read results through
+        // their own service, so the closed rows stay reachable for them.
+        //
+        // Program-based, not semester-based, so a Semester 3 student still sees their own
+        // Semester 1/2 results. When the program cannot be resolved, results are left
+        // untouched so legacy students are unaffected.
+        var currentProgramId = await GetCurrentProgramIdByRegistrationNumberAsync(registrationNumber);
+        if (currentProgramId.HasValue)
+        {
+            resultRecords = resultRecords
+                .Where(rr => rr.ProgramsId == currentProgramId.Value)
+                .ToList();
         }
 
         return resultRecords;
@@ -1436,11 +1453,30 @@ public class StudentDashboardService(
 
         if (voucherIds.Count == 0) return [];
 
-        return await context.ExamRegistrations!
+        var baseFilter = context.ExamRegistrations!
             .AsNoTracking()
             .Where(er => er.ApplicationVoucherId != null
                       && voucherIds.Contains(er.ApplicationVoucherId!.Value)
-                      && er.IsActive)
+                      && er.IsActive);
+
+        // A transfer keeps RegistrationNumber, so the filter above still matches the OLD
+        // program's registrations — which would keep serving the old program's exam forms,
+        // marksheets, subject results, rejections, admit cards and payments. Narrow to the
+        // student's CURRENT program via the schedule.
+        //
+        // Deliberately program-based rather than "active semester instance" based: a student
+        // who is in Semester 3 must still see Semester 1/2 results and re-exam forms of their
+        // OWN program, and those schedules sit in semester instances that are long closed.
+        // A closed enrollment is a history record, not a visibility boundary.
+        if (sr.ProgramId == null)
+            return await baseFilter.Select(er => er.Id).ToListAsync();
+
+        var currentProgramId = sr.ProgramId.Value;
+        return await baseFilter
+            .Where(er => context.ExamSchedules!
+                .IgnoreQueryFilters()
+                .Any(es => es.Id == er.ExamScheduleId
+                       && es.ProgramId == currentProgramId))
             .Select(er => er.Id)
             .ToListAsync();
     }
@@ -1692,15 +1728,54 @@ public class StudentDashboardService(
         }
     }
 
+    /// <summary>
+    /// The student's current program, or null when it cannot be resolved (legacy rows).
+    /// This — not enrollment status — is the boundary for student-facing reads after a
+    /// transfer: a closed enrollment is a history record, but a different program is a
+    /// different course entirely.
+    /// </summary>
+    private async Task<int?> GetCurrentProgramIdAsync(int studentRegistrationId)
+    {
+        return await context.StudentRegistrations!
+            .AsNoTracking()
+            .Where(s => s.Id == studentRegistrationId)
+            .Select(s => (int?)s.ProgramId)
+            .FirstOrDefaultAsync();
+    }
+
+    private async Task<int?> GetCurrentProgramIdByRegistrationNumberAsync(string registrationNumber)
+    {
+        if (string.IsNullOrWhiteSpace(registrationNumber)) return null;
+
+        var studentRegistrationId = await context.StudentRegistrations!
+            .AsNoTracking()
+            .Where(s => s.RegistrationNumber == registrationNumber)
+            .Select(s => (int?)s.Id)
+            .FirstOrDefaultAsync();
+
+        if (studentRegistrationId == null) return null;
+
+        return await GetCurrentProgramIdAsync(studentRegistrationId.Value);
+    }
+
     public async Task<List<AdmitCard>> GetAdmitCardsForStudentAsync(string userId, int studentRegistrationId)
     {
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        var currentProgramId = await GetCurrentProgramIdAsync(studentRegistrationId);
 
+        // The direct StudentRegistrationId arm is narrowed to the student's CURRENT program.
+        // Unchanged, it would keep serving admit cards of the old program's schedules even
+        // though the exam-registration lookup above is already filtered.
         var admitCards = await context.Set<AdmitCard>()
             .AsNoTracking()
             .Where(ac => ac.IsActive
                       && (studentErIds.Contains(ac.ExamRegistrationId)
-                          || ac.StudentRegistrationId == studentRegistrationId))
+                          || (ac.StudentRegistrationId == studentRegistrationId
+                              && (currentProgramId == null
+                                  || context.ExamSchedules!
+                                      .IgnoreQueryFilters()
+                                      .Any(es => es.Id == ac.ExamScheduleId
+                                             && es.ProgramId == currentProgramId.Value)))))
             .OrderByDescending(ac => ac.GeneratedDate)
             .ToListAsync();
 
@@ -1716,25 +1791,37 @@ public class StudentDashboardService(
     public async Task<bool> HasAdmitCardForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId)
     {
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        var currentProgramId = await GetCurrentProgramIdAsync(studentRegistrationId);
 
         return await context.Set<AdmitCard>()
             .AsNoTracking()
             .AnyAsync(ac => ac.ExamScheduleId == examScheduleId
                          && ac.IsActive
                          && (studentErIds.Contains(ac.ExamRegistrationId)
-                             || ac.StudentRegistrationId == studentRegistrationId));
+                             || (ac.StudentRegistrationId == studentRegistrationId
+                                 && (currentProgramId == null
+                                     || context.ExamSchedules!
+                                         .IgnoreQueryFilters()
+                                         .Any(es => es.Id == ac.ExamScheduleId
+                                                && es.ProgramId == currentProgramId.Value)))));
     }
 
     public async Task<int?> GetAdmitCardIdForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId)
     {
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        var currentProgramId = await GetCurrentProgramIdAsync(studentRegistrationId);
 
         return await context.Set<AdmitCard>()
             .AsNoTracking()
             .Where(ac => ac.ExamScheduleId == examScheduleId
                       && ac.IsActive
                       && (studentErIds.Contains(ac.ExamRegistrationId)
-                          || ac.StudentRegistrationId == studentRegistrationId))
+                          || (ac.StudentRegistrationId == studentRegistrationId
+                              && (currentProgramId == null
+                                  || context.ExamSchedules!
+                                      .IgnoreQueryFilters()
+                                      .Any(es => es.Id == ac.ExamScheduleId
+                                             && es.ProgramId == currentProgramId.Value)))))
             .Select(ac => (int?)ac.Id)
             .FirstOrDefaultAsync();
     }

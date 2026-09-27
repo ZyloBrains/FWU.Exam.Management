@@ -130,12 +130,12 @@ public class StudentTransfersController(
                 CurrentAcademicYear = s.AcademicYear != null ? s.AcademicYear.AcademicYearName : "",
                 CurrentAcademicYearId = s.AcademicYearId,
                 HasAdmission = s.StudentAdmission != null,
-                AdmissionId = (int?)s.StudentAdmission.Id,
+                AdmissionId = s.StudentAdmission != null ? (int?)s.StudentAdmission.Id : null,
                 AdmissionCollege = s.StudentAdmission != null && s.StudentAdmission.College != null ? s.StudentAdmission.College.Name : "",
-                AdmissionCollegeId = (int?)s.StudentAdmission.CollegeId,
+                AdmissionCollegeId = s.StudentAdmission != null ? (int?)s.StudentAdmission.CollegeId : null,
                 AdmissionProgram = s.StudentAdmission != null && s.StudentAdmission.Program != null ? s.StudentAdmission.Program.ProgramName : "",
-                AdmissionProgramId = (int?)s.StudentAdmission.ProgramsId,
-                AdmissionAcademicYearId = (int?)s.StudentAdmission.AcademicYearId
+                AdmissionProgramId = s.StudentAdmission != null ? (int?)s.StudentAdmission.ProgramsId : null,
+                AdmissionAcademicYearId = s.StudentAdmission != null ? (int?)s.StudentAdmission.AcademicYearId : null
             })
             .ToListAsync();
 
@@ -194,17 +194,54 @@ public class StudentTransfersController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Transfer(int id, int levelId, int collegeId, int programId, int academicYearId, int? semesterId = null)
+    public async Task<IActionResult> Transfer(int id, int levelId, int collegeId, int programId, int academicYearId, int semesterId)
     {
         var student = await context.StudentRegistrations
             .Include(s => s.StudentAdmission)
             .FirstOrDefaultAsync(s => s.Id == id);
         if (student == null) return NotFound();
 
-        var program = await context.Programs.FindAsync(programId);
+        // The target semester is a required choice: it decides which SemesterInstance the
+        // student is actually enrolled into, and it is what makes the closed history rows
+        // unambiguous. Never guess it.
+        if (semesterId <= 0)
+        {
+            TempData["ErrorMessage"] = "Please select the semester you are transferring the student into.";
+            return RedirectToAction(nameof(Transfer), new { id });
+        }
+
+        var program = await context.Programs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == programId);
         if (program == null)
         {
             TempData["ErrorMessage"] = "Selected program not found.";
+            return RedirectToAction(nameof(Transfer), new { id });
+        }
+
+        // The program dropdown is driven by level, so a mismatched pair means a tampered
+        // or stale form. Persisting it would point the student at another level's program.
+        if (program.LevelId != levelId)
+        {
+            TempData["ErrorMessage"] = "The selected program does not belong to the selected level.";
+            return RedirectToAction(nameof(Transfer), new { id });
+        }
+
+        // The program dropdown is also driven by college; enforce the same pairing server-side.
+        var collegeProgramExists = await context.CollegePrograms
+            .AsNoTracking()
+            .AnyAsync(cp => cp.CollegeId == collegeId && cp.ProgramId == programId);
+        if (!collegeProgramExists)
+        {
+            TempData["ErrorMessage"] = "The selected program is not offered by the selected college.";
+            return RedirectToAction(nameof(Transfer), new { id });
+        }
+
+        // Authorisation was previously UI-only: the college list was scoped but the POST
+        // accepted any id. Check the target is actually reachable by this user.
+        if (!await CanTransferToTargetAsync(collegeId, programId))
+        {
+            TempData["ErrorMessage"] = "You are not allowed to transfer a student into that college or program.";
             return RedirectToAction(nameof(Transfer), new { id });
         }
 
@@ -216,16 +253,19 @@ public class StudentTransfersController(
         {
             using var transaction = await context.Database.BeginTransactionAsync();
 
-            // Validate the target semester has an active instance BEFORE touching
-            // the student/admission so a failed transfer never deletes enrollments.
             if (student.StudentAdmission != null)
             {
                 var hasAnyEnrollment = await context.SemesterEnrollments
                     .AnyAsync(se => se.StudentAdmissionId == student.StudentAdmission.Id);
                 var recreateEnrollments = programChanged || academicYearChanged || !hasAnyEnrollment;
+
+                // Closing enrollments and re-pointing the exam registrations are no longer
+                // mutually exclusive: previously a program change skipped the college
+                // cascade entirely, leaving ExamRegistration.CollegeId stale.
                 if (recreateEnrollments)
                 {
-                    var transferred = await semesterEnrollmentService.TransferEnrollmentsAsync(student.StudentAdmission.Id, programId, academicYearId, semesterId);
+                    var transferred = await semesterEnrollmentService.TransferEnrollmentsAsync(
+                        student.StudentAdmission.Id, programId, academicYearId, semesterId);
                     if (!transferred)
                     {
                         await transaction.RollbackAsync();
@@ -233,10 +273,14 @@ public class StudentTransfersController(
                         return RedirectToAction(nameof(Transfer), new { id });
                     }
                 }
-                else if (collegeChanged)
-                {
-                    await UpdateExamRegistrationCollegesAsync(student.StudentAdmission.Id, collegeId);
-                }
+
+                // ExamRegistration.ProgramId/CollegeId are denormalised copies of the owning
+                // student, so every row is re-pointed at the new program/college. NOTE: this
+                // includes rows from closed semesters, so a historical exam registration
+                // stops naming the program it was originally taken under. ResultRecord is
+                // keyed by registration number and is NOT touched, so marks survive either way.
+                if (programChanged || collegeChanged)
+                    await UpdateExamRegistrationCollegesAsync(student.StudentAdmission.Id, collegeId, programId);
             }
 
             student.LevelId = levelId;
@@ -272,7 +316,7 @@ public class StudentTransfersController(
             await transaction.CommitAsync();
 
             var message = programChanged
-                ? $"Student {student.FirstName} {student.LastName} transferred to {program.ProgramName} (new program — enrollments recreated)."
+                ? $"Student {student.FirstName} {student.LastName} transferred to {program.ProgramName}. Prior semester enrollments were closed and kept as history."
                 : $"Student {student.FirstName} {student.LastName} college updated to {(await context.Colleges.FindAsync(collegeId))?.Name ?? "N/A"} (enrollments preserved).";
             TempData["SuccessMessage"] = message;
         }
@@ -284,16 +328,66 @@ public class StudentTransfersController(
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task UpdateExamRegistrationCollegesAsync(int admissionId, int newCollegeId)
+    /// <summary>
+    /// True when the signed-in back-office user may target the given college/program.
+    /// SuperAdmin is unrestricted; CollegeAdmin is limited to its own college;
+    /// FacultyAdmin is limited to programs of its faculty.
+    /// </summary>
+    private async Task<bool> CanTransferToTargetAsync(int collegeId, int programId)
     {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return false;
+
+        if (User.IsInRole(Role.SuperAdmin)) return true;
+
+        if (User.IsInRole(Role.CollegeAdmin) && user.CollegeId != null)
+            return user.CollegeId.Value == collegeId;
+
+        if (User.IsInRole(Role.FacultyAdmin) && user.FacultyId != null)
+        {
+            var program = await context.Programs
+                .AsNoTracking()
+                .Where(p => p.Id == programId)
+                .Select(p => new { p.FacultyId })
+                .FirstOrDefaultAsync();
+            return program != null && program.FacultyId == user.FacultyId.Value;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Re-points the denormalised college/program columns on ExamRegistration.
+    /// Covers both ways a registration reaches the table: through its SemesterEnrollment and
+    /// through its ApplicationVoucher. ExamRegistration has no StudentRegistrationId of its
+    /// own, so voucher linkage is the only fallback for rows predating enrollment linkage.
+    /// </summary>
+    private async Task UpdateExamRegistrationCollegesAsync(int admissionId, int newCollegeId, int newProgramId)
+    {
+        var registrationIds = await context.StudentRegistrations
+            .Where(s => s.StudentAdmission != null && s.StudentAdmission.Id == admissionId)
+            .Select(s => s.Id)
+            .ToListAsync();
+
+        var voucherIds = registrationIds.Count == 0
+            ? new List<int>()
+            : await context.ApplicationVouchers
+                .Where(av => av.StudentRegistrationId != null
+                          && registrationIds.Contains(av.StudentRegistrationId.Value))
+                .Select(av => av.Id)
+                .ToListAsync();
+
         var examRegistrations = await context.ExamRegistrations
-            .Where(er => er.SemesterEnrollment != null &&
-                         er.SemesterEnrollment.StudentAdmissionId == admissionId)
+            .Where(er => (er.SemesterEnrollment != null
+                          && er.SemesterEnrollment.StudentAdmissionId == admissionId)
+                      || (er.ApplicationVoucherId != null
+                          && voucherIds.Contains(er.ApplicationVoucherId.Value)))
             .ToListAsync();
 
         foreach (var er in examRegistrations)
         {
             er.CollegeId = newCollegeId;
+            er.ProgramsId = newProgramId;
         }
 
         if (examRegistrations.Count > 0)
@@ -356,12 +450,21 @@ public class StudentTransfersController(
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetSemestersForProgram(int programId)
+    public async Task<JsonResult> GetSemestersForProgram(int programId, int? academicYearId = null)
     {
+        // Only offer semesters that actually have a SemesterInstance for the target
+        // program + academic year. Previously any active ProgramSemester was offered and
+        // the service silently fell back to the lowest semester number, so the user could
+        // select Semester 1 and get something they never picked.
         var semesters = await context.ProgramSemesters
             .AsNoTracking()
-            .Include(ps => ps.Semester)
-            .Where(ps => ps.ProgramId == programId && ps.IsActive && ps.Semester != null)
+            .Where(ps => ps.ProgramId == programId
+                      && ps.IsActive
+                      && ps.Semester != null
+                      && (!academicYearId.HasValue
+                          || context.SemesterInstances!.Any(si => si.ProgramId == programId
+                                                             && si.AcademicYearId == academicYearId.Value
+                                                             && si.SemesterId == ps.SemesterId)))
             .OrderBy(ps => ps.DisplayOrder)
             .Select(ps => new SelectOption { Id = ps.SemesterId, Name = ps.Semester!.Name })
             .ToListAsync();

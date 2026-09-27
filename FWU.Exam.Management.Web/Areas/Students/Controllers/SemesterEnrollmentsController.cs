@@ -56,9 +56,12 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         return [];
     }
 
-    public async Task<IActionResult> Index(int page = 1, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int pageSize = 10, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
+    public async Task<IActionResult> Index(int page = 1, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int pageSize = 10, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null, int? enrollmentStatus = null)
     {
-        var (items, totalCount) = await enrollmentService.GetEnrollmentsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId, programId, semesterId, academicYearId);
+        // enrollmentStatus is omitted by default => Active only. Transfer closes prior
+        // enrollments instead of deleting them, so the list would otherwise double up.
+        // Pass 0 for "All" or a specific StudentEnrollmentStatus value to widen it.
+        var (items, totalCount) = await enrollmentService.GetEnrollmentsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId, programId, semesterId, academicYearId, enrollmentStatus);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -72,6 +75,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         ViewBag.ProgramId = programId;
         ViewBag.SemesterId = semesterId;
         ViewBag.AcademicYearId = academicYearId;
+        ViewBag.EnrollmentStatus = enrollmentStatus;
 
         await PopulateFilterDropdownsAsync(collegeId, programId, semesterId, academicYearId);
 
@@ -234,6 +238,22 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         {
             try
             {
+                // Transfers close prior enrollments by setting Inactive + DropDate/DropReason.
+                // Reopening one by flipping it back to Active would resurrect a semester the
+                // student has already been transferred out of, undoing the transfer.
+                if (enrollment.EnrollmentStatus == StudentEnrollmentStatus.Active
+                    && !await enrollmentService.EnrollmentExistsAsync(enrollment.Id))
+                {
+                    return NotFound();
+                }
+
+                if (enrollment.EnrollmentStatus == StudentEnrollmentStatus.Active
+                    && !await CanReactivateEnrollmentAsync(enrollment.Id))
+                {
+                    TempData["ErrorMessage"] = "This enrollment was closed by a student transfer and cannot be reactivated. Transfer the student instead.";
+                    return RedirectToAction(nameof(Index), new { enrollmentStatus = 0 });
+                }
+
                 await enrollmentService.UpdateEnrollmentAsync(enrollment);
                 TempData["SuccessMessage"] = "Semester enrollment updated successfully!";
             }
@@ -247,6 +267,30 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         }
 
         return View(enrollment);
+    }
+
+    /// <summary>
+    /// False when the row was closed by a transfer, i.e. it carries a DropDate/DropReason and
+    /// the student has since been enrolled elsewhere.
+    /// </summary>
+    private async Task<bool> CanReactivateEnrollmentAsync(int id)
+    {
+        var enrollment = await context.SemesterEnrollments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(se => se.Id == id);
+
+        if (enrollment == null) return false;
+        if (enrollment.DropDate == null) return true;
+
+        // A closed row is transfer history when the student now holds a different, active
+        // enrollment. A plain dropped semester (no other active enrollment) may be reopened.
+        var hasOtherActive = await context.SemesterEnrollments
+            .AsNoTracking()
+            .AnyAsync(se => se.StudentAdmissionId == enrollment.StudentAdmissionId
+                        && se.Id != enrollment.Id
+                        && se.EnrollmentStatus == StudentEnrollmentStatus.Active);
+
+        return !hasOtherActive;
     }
 
     public async Task<IActionResult> Delete(int? id)
@@ -290,9 +334,9 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         return RedirectToAction(nameof(Index));
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null, int? enrollmentStatus = null)
     {
-        var items = await enrollmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId, programId, semesterId, academicYearId);
+        var items = await enrollmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId, programId, semesterId, academicYearId, enrollmentStatus);
 
         var sb = new StringBuilder();
         sb.AppendLine("S.N.,Student Name,Roll Number,Program,College,Semester,Academic Year,Status,Type,Payment,Total Fee,Total Credits,Result");
@@ -305,9 +349,9 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", $"SemesterEnrollments_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null, int? enrollmentStatus = null)
     {
-        var (items, totalCount) = await enrollmentService.GetEnrollmentsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId, programId, semesterId, academicYearId);
+        var (items, totalCount) = await enrollmentService.GetEnrollmentsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId, programId, semesterId, academicYearId, enrollmentStatus);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -320,9 +364,9 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null, int? enrollmentStatus = null)
     {
-        var items = await enrollmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId, programId, semesterId, academicYearId);
+        var items = await enrollmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId, programId, semesterId, academicYearId, enrollmentStatus);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("SemesterEnrollments");

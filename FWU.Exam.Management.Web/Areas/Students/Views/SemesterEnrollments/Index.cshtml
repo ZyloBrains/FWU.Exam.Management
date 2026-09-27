@@ -13,6 +13,7 @@
     var currentProgramId = ViewBag.ProgramId as int?;
     var currentSemesterId = ViewBag.SemesterId as int?;
     var currentAcademicYearId = ViewBag.AcademicYearId as int?;
+    var currentEnrollmentStatus = ViewBag.EnrollmentStatus as int?;
 }
 
 <div class="space-y-6" x-data="{ showFilters: false }">
@@ -72,7 +73,8 @@
                             ["collegeId"] = currentCollegeId?.ToString() ?? "",
                             ["programId"] = currentProgramId?.ToString() ?? "",
                             ["semesterId"] = currentSemesterId?.ToString() ?? "",
-                            ["academicYearId"] = currentAcademicYearId?.ToString() ?? ""
+                            ["academicYearId"] = currentAcademicYearId?.ToString() ?? "",
+                            ["enrollmentStatus"] = currentEnrollmentStatus?.ToString() ?? ""
                         },
                         ButtonClass = "bg-green-600 hover:bg-green-700",
                         ScopeLabel = " (All)"
@@ -146,6 +148,20 @@
                             }
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                        <select name="enrollmentStatus" id="enrollmentStatus" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                            @* Default (no value) shows Active only, because transfers close
+                               prior enrollments instead of deleting them. 0 = All. *@
+                            <option value="" selected="@(currentEnrollmentStatus == null)">Active Only</option>
+                            <option value="0" selected="@(currentEnrollmentStatus == 0)">All Statuses</option>
+                            @foreach (var status in Enum.GetValues<FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus>())
+                            {
+                                var value = ((int)status).ToString();
+                                <option value="@value" selected="@(currentEnrollmentStatus == (int)status)">@status</option>
+                            }
+                        </select>
+                    </div>
                 </div>
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-3 gap-3">
                     <div class="flex items-center gap-2 text-xs text-gray-400">
@@ -155,6 +171,7 @@
                     <div class="flex items-center gap-2">
                         <a asp-action="Index" asp-route-pageSize="@pageSize" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId"
                            asp-route-collegeId="@currentCollegeId" asp-route-programId="@currentProgramId" asp-route-semesterId="@currentSemesterId" asp-route-academicYearId="@currentAcademicYearId"
+                           asp-route-enrollmentStatus="0"
                            class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                             <i class="fas fa-times text-xs"></i> Clear All
                         </a>
@@ -305,7 +322,7 @@
                 @if (currentPage > 1)
                 {
                     <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId"
-                       asp-route-collegeId="@currentCollegeId" asp-route-programId="@currentProgramId" asp-route-semesterId="@currentSemesterId" asp-route-academicYearId="@currentAcademicYearId"
+                       asp-route-collegeId="@currentCollegeId" asp-route-programId="@currentProgramId" asp-route-semesterId="@currentSemesterId" asp-route-academicYearId="@currentAcademicYearId" asp-route-enrollmentStatus="@currentEnrollmentStatus"
                        class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
                         <i class="fas fa-chevron-left text-xs"></i> Previous
                     </a>
@@ -314,7 +331,7 @@
                 @if (currentPage < totalPages)
                 {
                     <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId"
-                       asp-route-collegeId="@currentCollegeId" asp-route-programId="@currentProgramId" asp-route-semesterId="@currentSemesterId" asp-route-academicYearId="@currentAcademicYearId"
+                       asp-route-collegeId="@currentCollegeId" asp-route-programId="@currentProgramId" asp-route-semesterId="@currentSemesterId" asp-route-academicYearId="@currentAcademicYearId" asp-route-enrollmentStatus="@currentEnrollmentStatus"
                        class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
                         Next <i class="fas fa-chevron-right text-xs"></i>
                     </a>

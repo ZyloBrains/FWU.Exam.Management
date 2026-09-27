@@ -1059,6 +1059,137 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetResultRecordsAsync_HidesPreviousProgramResults_AfterTransfer()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(2), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            // Same tenant-2 wiring the existing result test uses; ResultRecord includes
+            // College, which is only visible once the seed rows belong to the query tenant.
+            ctx.Tenants.Add(new Tenant
+            {
+                Id = 2,
+                Name = "EEO",
+                OfficeCode = "EEO",
+                ContactNumber = "0",
+                Address = "Mahendranagar",
+                Email = "eng@test.com",
+                TenantType = TenantType.Standard,
+                IsActive = true
+            });
+            ctx.AcademicYears.Local.Single(a => a.Id == TestData.AcademicYearId).TenantId = 2;
+            ctx.Faculties.Add(new Faculty { Id = 5, Name = "Engineering", OfficeCode = "L091", TenantId = 2 });
+            ctx.CollegeFaculties.Add(new CollegeFaculty { TenantId = 2, CollegeId = TestData.CollegeId, FacultyId = 5 });
+
+            // The student now sits in BIT after the transfer.
+            var sr = TestData.StudentRegistration(1, Email, TestData.ProgramIdOther);
+            sr.TenantId = 2;
+            ctx.StudentRegistrations.Add(sr);
+
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, Past, null, programId: TestData.ProgramId));
+            ctx.ExamSchedules.Add(TestData.Schedule(12, 2, TestData.Regular, Past, null, programId: TestData.ProgramIdOther));
+
+            ctx.ResultRecords.Add(NewResultRecord(1, 11, "REG1", TestData.ProgramId, 2));
+            ctx.ResultRecords.Add(NewResultRecord(2, 12, "REG1", TestData.ProgramIdOther, 2));
+        });
+
+        var service = CreateService(db);
+
+        var result = await service.GetResultRecordsAsync("REG1");
+
+        // RegistrationNumber is unchanged by a transfer, so without a program filter the
+        // student would keep seeing the old program's marksheet.
+        var rr = Assert.Single(result);
+        Assert.Equal(TestData.ProgramIdOther, rr.ProgramsId);
+    }
+
+    [Fact]
+    public async Task GetResultRecordsAsync_KeepsEarlierSemesterResultsOfCurrentProgram()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(2), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Tenants.Add(new Tenant
+            {
+                Id = 2,
+                Name = "EEO",
+                OfficeCode = "EEO",
+                ContactNumber = "0",
+                Address = "Mahendranagar",
+                Email = "eng@test.com",
+                TenantType = TenantType.Standard,
+                IsActive = true
+            });
+            ctx.AcademicYears.Local.Single(a => a.Id == TestData.AcademicYearId).TenantId = 2;
+            ctx.Faculties.Add(new Faculty { Id = 5, Name = "Engineering", OfficeCode = "L091", TenantId = 2 });
+            ctx.CollegeFaculties.Add(new CollegeFaculty { TenantId = 2, CollegeId = TestData.CollegeId, FacultyId = 5 });
+
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.TenantId = 2;
+            ctx.StudentRegistrations.Add(sr);
+
+            // Semester 1 result, while the student sits in Semester 2 of the SAME program.
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, Past, null));
+            ctx.ExamSchedules.Add(TestData.Schedule(12, 2, TestData.Regular, Past, null));
+            ctx.ResultRecords.Add(NewResultRecord(1, 11, "REG1", TestData.ProgramId, 2));
+            ctx.ResultRecords.Add(NewResultRecord(2, 12, "REG1", TestData.ProgramId, 2));
+        });
+
+        var service = CreateService(db);
+
+        var result = await service.GetResultRecordsAsync("REG1");
+
+        // Guards the boundary choice: a closed semester is not the same as another program.
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
+    public async Task GetStudentExamRegistrationsAsync_HidesRegistrationsOfPreviousProgram()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email, TestData.ProgramIdOther));
+
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, Future, null, programId: TestData.ProgramId));
+            ctx.ExamSchedules.Add(TestData.Schedule(12, 2, TestData.Regular, Future, null, programId: TestData.ProgramIdOther));
+
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 11));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(2, 1, 12));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 11, 1));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(2, 12, 1));
+        });
+
+        var service = CreateService(db);
+
+        var result = await service.GetStudentExamRegistrationsAsync(UserId);
+
+        var er = Assert.Single(result);
+        Assert.Equal(12, er.ExamScheduleId);
+    }
+
+    private static ResultRecord NewResultRecord(int id, int examScheduleId, string registrationNumber, int programsId, int tenantId = TestData.TenantId) => new()
+    {
+        Id = id,
+        TenantId = tenantId,
+        AcademicYearId = TestData.AcademicYearId,
+        ProgramsId = programsId,
+        ExamTypeId = TestData.Regular,
+        CollegeId = TestData.CollegeId,
+        ExamScheduleId = examScheduleId,
+        RegistrationNumber = registrationNumber,
+        SymbolNumber = "SYM1",
+        Year = "I",
+        Part = "I",
+        DateOfBirthBs = "2050-01-01",
+        TotalObtainedGrade = "B",
+        Gpa = "3.00",
+        Result = "Pass",
+        StudentName = "Test Student"
+    };
+
+    [Fact]
     public async Task GetStudentExamRegistrationsAsync_KeepsRegistrationsWhenScheduleBelongsToAnotherTenant()
     {
         using var db = new TestDb(TestTenantContext.Standard(2), ctx =>

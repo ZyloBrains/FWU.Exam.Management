@@ -132,10 +132,17 @@
 
                         <!-- Target Semester -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Target Semester</label>
-                            <select name="semesterId" id="SemesterId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="">First Semester (default)</option>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                                Target Semester <span class="text-red-600">*</span>
+                            </label>
+                            <select name="semesterId" id="SemesterId" required
+                                    class="select2 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Select target semester</option>
                             </select>
+                            <p class="text-xs text-gray-500 mt-1">
+                                The semester the student is enrolled into after the transfer. Prior enrollments are
+                                closed and kept as history; this is a required choice and is never inferred.
+                            </p>
                         </div>
 
                         <!-- Academic Year -->
@@ -173,7 +180,7 @@
                                     I confirm this transfer
                                 </label>
                                 <p id="confirmText" class="text-xs text-amber-600 mt-1">
-                                    This will update the student's program, college, and faculty. Existing semester enrollments will be removed and the student will be re-enrolled in the first semester of the new program.
+                                    This will update the student's program, college, and faculty. Prior semester enrollments are closed and kept as history (credits, fees and results are preserved), and the student is enrolled into the target semester you select.
                                 </p>
                             </div>
                         </div>
@@ -283,13 +290,13 @@
             <!-- Enrollment Impact (only shown when program changes) -->
             <div id="enrollmentImpact" class="hidden mt-8 pt-6 border-t border-gray-200">
                 <div class="grid grid-cols-1 lg:grid-cols-[1fr,auto,1fr] gap-6 items-start">
-                    <!-- WILL BE REMOVED -->
+                    <!-- WILL BE CLOSED -->
                     <div>
                         <div class="flex items-center gap-2 mb-4">
                             <div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-trash-alt text-red-500 text-xs"></i>
+                                <i class="fas fa-lock text-red-500 text-xs"></i>
                             </div>
-                            <h3 class="text-sm font-bold text-red-600 uppercase tracking-wide">Will Be Removed</h3>
+                            <h3 class="text-sm font-bold text-red-600 uppercase tracking-wide">Will Be Closed (kept as history)</h3>
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">@enrollments.Count</span>
                         </div>
 
@@ -364,7 +371,7 @@
                     <!-- ARROW -->
                     <div class="hidden lg:flex flex-col items-center justify-center pt-8 gap-2">
                         <i class="fas fa-arrow-right text-amber-500 text-xl"></i>
-                        <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wide">Removed</span>
+                        <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wide">Closed</span>
                     </div>
 
                     <!-- WILL BE CREATED -->
@@ -377,7 +384,7 @@
                         </div>
                         <div class="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
                             <div class="flex items-center justify-between">
-                                <span class="text-sm font-bold text-gray-800" id="dNewEnrollSemester">Semester 1</span>
+                                <span class="text-sm font-bold text-gray-800" id="dNewEnrollSemester">Not selected</span>
                                 <span class="text-xs text-gray-500" id="dNewEnrollYear">@currentAcademicYear</span>
                             </div>
                             <div class="flex flex-wrap gap-1.5">
@@ -392,7 +399,7 @@
                             <div class="mt-2 pt-2 border-t border-green-200">
                                 <p class="text-xs text-green-600">
                                     <i class="fas fa-info-circle mr-1"></i>
-                                    Enrolled in first semester of <span class="font-semibold" id="dNewEnrollProgram">@currentProgram</span> upon transfer completion.
+                                    Enrolled in the target semester you select, in <span class="font-semibold" id="dNewEnrollProgram">@currentProgram</span>, upon transfer completion.
                                 </p>
                             </div>
                         </div>
@@ -403,8 +410,8 @@
                                 <div class="flex items-start gap-2">
                                     <i class="fas fa-exclamation-triangle text-amber-500 text-sm mt-0.5"></i>
                                     <div>
-                                        <p class="text-xs font-medium text-amber-800">@affectedExamCount exam registration(s) will be unlinked</p>
-                                        <p class="text-xs text-amber-600 mt-1">Their enrollment link will be removed. Exam data (grades, hall tickets) is preserved.</p>
+                                        <p class="text-xs font-medium text-amber-800">@affectedExamCount exam registration(s) will be re-pointed</p>
+                                        <p class="text-xs text-amber-600 mt-1">Their college and program columns are updated. The enrollment link is kept, and exam data (grades, hall tickets) is preserved.</p>
                                     </div>
                                 </div>
                             </div>
@@ -508,7 +515,7 @@
             document.getElementById("dNewEnrollProgram").textContent = newProgramName || "—";
 
             var semesterName = $("#SemesterId").val() ? getSelectedText("SemesterId") : "";
-            document.getElementById("dNewEnrollSemester").textContent = semesterName || "Semester 1";
+            document.getElementById("dNewEnrollSemester").textContent = semesterName || "Not selected";
 
             setArrow("arrowLevel", levelChanged);
             setArrow("arrowCollege", collegeChanged);
@@ -540,7 +547,7 @@
 
             var confirmText = document.getElementById("confirmText");
             if (programChanged) {
-                confirmText.textContent = "This will change the student's program. All semester enrollments will be deleted and the student will be re-enrolled in the first semester of the new program.";
+                confirmText.textContent = "This will change the student's program. Prior semester enrollments are closed and kept as history (credits, fees and results preserved), and the student is enrolled into the target semester you select.";
             } else if (collegeChanged) {
                 confirmText.textContent = "This will update the student's college. Semester enrollments and exam registrations are preserved.";
             } else {
@@ -616,27 +623,28 @@
         }
 
         var _semesterSeq = 0;
-        function loadSemesters(programId, selectFirst, callback) {
+        function loadSemesters(programId, academicYearId, callback) {
             var seq = ++_semesterSeq;
             var dropdown = $("#SemesterId");
-            dropdown.select2('destroy');
-            dropdown.empty();
-            dropdown.append('<option value="">First Semester (default)</option>');
-            dropdown.select2({ width: 'resolve' });
-            if (!programId) { if (callback) callback(); return; }
+            var reset = function () {
+                dropdown.select2('destroy');
+                dropdown.empty();
+                dropdown.append('<option value="">Select target semester</option>');
+                dropdown.select2({ width: 'resolve' });
+            };
+            reset();
+            if (!programId || !academicYearId) { if (callback) callback(); return; }
+            // The academic year is passed so the endpoint only returns semesters that really
+            // have a SemesterInstance for this program + year. No default is pre-selected:
+            // the target semester is a required, explicit choice.
             $.get(tenantUrl("/Students/StudentTransfers/GetSemestersForProgram"),
-                { programId: programId },
+                { programId: programId, academicYearId: academicYearId },
                 function (data) {
                     if (seq !== _semesterSeq) return;
-                    dropdown.select2('destroy');
-                    dropdown.empty();
-                    dropdown.append('<option value="">First Semester (default)</option>');
+                    reset();
                     $.each(data, function (i, item) {
                         dropdown.append(`<option value="${item.id}">${item.name}</option>`);
                     });
-                    if (selectFirst && data.length > 0) {
-                        dropdown.val(data[0].id);
-                    }
                     dropdown.select2({ width: 'resolve' });
                     if (callback) callback();
                 });
@@ -652,7 +660,7 @@
             _cascadeBusy = true;
             loadColleges(initLevelId, initCollegeId, function () {
                 loadPrograms(initCollegeId, initProgramId, function () {
-                    loadSemesters(initProgramId, false, function () {
+                    loadSemesters(initProgramId, $("#AcademicYearId").val(), function () {
                         _cascadeBusy = false;
                         updateDiagram();
                     });
@@ -669,7 +677,7 @@
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
                 $("#ProgramId").select2({ width: 'resolve' });
                 $("#SemesterId").select2('destroy');
-                $("#SemesterId").empty().append('<option value="">First Semester (default)</option>');
+                $("#SemesterId").empty().append('<option value="">Select target semester</option>');
                 $("#SemesterId").select2({ width: 'resolve' });
                 loadColleges(levelId, null);
                 updateDiagram();
@@ -682,7 +690,7 @@
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
                 $("#ProgramId").select2({ width: 'resolve' });
                 $("#SemesterId").select2('destroy');
-                $("#SemesterId").empty().append('<option value="">First Semester (default)</option>');
+                $("#SemesterId").empty().append('<option value="">Select target semester</option>');
                 $("#SemesterId").select2({ width: 'resolve' });
                 loadPrograms(collegeId, null);
                 updateDiagram();
@@ -691,19 +699,24 @@
             $("#ProgramId").change(function () {
                 if (_cascadeBusy) return;
                 var programId = $(this).val();
+                loadSemesters(programId, $("#AcademicYearId").val(), function () {
+                    updateDiagram();
+                });
+            });
+
+            $("#AcademicYearId").change(function () {
+                // The available semesters depend on the academic year, so reload them.
+                var programId = $("#ProgramId").val();
                 if (programId) {
-                    loadSemesters(programId, true, function () {
+                    loadSemesters(programId, $(this).val(), function () {
                         updateDiagram();
                     });
                 } else {
-                    $("#SemesterId").select2('destroy');
-                    $("#SemesterId").empty().append('<option value="">First Semester (default)</option>');
-                    $("#SemesterId").select2({ width: 'resolve' });
                     updateDiagram();
                 }
             });
 
-            $("#AcademicYearId").change(function () {
+            $("#SemesterId").change(function () {
                 updateDiagram();
             });
 
@@ -716,14 +729,16 @@
                 var college = $("#CollegeId").val();
                 var program = $("#ProgramId").val();
                 var ay = $("#AcademicYearId").val();
-                if (!level || !college || !program || !ay) {
+                var semester = $("#SemesterId").val();
+                if (!level || !college || !program || !ay || !semester) {
                     e.preventDefault();
-                    alert("Please fill in all transfer fields.");
+                    alert("Please fill in all transfer fields, including the target semester.");
                     return false;
                 }
                 var newProgramId = parseInt(program);
+                var targetSemester = getSelectedText("SemesterId");
                 var msg = newProgramId !== _current.program
-                    ? "This will transfer the student to a NEW PROGRAM. All semester enrollments will be deleted and the student will be re-enrolled in the first semester. This action cannot be undone."
+                    ? "This will transfer the student to a NEW PROGRAM. Prior semester enrollments are closed and kept as history (credits, fees and results preserved), and the student is enrolled into " + targetSemester + ". Continue?"
                     : "This will update the student's college. Semester enrollments will be preserved. Continue?";
                 if (!confirm(msg)) {
                     e.preventDefault();

@@ -11,9 +11,9 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class SemesterEnrollmentService(AppDbContext context, IUserContext userContext) : ISemesterEnrollmentService
 {
-    public async Task<(List<SemesterEnrollmentListItemDto> Items, int TotalCount)> GetEnrollmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null)
+    public async Task<(List<SemesterEnrollmentListItemDto> Items, int TotalCount)> GetEnrollmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null, int? enrollmentStatus = null)
     {
-        var query = BuildQuery(search, admissionId, collegeId, programId, semesterInstanceId, academicYearId);
+        var query = BuildQuery(search, admissionId, collegeId, programId, semesterInstanceId, academicYearId, enrollmentStatus);
         var totalCount = await query.CountAsync();
 
         query = sortDir.ToLower() == "desc"
@@ -29,9 +29,9 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         return (items, totalCount);
     }
 
-    public async Task<List<SemesterEnrollmentListItemDto>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null)
+    public async Task<List<SemesterEnrollmentListItemDto>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null, int? enrollmentStatus = null)
     {
-        var query = BuildQuery(search, admissionId, collegeId, programId, semesterInstanceId, academicYearId);
+        var query = BuildQuery(search, admissionId, collegeId, programId, semesterInstanceId, academicYearId, enrollmentStatus);
 
         query = sortDir.ToLower() == "desc"
             ? query.OrderByDescending(GetSortProperty(sort))
@@ -291,8 +291,10 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         return true;
     }
 
-    public async Task<bool> TransferEnrollmentsAsync(int admissionId, int newProgramId, int newAcademicYearId, int? targetSemesterId = null)
+    public async Task<bool> TransferEnrollmentsAsync(int admissionId, int newProgramId, int newAcademicYearId, int targetSemesterId, string? transferReason = null)
     {
+        if (targetSemesterId < 1) return false;
+
         var admission = await context.StudentAdmissions
             .AsNoTracking()
             .FirstOrDefaultAsync(sa => sa.Id == admissionId);
@@ -300,26 +302,12 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
 
         // Resolve the target ProgramSemester and SemesterInstance FIRST so the
         // transfer can never leave the student without an enrollment.
-        ProgramSemester? programSemester;
-        if (targetSemesterId.HasValue)
-        {
-            programSemester = await context.ProgramSemesters
-                .AsNoTracking()
-                .FirstOrDefaultAsync(ps =>
-                    ps.ProgramId == newProgramId &&
-                    ps.SemesterId == targetSemesterId.Value &&
-                    ps.IsActive);
-        }
-        else
-        {
-            programSemester = await context.ProgramSemesters
-                .AsNoTracking()
-                .Where(ps => ps.ProgramId == newProgramId && ps.IsActive)
-                .Include(ps => ps.Semester)
-                .OrderBy(ps => ps.DisplayOrder)
-                .ThenBy(ps => ps.Semester!.Number)
-                .FirstOrDefaultAsync();
-        }
+        var programSemester = await context.ProgramSemesters
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ps =>
+                ps.ProgramId == newProgramId &&
+                ps.SemesterId == targetSemesterId &&
+                ps.IsActive);
         if (programSemester == null) return false;
 
         var semesterInstance = await context.SemesterInstances
@@ -330,26 +318,41 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                 si.ProgramId == newProgramId);
         if (semesterInstance == null) return false;
 
+        var targetProgram = await context.Programs
+            .AsNoTracking()
+            .Where(p => p.Id == newProgramId)
+            .Select(p => new { p.ProgramName, p.ProgramCode })
+            .FirstOrDefaultAsync();
+
+        var newProgramLabel = targetProgram == null
+            ? $"Program {newProgramId}"
+            : string.IsNullOrWhiteSpace(targetProgram.ProgramCode)
+                ? targetProgram.ProgramName
+                : $"{targetProgram.ProgramName} ({targetProgram.ProgramCode})";
+
+        var closeReason = string.IsNullOrWhiteSpace(transferReason)
+            ? $"Transferred to {newProgramLabel}"
+            : $"Transferred to {newProgramLabel}: {transferReason!.Trim()}";
+        if (closeReason.Length > 500) closeReason = closeReason[..500];
+
+        var now = DateTime.UtcNow;
+
+        // Close prior enrollments instead of deleting them so the student's
+        // transcript (credits, grade points, fees, results) and every linked
+        // ExamRegistration survive. ExamRegistration.SemesterEnrollmentId is
+        // deliberately left intact, which also keeps the
+        // ExamRegistration -> SemesterEnrollment -> StudentAdmission chain walkable.
         var existingEnrollments = await context.SemesterEnrollments
             .Where(se => se.StudentAdmissionId == admissionId)
             .ToListAsync();
-        if (existingEnrollments.Count > 0)
+        foreach (var enrollment in existingEnrollments)
         {
-            var enrollmentIds = existingEnrollments.Select(e => e.Id).ToList();
-
-            var linkedExamRegistrations = await context.ExamRegistrations
-                .Where(er => er.SemesterEnrollmentId != null && enrollmentIds.Contains(er.SemesterEnrollmentId!.Value))
-                .ToListAsync();
-            foreach (var er in linkedExamRegistrations)
-            {
-                er.SemesterEnrollmentId = null;
-            }
-            if (linkedExamRegistrations.Count > 0)
-                await context.SaveChangesAsync();
-
-            context.SemesterEnrollments.RemoveRange(existingEnrollments);
-            await context.SaveChangesAsync();
+            enrollment.EnrollmentStatus = StudentEnrollmentStatus.Inactive;
+            enrollment.DropDate = now;
+            enrollment.DropReason = closeReason;
         }
+        if (existingEnrollments.Count > 0)
+            await context.SaveChangesAsync();
 
         context.SemesterEnrollments.Add(new SemesterEnrollment
         {
@@ -360,7 +363,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             EnrollmentType = EnrollmentType.FullTime,
             PaymentStatus = PaymentStatus.Pending,
             ResultStatus = ResultStatus.Incomplete,
-            EnrolledDate = DateTime.UtcNow,
+            EnrolledDate = now,
             TotalCredits = 0,
             GradePoints = 0,
             TotalFee = 0,
@@ -547,7 +550,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         return created;
     }
 
-    private IQueryable<SemesterEnrollment> BuildQuery(string? search, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null)
+    private IQueryable<SemesterEnrollment> BuildQuery(string? search, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null, int? enrollmentStatus = null)
     {
         var query = context.SemesterEnrollments
             .Include(se => se.StudentAdmission)
@@ -558,7 +561,23 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                 .ThenInclude(sa => sa!.StudentRegistration)
             .Include(se => se.SemesterInstance)
                 .ThenInclude(si => si!.Semester)
+            .Include(se => se.SemesterInstance)
+                .ThenInclude(si => si!.Program)
             .AsNoTracking();
+
+        // Default to Active only. Pass an explicit status to widen the view;
+        // enrollmentStatus == 0 means "All".
+        if (enrollmentStatus.HasValue)
+        {
+            if (enrollmentStatus.Value == 0)
+                query = query.Where(se => true);
+            else
+                query = query.Where(se => (int)se.EnrollmentStatus == enrollmentStatus.Value);
+        }
+        else
+        {
+            query = query.Where(se => se.EnrollmentStatus == StudentEnrollmentStatus.Active);
+        }
 
         if (admissionId.HasValue)
             query = query.Where(se => se.StudentAdmissionId == admissionId.Value);
@@ -575,10 +594,17 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         if (academicYearId.HasValue)
             query = query.Where(se => se.StudentAdmission != null && se.StudentAdmission.AcademicYearId == academicYearId.Value);
 
-        if (!userContext.IsSuperAdmin)
+        if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
         {
-            if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
-                query = query.Where(se => se.StudentAdmission != null && se.StudentAdmission.CollegeId == userContext.CollegeId.Value);
+            var facultyId = userContext.FacultyId.Value;
+            query = query.Where(se => se.StudentAdmission != null
+                                   && se.StudentAdmission.Program != null
+                                   && se.StudentAdmission.Program.FacultyId == facultyId);
+        }
+        else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+        {
+            var collegeId2 = userContext.CollegeId.Value;
+            query = query.Where(se => se.StudentAdmission != null && se.StudentAdmission.CollegeId == collegeId2);
         }
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -601,7 +627,14 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             StudentName = se.StudentAdmission!.FirstName + (se.StudentAdmission.MiddleName != null ? " " + se.StudentAdmission.MiddleName : "") + (se.StudentAdmission.LastName != null ? " " + se.StudentAdmission.LastName : ""),
             RegistrationNumber = se.StudentAdmission!.StudentRegistration != null ? se.StudentAdmission.StudentRegistration.RegistrationNumber : null,
             CollegeRollNumber = se.StudentAdmission!.CollegeRollNumber,
-            ProgramName = se.StudentAdmission!.Program != null ? se.StudentAdmission.Program.ProgramName : null,
+            // Program comes from SemesterInstance, not the admission: after a transfer
+            // the admission points at the NEW program, which would mislabel every
+            // closed history row with the current program. SemesterInstance carries the
+            // per-row historical program. College has no per-enrollment history (it lives
+            // only on the admission), so it keeps reading from there.
+            ProgramName = se.SemesterInstance != null && se.SemesterInstance.Program != null
+                ? se.SemesterInstance.Program.ProgramName
+                : se.StudentAdmission!.Program != null ? se.StudentAdmission.Program.ProgramName : null,
             CollegeName = se.StudentAdmission!.College != null ? se.StudentAdmission.College.Name : null,
             SemesterName = se.SemesterInstance != null && se.SemesterInstance.Semester != null ? se.SemesterInstance.Semester.Name : null,
             AcademicYearName = se.StudentAdmission != null && se.StudentAdmission.AcademicYear != null ? se.StudentAdmission.AcademicYear.AcademicYearCode : null,

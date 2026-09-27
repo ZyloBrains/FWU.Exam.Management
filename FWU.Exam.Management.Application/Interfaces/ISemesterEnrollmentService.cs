@@ -6,8 +6,8 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface ISemesterEnrollmentService
 {
-    Task<(List<SemesterEnrollmentListItemDto> Items, int TotalCount)> GetEnrollmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null);
-    Task<List<SemesterEnrollmentListItemDto>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null);
+    Task<(List<SemesterEnrollmentListItemDto> Items, int TotalCount)> GetEnrollmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null, int? enrollmentStatus = null);
+    Task<List<SemesterEnrollmentListItemDto>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null, int? enrollmentStatus = null);
     Task<SemesterEnrollment?> GetEnrollmentByIdAsync(int id);
     Task UpdateEnrollmentAsync(SemesterEnrollment enrollment);
     Task DeleteEnrollmentAsync(int id);
@@ -18,6 +18,6 @@ public interface ISemesterEnrollmentService
     Task<(int Created, int Skipped)> BulkCreateEnrollmentsAsync(List<int> admissionIds, int semesterInstanceId, EnrollmentType? enrollmentType = null);
     Task<(int Created, int Skipped)> BulkCreateAllEnrollmentsAsync(string? search, int? academicYearId, int? collegeId, int? programId, int semesterInstanceId, EnrollmentType? enrollmentType = null);
     Task<bool> EnrollInFirstSemesterAsync(int admissionId);
-    Task<bool> TransferEnrollmentsAsync(int admissionId, int newProgramId, int newAcademicYearId, int? targetSemesterId = null);
+    Task<bool> TransferEnrollmentsAsync(int admissionId, int newProgramId, int newAcademicYearId, int targetSemesterId, string? transferReason = null);
     Task<int> PromoteCompletedSemestersAsync();
 }
