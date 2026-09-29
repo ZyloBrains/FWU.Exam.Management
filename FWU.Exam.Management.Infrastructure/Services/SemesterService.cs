@@ -58,10 +58,13 @@ public class SemesterService(AppDbContext context) : ISemesterService
 
     public async Task<List<Semester>> GetSemestersByProgramAsync(int programId)
     {
+        // Ordered by Semester.Number, not ProgramSemesters.DisplayOrder: that column is 0 on
+        // every row in the database, so ordering by it returns the semesters in no order.
         return await context.ProgramSemesters
             .AsNoTracking()
             .Where(ps => ps.ProgramId == programId && ps.IsActive)
-            .OrderBy(ps => ps.DisplayOrder)
+            .OrderBy(ps => ps.Semester!.Number)
+            .ThenBy(ps => ps.SemesterId)
             .Select(ps => ps.Semester!)
             .ToListAsync();
     }

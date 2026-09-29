@@ -3,9 +3,13 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
+using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
@@ -21,15 +25,25 @@ public class StudentTransfersController(
     IStudentRegistrationService studentRegistrationService,
     ISemesterEnrollmentService semesterEnrollmentService,
     UserManager<AppUser> userManager,
+    IUserContext userContext,
     AppDbContext context) : Controller
 {
-    private async Task<List<int>> GetUserCollegeIdsAsync()
+    /// <summary>
+    /// Colleges this back-office user may target, or null when unrestricted.
+    /// <para>
+    /// null means "no restriction" and is only ever returned for SuperAdmin. Any other role
+    /// that is not recognised, or whose scope cannot be resolved, gets an EMPTY list, which
+    /// restricts them to nothing. This is deliberate: an empty list used to be treated as
+    /// unrestricted by every caller, so an unrecognised role silently saw every college.
+    /// </para>
+    /// </summary>
+    private async Task<List<int>?> GetUserCollegeIdsAsync()
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return new List<int>();
 
         if (User.IsInRole(Role.SuperAdmin))
-            return new List<int>();
+            return null;
 
         if (User.IsInRole(Role.FacultyAdmin) && user.FacultyId != null)
         {
@@ -61,7 +75,7 @@ public class StudentTransfersController(
             "Id", "LevelName");
 
         var collegesQuery = context.Colleges.AsNoTracking().Where(c => c.IsActive);
-        if (!isSuperAdmin && collegeIds.Count > 0)
+        if (collegeIds != null)
             collegesQuery = collegesQuery.Where(c => collegeIds.Contains(c.Id));
         ViewBag.Colleges = new SelectList(
             await collegesQuery.OrderBy(c => c.Name).ToListAsync(),
@@ -79,7 +93,6 @@ public class StudentTransfersController(
             return Json(new List<object>());
 
         var collegeIds = await GetUserCollegeIdsAsync();
-        var isSuperAdmin = User.IsInRole(Role.SuperAdmin);
         var term = searchTerm.Trim().ToLower();
 
         var query = context.StudentRegistrations
@@ -99,7 +112,7 @@ public class StudentTransfersController(
                 (s.LastName != null && s.LastName.ToLower().Contains(term)) ||
                 ((s.FirstName + " " + s.LastName).ToLower().Contains(term)));
 
-        if (!isSuperAdmin && collegeIds.Count > 0)
+        if (collegeIds != null)
             query = query.Where(s => collegeIds.Contains(s.CollegeId));
 
         if (levelId.HasValue)
@@ -148,8 +161,22 @@ public class StudentTransfersController(
         var student = await studentRegistrationService.GetStudentRegistrationByIdAsync(id);
         if (student == null) return NotFound();
 
+        // Carried back from a rejected post so a validation failure does not force the
+        // staff member to retype the reason they already entered.
+        ViewBag.TransferReason = TempData["TransferReason"] as string ?? string.Empty;
+
         var collegeIds = await GetUserCollegeIdsAsync();
-        var isSuperAdmin = User.IsInRole(Role.SuperAdmin);
+
+        // Seed the read-only tenant display with the tenant the student is on today, so it
+        // reads as "current" rather than as an error before a faculty has been chosen. The
+        // id is resolved the same way TenantDefaults.Resolve resolves a faculty's, so the
+        // form can compare ids and never trip over a null-vs-named tenant mismatch.
+        ViewBag.CurrentTenantId = student.TenantId > 0 ? student.TenantId : TenantDefaults.CentralTenantId;
+        ViewBag.CurrentTenantName = await context.Tenants
+            .AsNoTracking()
+            .Where(t => t.Id == student.TenantId)
+            .Select(t => t.Name)
+            .FirstOrDefaultAsync() ?? "Central (default)";
 
         ViewBag.AcademicYears = new SelectList(
             await context.AcademicYears.AsNoTracking().Where(ay => ay.IsActive).OrderByDescending(ay => ay.AcademicYearCode).ToListAsync(),
@@ -159,7 +186,7 @@ public class StudentTransfersController(
             "Id", "LevelName");
 
         var collegesQuery = context.Colleges.AsNoTracking().Where(c => c.IsActive);
-        if (!isSuperAdmin && collegeIds.Count > 0)
+        if (collegeIds != null)
             collegesQuery = collegesQuery.Where(c => collegeIds.Contains(c.Id));
         ViewBag.Colleges = new SelectList(
             await collegesQuery.OrderBy(c => c.Name).ToListAsync(),
@@ -194,12 +221,28 @@ public class StudentTransfersController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Transfer(int id, int levelId, int collegeId, int programId, int academicYearId, int semesterId)
+    public async Task<IActionResult> Transfer(int id, int levelId, int facultyId, int collegeId, int programId, int academicYearId, int semesterId, string? transferReason)
     {
         var student = await context.StudentRegistrations
             .Include(s => s.StudentAdmission)
             .FirstOrDefaultAsync(s => s.Id == id);
         if (student == null) return NotFound();
+
+        // The reason is the audit trail for the transfer and is stored on the closed
+        // semester enrollments. It is mandatory, so validate it before anything is written
+        // and carry the typed text through the redirect rather than making staff retype it.
+        TempData["TransferReason"] = transferReason;
+        if (string.IsNullOrWhiteSpace(transferReason))
+        {
+            TempData["ErrorMessage"] = "Please enter a reason for this transfer.";
+            return RedirectToAction(nameof(Transfer), new { id });
+        }
+
+        if (transferReason.Trim().Length > 500)
+        {
+            TempData["ErrorMessage"] = "The transfer reason must be 500 characters or fewer.";
+            return RedirectToAction(nameof(Transfer), new { id });
+        }
 
         // The target semester is a required choice: it decides which SemesterInstance the
         // student is actually enrolled into, and it is what makes the closed history rows
@@ -210,6 +253,37 @@ public class StudentTransfersController(
             return RedirectToAction(nameof(Transfer), new { id });
         }
 
+        // The faculty drives the rest of the cascade and, through TenantDefaults, the
+        // tenant. It is a required choice, not something inferred from the program.
+        if (facultyId <= 0)
+        {
+            TempData["ErrorMessage"] = "Please select the faculty you are transferring the student into.";
+            return RedirectToAction(nameof(Transfer), new { id });
+        }
+
+        // Scoped exactly as the dropdown was, so the form can never offer a faculty that
+        // the POST then rejects, and an out-of-scope faculty reads as "not found" rather
+        // than leaking its existence.
+        var faculty = await ApplyTransferFacultyScope(context.Faculties.AsNoTracking())
+            .Where(f => f.Id == facultyId)
+            .Select(f => new { f.Id, f.Name, f.TenantId, TenantName = f.Tenant != null ? f.Tenant.Name : null })
+            .FirstOrDefaultAsync();
+        if (faculty == null)
+        {
+            TempData["ErrorMessage"] = "Selected faculty not found.";
+            return RedirectToAction(nameof(Transfer), new { id });
+        }
+
+        // Program has no tenant of its own, so the faculty's tenant is the tenant the
+        // student ends up in. A faculty with no tenant of its own resolves to the central
+        // one. This genuinely differs from the student's current tenant in normal use:
+        // Engineering is administered by the Engineering Exam Office, so an OCE student
+        // moving into Engineering changes tenant, and the closed history rows stay behind
+        // in the old tenant. That is the intended outcome, so it is not blocked here.
+        var targetTenantId = TenantDefaults.Resolve(faculty.TenantId);
+        var targetTenantName = faculty.TenantName ?? "Central (default)";
+        var tenantChanged = student.TenantId > 0 && targetTenantId != student.TenantId;
+
         var program = await context.Programs
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == programId);
@@ -219,11 +293,36 @@ public class StudentTransfersController(
             return RedirectToAction(nameof(Transfer), new { id });
         }
 
+        // The program dropdown is driven by faculty, so a mismatched pair means a tampered
+        // or stale form. Persisting it would put the student in a faculty the staff did not
+        // choose, and would resolve the wrong tenant.
+        if (program.FacultyId != facultyId)
+        {
+            TempData["ErrorMessage"] = "The selected program does not belong to the selected faculty.";
+            return RedirectToAction(nameof(Transfer), new { id });
+        }
+
         // The program dropdown is driven by level, so a mismatched pair means a tampered
         // or stale form. Persisting it would point the student at another level's program.
         if (program.LevelId != levelId)
         {
             TempData["ErrorMessage"] = "The selected program does not belong to the selected level.";
+            return RedirectToAction(nameof(Transfer), new { id });
+        }
+
+        // The college dropdown is driven by the faculty's affiliations, so enforce the same
+        // pairing server-side. Must mirror GetCollegesByFaculty exactly, otherwise the form
+        // offers a college the POST then rejects.
+        var collegeAffiliated = await context.Colleges
+            .AsNoTracking()
+            .AnyAsync(c => c.Id == collegeId
+                           && ((c.CollegeFaculties != null
+                                 && c.CollegeFaculties.Any(cf => cf.FacultyId == facultyId))
+                                || c.CollegePrograms!.Any(cp => cp.Program != null
+                                                                 && cp.Program.FacultyId == facultyId)));
+        if (!collegeAffiliated)
+        {
+            TempData["ErrorMessage"] = "The selected college is not affiliated with the selected faculty.";
             return RedirectToAction(nameof(Transfer), new { id });
         }
 
@@ -248,6 +347,7 @@ public class StudentTransfersController(
         bool programChanged = student.ProgramId != programId;
         bool collegeChanged = student.CollegeId != collegeId;
         bool academicYearChanged = student.AcademicYearId != academicYearId;
+        bool facultyChanged = student.FacultyId != program.FacultyId;
 
         try
         {
@@ -265,7 +365,7 @@ public class StudentTransfersController(
                 if (recreateEnrollments)
                 {
                     var transferred = await semesterEnrollmentService.TransferEnrollmentsAsync(
-                        student.StudentAdmission.Id, programId, academicYearId, semesterId);
+                        student.StudentAdmission.Id, programId, academicYearId, semesterId, transferReason);
                     if (!transferred)
                     {
                         await transaction.RollbackAsync();
@@ -274,13 +374,13 @@ public class StudentTransfersController(
                     }
                 }
 
-                // ExamRegistration.ProgramId/CollegeId are denormalised copies of the owning
-                // student, so every row is re-pointed at the new program/college. NOTE: this
-                // includes rows from closed semesters, so a historical exam registration
-                // stops naming the program it was originally taken under. ResultRecord is
-                // keyed by registration number and is NOT touched, so marks survive either way.
+                // The exam registrations follow their semester: rows on a semester that was
+                // just closed are deactivated (which is what removes the student from the
+                // previous program), rows on a still-active semester just follow the new
+                // college. See UpdateExamRegistrationCollegesAsync for why ProgramsId is
+                // left alone on history.
                 if (programChanged || collegeChanged)
-                    await UpdateExamRegistrationCollegesAsync(student.StudentAdmission.Id, collegeId, programId);
+                    await UpdateExamRegistrationCollegesAsync(student.StudentAdmission.Id, collegeId);
             }
 
             student.LevelId = levelId;
@@ -288,6 +388,10 @@ public class StudentTransfersController(
             student.ProgramId = programId;
             student.FacultyId = program.FacultyId;
             student.AcademicYearId = academicYearId;
+            // Stamped explicitly rather than left to TenantSaveChangesInterceptor, which only
+            // fills in Added rows. This also repairs a legacy student whose tenant was never
+            // set, since TenantId 0 falls through to the faculty's tenant.
+            student.TenantId = targetTenantId;
 
             context.StudentRegistrations.Update(student);
             await context.SaveChangesAsync();
@@ -298,6 +402,7 @@ public class StudentTransfersController(
                 admission.CollegeId = collegeId;
                 admission.ProgramsId = programId;
                 admission.AcademicYearId = academicYearId;
+                admission.TenantId = targetTenantId;
 
                 context.StudentAdmissions.Update(admission);
                 await context.SaveChangesAsync();
@@ -315,9 +420,22 @@ public class StudentTransfersController(
 
             await transaction.CommitAsync();
 
-            var message = programChanged
-                ? $"Student {student.FirstName} {student.LastName} transferred to {program.ProgramName}. Prior semester enrollments were closed and kept as history."
-                : $"Student {student.FirstName} {student.LastName} college updated to {(await context.Colleges.FindAsync(collegeId))?.Name ?? "N/A"} (enrollments preserved).";
+            var studentName = $"{student.FirstName} {student.LastName}";
+            string message;
+            if (programChanged)
+            {
+                message = $"Student {studentName} transferred to {program.ProgramName}. Prior semester enrollments were closed and kept as history.";
+            }
+            else if (facultyChanged)
+            {
+                message = $"Student {studentName} faculty updated to {faculty.Name} (enrollments preserved).";
+            }
+            else
+            {
+                message = $"Student {studentName} college updated to {(await context.Colleges.FindAsync(collegeId))?.Name ?? "N/A"} (enrollments preserved).";
+            }
+            if (tenantChanged)
+                message += $" The student now sits under tenant '{targetTenantName}'; their closed history stays in the previous tenant.";
             TempData["SuccessMessage"] = message;
         }
         catch (Exception ex)
@@ -357,12 +475,26 @@ public class StudentTransfersController(
     }
 
     /// <summary>
-    /// Re-points the denormalised college/program columns on ExamRegistration.
+    /// ExamRegistration rows follow the lifecycle of the semester they were taken in.
     /// Covers both ways a registration reaches the table: through its SemesterEnrollment and
     /// through its ApplicationVoucher. ExamRegistration has no StudentRegistrationId of its
     /// own, so voucher linkage is the only fallback for rows predating enrollment linkage.
+    /// <para>
+    /// Rows on a CLOSED (history) semester are deactivated and otherwise left untouched.
+    /// Every exam, marks, roll-number, admit-card, exam-centre and triplicate query filters
+    /// on IsActive, so deactivating is what removes the student from the previous program
+    /// entirely. Their ProgramsId/CollegeId are deliberately NOT rewritten: they are
+    /// denormalised copies and still describe the exam that was actually sat, which is what
+    /// reports and historical marks sheets key on. ResultRecord is keyed by registration
+    /// number and is untouched, so the marks themselves are never at risk.
+    /// </para>
+    /// <para>
+    /// Rows on a still-ACTIVE semester do follow the student: that is the college-only
+    /// change case, where the student keeps the same program and still has to sit the
+    /// current semester's exam, at their new college.
+    /// </para>
     /// </summary>
-    private async Task UpdateExamRegistrationCollegesAsync(int admissionId, int newCollegeId, int newProgramId)
+    private async Task UpdateExamRegistrationCollegesAsync(int admissionId, int newCollegeId)
     {
         var registrationIds = await context.StudentRegistrations
             .Where(s => s.StudentAdmission != null && s.StudentAdmission.Id == admissionId)
@@ -386,40 +518,135 @@ public class StudentTransfersController(
 
         foreach (var er in examRegistrations)
         {
-            er.CollegeId = newCollegeId;
-            er.ProgramsId = newProgramId;
+            var isHistorical = er.SemesterEnrollment != null
+                && er.SemesterEnrollment.EnrollmentStatus != StudentEnrollmentStatus.Active;
+
+            if (isHistorical)
+            {
+                er.IsActive = false;
+            }
+            else
+            {
+                er.CollegeId = newCollegeId;
+            }
         }
 
         if (examRegistrations.Count > 0)
             await context.SaveChangesAsync();
     }
 
-    [HttpGet]
-    public async Task<JsonResult> GetCollegesByLevel(int levelId)
+    /// <summary>
+    /// Faculties this user may target, as targets for a transfer.
+    /// <para>
+    /// Mirrors UserScopeExtensions.ApplyScope for the FacultyAdmin case and widens the
+    /// CollegeAdmin case: that helper resolves a CollegeAdmin's faculties purely from
+    /// CollegeFaculty, which is near-empty in practice (the dev database has 4 rows, all
+    /// for one faculty), so a CollegeAdmin would otherwise see a single faculty. The
+    /// widened branch accepts a faculty the college actually teaches, which is the same
+    /// union GetCollegesByFaculty uses, so the faculty and college lists always agree.
+    /// Unrecognised roles still resolve to nothing.
+    /// </para>
+    /// </summary>
+    private IQueryable<Faculty> ApplyTransferFacultyScope(IQueryable<Faculty> query)
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        var isSuperAdmin = User.IsInRole(Role.SuperAdmin);
+        if (userContext.IsSuperAdmin) return query;
 
-        var query = context.CollegePrograms
-            .Where(cp => cp.Program != null && cp.Program.LevelId == levelId && cp.College != null && cp.College.Name != null);
+        if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+        {
+            var collegeId = userContext.CollegeId.Value;
+            return query.Where(f => f.Id == userContext.FacultyId
+                                   || (f.CollegeFaculties != null
+                                       && f.CollegeFaculties.Any(cf => cf.CollegeId == collegeId))
+                                   || context.CollegePrograms.Any(cp => cp.CollegeId == collegeId
+                                                                          && cp.Program != null
+                                                                          && cp.Program.FacultyId == f.Id));
+        }
 
-        if (!isSuperAdmin && collegeIds.Count > 0)
-            query = query.Where(cp => collegeIds.Contains(cp.CollegeId));
+        if (userContext.FacultyId.HasValue)
+            return query.Where(f => f.Id == userContext.FacultyId.Value);
 
-        var colleges = await query
-            .Select(cp => new SelectOption { Id = cp.College!.Id, Name = cp.College.Name! })
-            .Distinct().AsNoTracking().ToListAsync();
+        return query.Where(f => false);
+    }
+
+    /// <summary>
+    /// Faculties that actually offer a program at the given level, restricted to the
+    /// faculties this user may manage. Faculty has no level of its own, so the level is
+    /// reached through Program.
+    /// <para>
+    /// The response carries the resolved tenant so the form can display it. A faculty
+    /// without a tenant of its own resolves to the central tenant, matching the rule in
+    /// TenantDefaults.Resolve.
+    /// </para>
+    /// </summary>
+    [HttpGet]
+    public async Task<JsonResult> GetFacultiesByLevel(int levelId)
+    {
+        var facultyIds = context.Programs
+            .AsNoTracking()
+            .Where(p => p.LevelId == levelId && p.IsActive && p.FacultyId != null)
+            .Select(p => p.FacultyId!.Value);
+
+        var faculties = await ApplyTransferFacultyScope(context.Faculties.AsNoTracking())
+            .Where(f => facultyIds.Contains(f.Id))
+            .OrderBy(f => f.Name)
+            .Select(f => new
+            {
+                f.Id,
+                f.Name,
+                TenantId = TenantDefaults.Resolve(f.TenantId),
+                TenantName = f.Tenant != null ? f.Tenant.Name : "Central (default)"
+            })
+            .ToListAsync();
+
+        return Json(faculties);
+    }
+
+    /// <summary>
+    /// Every college affiliated with the selected faculty, even if it offers no program at
+    /// the currently selected level.
+    /// <para>
+    /// Affiliation is recorded in TWO places, and either one counts. CollegeFaculty is the
+    /// explicit table, but in practice it is close to empty (the dev database has 4 rows,
+    /// all for a single faculty), while CollegeProgram is where the bulk of the real
+    /// faculty-to-college relationship lives. Keying this list off CollegeFaculty alone made
+    /// the dropdown come back empty for almost every faculty. ApplyScope is still
+    /// fail-closed on top of that: an unrecognised role resolves to no colleges.
+    /// </para>
+    /// </summary>
+    [HttpGet]
+    public async Task<JsonResult> GetCollegesByFaculty(int facultyId)
+    {
+        if (facultyId <= 0)
+            return Json(new List<SelectOption>());
+
+        var colleges = await context.Colleges
+            .ApplyScope(userContext)
+            .AsNoTracking()
+            .Where(c => c.IsActive
+                        && ((c.CollegeFaculties != null
+                             && c.CollegeFaculties.Any(cf => cf.FacultyId == facultyId))
+                            || c.CollegePrograms!.Any(cp => cp.Program != null
+                                                             && cp.Program.FacultyId == facultyId)))
+            .OrderBy(c => c.Name)
+            .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
+            .ToListAsync();
         return Json(colleges);
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetProgramsByCollege(int collegeId, int? levelId = null)
+    public async Task<JsonResult> GetProgramsByCollege(int collegeId, int? levelId = null, int? facultyId = null)
     {
+        var collegeIds = await GetUserCollegeIdsAsync();
+        if (collegeIds != null && !collegeIds.Contains(collegeId))
+            return Json(new List<SelectOption>());
+
         var query = context.CollegePrograms
-            .Where(cp => cp.CollegeId == collegeId && cp.Program != null && cp.Program.ProgramName != null)
-            .Include(cp => cp.Program).AsQueryable();
+            .Where(cp => cp.CollegeId == collegeId && cp.Program != null && cp.Program.ProgramName != null);
         if (levelId.HasValue)
             query = query.Where(cp => cp.Program!.LevelId == levelId.Value);
+        if (facultyId.HasValue)
+            query = query.Where(cp => cp.Program!.FacultyId == facultyId.Value);
+
         var programs = await query
             .Select(cp => new SelectOption { Id = cp.Program!.Id, Name = cp.Program.ProgramName })
             .AsNoTracking().ToListAsync();
@@ -439,17 +666,6 @@ public class StudentTransfersController(
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetFacultyByProgram(int programId)
-    {
-        var faculty = await context.Programs
-            .AsNoTracking()
-            .Where(p => p.Id == programId)
-            .Select(p => new { FacultyName = p.Faculty != null ? p.Faculty.Name : "" })
-            .FirstOrDefaultAsync();
-        return Json(faculty ?? new { FacultyName = "" });
-    }
-
-    [HttpGet]
     public async Task<JsonResult> GetSemestersForProgram(int programId, int? academicYearId = null)
     {
         // Only offer semesters that actually have a SemesterInstance for the target
@@ -465,7 +681,8 @@ public class StudentTransfersController(
                           || context.SemesterInstances!.Any(si => si.ProgramId == programId
                                                              && si.AcademicYearId == academicYearId.Value
                                                              && si.SemesterId == ps.SemesterId)))
-            .OrderBy(ps => ps.DisplayOrder)
+            .OrderBy(ps => ps.Semester!.Number)
+            .ThenBy(ps => ps.SemesterId)
             .Select(ps => new SelectOption { Id = ps.SemesterId, Name = ps.Semester!.Name })
             .ToListAsync();
         return Json(semesters);

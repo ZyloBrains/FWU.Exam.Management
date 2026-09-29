@@ -26,6 +26,35 @@ public class SemesterEnrollmentServiceTests
         ctx.Users.Add(TestData.User(UserId, Email));
     }
 
+    /// <summary>
+    /// Rewrites every seeded ProgramSemester to DisplayOrder 0, matching the live database
+    /// where that column is uniformly 0 because the creating migration backfilled it that way.
+    /// Enumerated through the change tracker rather than the DbSet, because the rows are
+    /// still Added and so are not returned by a query against the database.
+    /// </summary>
+    private static void ZeroAllProgramSemesterDisplayOrders(AppDbContext ctx)
+    {
+        foreach (var entry in ctx.ChangeTracker.Entries<ProgramSemester>())
+            entry.Entity.DisplayOrder = 0;
+    }
+
+    // Faculty.TenantId is a real foreign key, so a faculty on a non-default tenant needs
+    // that tenant to exist before the seed can be saved.
+    private static void SeedTenant(AppDbContext ctx, int tenantId, string code)
+    {
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Name = $"Tenant {code}",
+            OfficeCode = code,
+            ContactNumber = "000",
+            Address = "Kathmandu",
+            Email = $"{code.ToLowerInvariant()}@t.com",
+            TenantType = TenantType.Standard,
+            IsActive = true
+        });
+    }
+
     private static DateOnly Past => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-10));
     private static DateOnly Future => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10));
     private static DateTime PastDateTime => DateTime.UtcNow.AddDays(-5);
@@ -167,6 +196,59 @@ public class SemesterEnrollmentServiceTests
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(2, 1, 2));
             ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, PastDateTime));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 21, 1, TestData.ProgramId, semesterEnrollmentId: 1));
+        });
+        var service = CreateService(db);
+
+        var created = await service.PromoteCompletedSemestersAsync();
+
+        Assert.Equal(0, created);
+    }
+
+    // Production reality: ProgramSemesters.DisplayOrder is 0 on every row, because the
+    // migration that created the table backfilled 0 and the seeder that would have filled in
+    // real values early-returns once the table has rows. The seeded fixtures set
+    // DisplayOrder = semesterId, which is data the real database never contains, so the
+    // other promotion tests cannot catch a regression that depends on this column.
+    [Fact]
+    public async Task PromoteCompletedSemestersAsync_CreatesNextSemester_WhenAllDisplayOrdersAreZero()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ZeroAllProgramSemesterDisplayOrders(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
+            ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, PastDateTime));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 21, 1, TestData.ProgramId, semesterEnrollmentId: 1));
+        });
+        var service = CreateService(db);
+
+        var created = await service.PromoteCompletedSemestersAsync();
+
+        Assert.Equal(1, created);
+        var next = db.Context.SemesterEnrollments!.Single(se => se.SemesterInstanceId == 2);
+        Assert.Equal(StudentEnrollmentStatus.Active, next.EnrollmentStatus);
+        Assert.Equal(TestData.TenantId, next.TenantId);
+    }
+
+    [Fact]
+    public async Task PromoteCompletedSemestersAsync_DoesNotPromote_WhenStudentIsInFinalSemester_AndDisplayOrdersAreZero()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ZeroAllProgramSemesterDisplayOrders(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            // SeedBase creates six semesters/instances for the program; the last one is 6.
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 6));
+            ctx.ExamSchedules.Add(TestData.Schedule(21, 6, TestData.Regular, Past, PastDateTime));
             ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
             ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
             ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 21, 1, TestData.ProgramId, semesterEnrollmentId: 1));
@@ -500,7 +582,7 @@ public class SemesterEnrollmentServiceTests
         });
         var service = CreateService(db);
 
-        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1);
+        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "Program closed, moved to running program");
 
         Assert.True(transferred);
         var rows = db.Context.SemesterEnrollments!.ToList();
@@ -526,6 +608,229 @@ public class SemesterEnrollmentServiceTests
     }
 
     [Fact]
+    public async Task TransferEnrollmentsAsync_StampsNewRowWithFacultyTenant_NotAdmissionsOldTenant()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 90,
+                TenantId = TestData.TenantId,
+                SemesterId = 1,
+                AcademicYearId = TestData.AcademicYearId,
+                ProgramId = TestData.ProgramIdOther
+            });
+            // The target program belongs to a faculty in tenant 5 while the admission is
+            // still on tenant 1. A program has no tenant of its own, so the faculty decides.
+            SeedTenant(ctx, 5, "OTH");
+            ctx.Faculties.Add(new Faculty { Id = 50, Name = "Other Faculty", OfficeCode = "OTH", TenantId = 5 });
+            ctx.Programs.Local.Single(p => p.Id == TestData.ProgramIdOther).FacultyId = 50;
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "Moved to the other faculty");
+
+        Assert.True(transferred);
+        var created = Assert.Single(db.Context.SemesterEnrollments!.ToList(), e => e.Id != 1);
+        Assert.Equal(5, created.TenantId);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_FallsBackToCentralTenant_WhenTargetFacultyHasNoTenant()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 90,
+                TenantId = TestData.TenantId,
+                SemesterId = 1,
+                AcademicYearId = TestData.AcademicYearId,
+                ProgramId = TestData.ProgramIdOther
+            });
+            ctx.Faculties.Add(new Faculty { Id = 51, Name = "Null Tenant Faculty", OfficeCode = "NTF", TenantId = null });
+            ctx.Programs.Local.Single(p => p.Id == TestData.ProgramIdOther).FacultyId = 51;
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "Moved to the other faculty");
+
+        Assert.True(transferred);
+        var created = Assert.Single(db.Context.SemesterEnrollments!.ToList(), e => e.Id != 1);
+        Assert.Equal(TenantDefaults.CentralTenantId, created.TenantId);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_LeavesClosedHistoryOnItsOriginalTenant()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 90,
+                TenantId = TestData.TenantId,
+                SemesterId = 1,
+                AcademicYearId = TestData.AcademicYearId,
+                ProgramId = TestData.ProgramIdOther
+            });
+            SeedTenant(ctx, 5, "OTH2");
+            ctx.Faculties.Add(new Faculty { Id = 52, Name = "Other Faculty", OfficeCode = "OTH2", TenantId = 5 });
+            ctx.Programs.Local.Single(p => p.Id == TestData.ProgramIdOther).FacultyId = 52;
+        });
+        var service = CreateService(db);
+
+        await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "Moved to the other faculty");
+
+        // The closed row keeps pointing at the old SemesterInstance, so it must NOT be
+        // restamped: that instance belongs to the old program and is shared with the rest
+        // of the old cohort.
+        var closed = Assert.Single(db.Context.SemesterEnrollments!.ToList(), e => e.Id == 1);
+        Assert.Equal(TestData.TenantId, closed.TenantId);
+        Assert.Equal(2, closed.SemesterInstanceId);
+        Assert.Equal(StudentEnrollmentStatus.Inactive, closed.EnrollmentStatus);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_ClosedHistoryStaysBehind_SoStudentCanChangeTenant()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 90,
+                TenantId = 5,
+                SemesterId = 1,
+                AcademicYearId = TestData.AcademicYearId,
+                ProgramId = TestData.ProgramIdOther
+            });
+            // Engineering-style faculty: administered by a different exam office than the one
+            // holding the student, and its semester instance sits in that other tenant too.
+            SeedTenant(ctx, 5, "ENG");
+            ctx.Faculties.Add(new Faculty { Id = 53, Name = "Engineering", OfficeCode = "ENG", TenantId = 5 });
+            ctx.Programs.Local.Single(p => p.Id == TestData.ProgramIdOther).FacultyId = 53;
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "Moved into Engineering");
+
+        Assert.True(transferred);
+        var rows = db.Context.SemesterEnrollments!.ToList();
+
+        // The new enrollment joins the new office, so it is visible to the faculty that runs it.
+        var created = Assert.Single(rows, e => e.Id != 1);
+        Assert.Equal(5, created.TenantId);
+        Assert.Equal(90, created.SemesterInstanceId);
+
+        // The closed row stays on the old tenant and keeps its old semester instance, which
+        // is what makes the student-tenant move safe: the old office keeps the transcript
+        // and the old cohort keeps its shared semester.
+        var closed = Assert.Single(rows, e => e.Id == 1);
+        Assert.Equal(TestData.TenantId, closed.TenantId);
+        Assert.Equal(2, closed.SemesterInstanceId);
+        Assert.Equal(StudentEnrollmentStatus.Inactive, closed.EnrollmentStatus);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_ReturnsFalse_WhenReasonMissing_AndClosesNothing()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            // The target semester instance exists, so the ONLY reason this can fail is the
+            // missing reason. The check must happen before anything is written.
+        });
+        var service = CreateService(db);
+
+        Assert.False(await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: ""));
+        Assert.False(await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "   "));
+
+        var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
+        Assert.Equal(StudentEnrollmentStatus.Active, enrollment.EnrollmentStatus);
+        Assert.Null(enrollment.DropDate);
+        Assert.Null(enrollment.DropReason);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_RecordsReasonOnClosedRow_AndCapsAt500()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 90,
+                TenantId = TestData.TenantId,
+                SemesterId = 1,
+                AcademicYearId = TestData.AcademicYearId,
+                ProgramId = TestData.ProgramIdOther
+            });
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(
+            1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "Program was closed");
+
+        Assert.True(transferred);
+        var closed = Assert.Single(db.Context.SemesterEnrollments!.Where(e => e.Id == 1).ToList());
+
+        // DropReason is the only free-text field on SemesterEnrollment and this flow is its
+        // sole writer, so it doubles as the "list of transferred students" source.
+        Assert.Contains("Program was closed", closed.DropReason);
+        Assert.StartsWith("Transferred to ", closed.DropReason);
+        Assert.True(closed.DropReason!.Length <= 500);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_TruncatesOverlongReasonToColumnLimit()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 90,
+                TenantId = TestData.TenantId,
+                SemesterId = 1,
+                AcademicYearId = TestData.AcademicYearId,
+                ProgramId = TestData.ProgramIdOther
+            });
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(
+            1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: new string('x', 900));
+
+        Assert.True(transferred);
+        var closed = Assert.Single(db.Context.SemesterEnrollments!.Where(e => e.Id == 1).ToList());
+        Assert.Equal(500, closed.DropReason!.Length);
+    }
+
+    [Fact]
     public async Task TransferEnrollmentsAsync_ReturnsFalse_WhenSemesterInstanceMissing_AndClosesNothing()
     {
         using var db = new TestDb(TestTenantContext.Central(), ctx =>
@@ -539,7 +844,7 @@ public class SemesterEnrollmentServiceTests
         });
         var service = CreateService(db);
 
-        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1);
+        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "Program closed, moved to running program");
 
         Assert.False(transferred);
         var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
@@ -560,7 +865,7 @@ public class SemesterEnrollmentServiceTests
         });
         var service = CreateService(db);
 
-        var transferred = await service.TransferEnrollmentsAsync(1, 99, TestData.AcademicYearId, targetSemesterId: 1);
+        var transferred = await service.TransferEnrollmentsAsync(1, 99, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "Program closed, moved to running program");
 
         Assert.False(transferred);
         var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
@@ -581,7 +886,7 @@ public class SemesterEnrollmentServiceTests
         });
         var service = CreateService(db);
 
-        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramId, TestData.AcademicYearId, targetSemesterId: 0);
+        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramId, TestData.AcademicYearId, targetSemesterId: 0, transferReason: "Program closed, moved to running program");
 
         Assert.False(transferred);
         var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
@@ -594,7 +899,7 @@ public class SemesterEnrollmentServiceTests
         using var db = new TestDb(TestTenantContext.Central(), TestData.SeedBase);
         var service = CreateService(db);
 
-        var transferred = await service.TransferEnrollmentsAsync(999, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1);
+        var transferred = await service.TransferEnrollmentsAsync(999, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "Program closed, moved to running program");
 
         Assert.False(transferred);
         Assert.Empty(db.Context.SemesterEnrollments!);
@@ -628,7 +933,7 @@ public class SemesterEnrollmentServiceTests
         });
         var service = CreateService(db);
 
-        var transferred = await service.TransferEnrollmentsAsync(1, 99, TestData.AcademicYearId, targetSemesterId: 3);
+        var transferred = await service.TransferEnrollmentsAsync(1, 99, TestData.AcademicYearId, targetSemesterId: 3, transferReason: "Program closed, moved to running program");
 
         Assert.True(transferred);
         var created = Assert.Single(db.Context.SemesterEnrollments!);
@@ -648,7 +953,7 @@ public class SemesterEnrollmentServiceTests
         });
         var service = CreateService(db);
 
-        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramId, TestData.AcademicYearId, targetSemesterId: 1);
+        var transferred = await service.TransferEnrollmentsAsync(1, TestData.ProgramId, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "Program closed, moved to running program");
 
         Assert.True(transferred);
         var rows = db.Context.SemesterEnrollments!.ToList();

@@ -10,6 +10,12 @@
 
     var enrollments = ViewBag.Enrollments as List<FWU.Exam.Management.Domain.Entities.Semesters.SemesterEnrollment> ?? new();
     var affectedExamCount = (int)(ViewBag.AffectedExamCount ?? 0);
+
+    // The tenant the student is on today. The target tenant is derived from the selected
+    // faculty in the browser, because a faculty is the only thing that carries a tenant.
+    var currentTenantName = ViewBag.CurrentTenantName as string ?? "Central (default)";
+    var historyEnrollmentCount = enrollments.Count(e =>
+        e.EnrollmentStatus != FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Active);
 }
 
 <div class="space-y-6">
@@ -114,6 +120,16 @@
                             </select>
                         </div>
 
+                        <!-- Faculty -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                                Faculty <span class="text-red-600">*</span>
+                            </label>
+                            <select name="facultyId" id="FacultyId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="">Select Faculty</option>
+                            </select>
+                        </div>
+
                         <!-- College -->
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1.5">College</label>
@@ -146,7 +162,7 @@
                         </div>
 
                         <!-- Academic Year -->
-                        <div class="sm:col-span-2">
+                        <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1.5">Academic Year</label>
                             <select name="academicYearId" id="AcademicYearId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
                                 <option value="">Select Academic Year</option>
@@ -166,6 +182,31 @@
                                 }
                             </select>
                         </div>
+                    </div>
+
+                    <!-- Resolved tenant (read-only: the faculty decides it) -->
+                    <div class="mt-5">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Tenant</label>
+                        <input type="text" id="ResolvedTenant" readonly disabled
+                               class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 cursor-not-allowed"
+                               value="Select a faculty to resolve the tenant" />
+                        <p class="text-xs text-gray-500 mt-1">
+                            A program has no tenant of its own; it belongs to the tenant of its faculty. A faculty with no
+                            tenant of its own falls back to the central tenant. This value is derived, not editable.
+                        </p>
+                    </div>
+
+                    <!-- Transfer reason (mandatory) -->
+                    <div class="mt-5">
+                        <label for="TransferReason" class="block text-sm font-medium text-gray-700 mb-1">
+                            Reason for transfer <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="transferReason" id="TransferReason" rows="3" required maxlength="500"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                  placeholder="e.g. Student cleared the semester but the program was closed, so they were moved to the equivalent running program.">@(ViewBag.TransferReason as string)</textarea>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Required. Stored with the closed semester enrollments as the record of why this transfer happened.
+                        </p>
                     </div>
 
                     <!-- Confirmation -->
@@ -242,6 +283,13 @@
                             <span class="text-sm text-gray-500">Academic Year</span>
                             <span class="text-sm font-semibold text-gray-800" id="dCurrentYear">@currentAcademicYear</span>
                         </div>
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100">
+                            <span class="text-sm text-gray-500 flex items-center gap-1">
+                                Tenant
+                                <i class="fas fa-circle-info text-gray-300 text-[10px]" title="The exam office that administers this student. Derived from the faculty, never chosen directly."></i>
+                            </span>
+                            <span class="text-sm font-semibold text-gray-800 text-right max-w-[60%]" id="dCurrentTenant">@currentTenantName</span>
+                        </div>
                     </div>
                 </div>
 
@@ -252,6 +300,7 @@
                     <div class="h-[34px] flex items-center" id="arrowFaculty"><i class="fas fa-minus text-gray-300 text-sm"></i></div>
                     <div class="h-[34px] flex items-center" id="arrowProgram"><i class="fas fa-minus text-gray-300 text-sm"></i></div>
                     <div class="h-[34px] flex items-center" id="arrowYear"><i class="fas fa-minus text-gray-300 text-sm"></i></div>
+                    <div class="h-[34px] flex items-center" id="arrowTenant"><i class="fas fa-minus text-gray-300 text-sm"></i></div>
                 </div>
 
                 <!-- AFTER -->
@@ -282,6 +331,10 @@
                         <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100" id="dRowYear">
                             <span class="text-sm text-gray-500">Academic Year</span>
                             <span class="text-sm font-semibold text-gray-800" id="dNewYear">—</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100" id="dRowTenant">
+                            <span class="text-sm text-gray-500">Tenant</span>
+                            <span class="text-sm font-semibold text-gray-800 text-right max-w-[60%]" id="dNewTenant">—</span>
                         </div>
                     </div>
                 </div>
@@ -399,7 +452,7 @@
                             <div class="mt-2 pt-2 border-t border-green-200">
                                 <p class="text-xs text-green-600">
                                     <i class="fas fa-info-circle mr-1"></i>
-                                    Enrolled in the target semester you select, in <span class="font-semibold" id="dNewEnrollProgram">@currentProgram</span>, upon transfer completion.
+                                    Enrolled in the target semester you select, in <span class="font-semibold" id="dNewEnrollProgram">@currentProgram</span>, upon transfer completion. The reason you enter is stored against the closed enrollments.
                                 </p>
                             </div>
                         </div>
@@ -416,6 +469,133 @@
                                 </div>
                             </div>
                         }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tenant Impact: only when the selected faculty resolves to a different tenant -->
+            <div id="tenantImpact" class="hidden mt-8 pt-6 border-t border-gray-200">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-building text-purple-500 text-xs"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-purple-600 uppercase tracking-wide">Tenant Impact</h3>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                        <i class="fas fa-arrow-right-arrow-left mr-1"></i>
+                        Cross-exam-office
+                    </span>
+                </div>
+
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-xs font-semibold text-purple-700 uppercase tracking-wide shrink-0">Moves to</span>
+                            <span class="text-sm font-bold text-purple-900 truncate" id="dTenantTargetName">—</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-purple-600">
+                            <span>from</span>
+                            <span class="font-medium" id="dTenantSourceName">@currentTenantName</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <!-- MOVES -->
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-arrow-right text-green-500 text-xs"></i>
+                            <h4 class="text-xs font-bold text-green-700 uppercase tracking-wide">Moves to the new tenant</h4>
+                        </div>
+                        <ul class="space-y-2 text-xs text-green-800">
+                            <li class="flex items-start gap-2">
+                                <i class="fas fa-check text-green-500 mt-0.5 text-[10px]"></i>
+                                <span>
+                                    <span class="font-semibold">Student record</span> &mdash; level, college, faculty,
+                                    program and academic year are re-pointed, and its tenant is restamped.
+                                </span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fas fa-check text-green-500 mt-0.5 text-[10px]"></i>
+                                <span>
+                                    <span class="font-semibold">Admission record</span> &mdash; college, program and
+                                    academic year follow the student.
+                                </span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fas fa-check text-green-500 mt-0.5 text-[10px]"></i>
+                                <span>
+                                    <span class="font-semibold">New semester enrollment</span> &mdash; created in the
+                                    new tenant, so the new exam office sees the student immediately.
+                                </span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fas fa-check text-green-500 mt-0.5 text-[10px]"></i>
+                                <span>
+                                    <span class="font-semibold">Portal login</span> &mdash; the linked user account's
+                                    college and faculty are updated to match.
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- STAYS -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-lock text-amber-500 text-xs"></i>
+                            <h4 class="text-xs font-bold text-amber-700 uppercase tracking-wide">Stays in the old tenant</h4>
+                        </div>
+                        @if (historyEnrollmentCount == 0)
+                        {
+                            <p class="text-xs text-amber-700">
+                                No closed semesters to leave behind &mdash; the student has no completed history on
+                                this program, so nothing is stranded in the previous tenant.
+                            </p>
+                        }
+                        else
+                        {
+                            <ul class="space-y-2 text-xs text-amber-800">
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-exclamation-triangle text-amber-500 mt-0.5 text-[10px]"></i>
+                                    <span>
+                                        <span class="font-semibold">@historyEnrollmentCount closed semester enrollment(s)</span>
+                                        remain in <span class="font-semibold">@currentTenantName</span> with their
+                                        credits, fees, GPA and results intact &mdash; they are never deleted.
+                                    </span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-exclamation-triangle text-amber-500 mt-0.5 text-[10px]"></i>
+                                    <span>
+                                        <span class="font-semibold">Historical exam registrations</span> on those closed
+                                        semesters are deactivated, not deleted, so the student drops out of the old
+                                        program's exam lists.
+                                    </span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-circle-info text-amber-500 mt-0.5 text-[10px]"></i>
+                                    <span>
+                                        <span class="font-semibold">Marks are safe</span> &mdash; result records are
+                                        keyed by registration number and are not touched by this transfer.
+                                    </span>
+                                </li>
+                            </ul>
+                        }
+                    </div>
+                </div>
+
+                <div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-exclamation-triangle text-amber-500 text-sm mt-0.5"></i>
+                        <div>
+                            <p class="text-xs font-medium text-amber-800">This split is visible to both exam offices</p>
+                            <p class="text-xs text-amber-700 mt-1">
+                                The student's live record lives in <span class="font-semibold" id="dTenantWarnTarget">the new tenant</span>
+                                and their completed semesters stay in <span class="font-semibold" id="dTenantWarnSource">@currentTenantName</span>.
+                                Each tenant's reports only see its own data, so the old exam office keeps the credit and
+                                result history while the new one sees only the current enrollment. If this student needs
+                                their full transcript in one place, request a transcript from
+                                <span class="font-semibold" id="dTenantWarnSource2">@currentTenantName</span> before the transfer.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -448,6 +628,7 @@
     <script>
         var _current = {
             level: @Model.LevelId,
+            faculty: @(Model.FacultyId?.ToString() ?? "0"),
             college: @Model.CollegeId,
             program: @(Model.ProgramId?.ToString() ?? "0"),
             year: @Model.AcademicYearId,
@@ -455,7 +636,9 @@
             collegeName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentCollege)),
             facultyName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentFaculty)),
             programName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentProgram)),
-            yearName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentAcademicYear))
+            yearName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentAcademicYear)),
+            tenantId: @(ViewBag.CurrentTenantId ?? 1),
+            tenantName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.CurrentTenantName as string ?? "Central (default)"))
         };
 
         function setArrow(id, changed) {
@@ -491,23 +674,26 @@
 
         function updateDiagram() {
             var newLevelId = parseInt($("#LevelId").val()) || 0;
+            var newFacultyId = parseInt($("#FacultyId").val()) || 0;
             var newCollegeId = parseInt($("#CollegeId").val()) || 0;
             var newProgramId = parseInt($("#ProgramId").val()) || 0;
             var newYearId = parseInt($("#AcademicYearId").val()) || 0;
 
             var levelChanged = newLevelId > 0 && newLevelId !== _current.level;
+            var facultyChanged = newFacultyId > 0 && newFacultyId !== _current.faculty;
             var collegeChanged = newCollegeId > 0 && newCollegeId !== _current.college;
             var programChanged = newProgramId > 0 && newProgramId !== _current.program;
             var yearChanged = newYearId > 0 && newYearId !== _current.year;
-            var facultyChanged = programChanged;
-            var anyChange = levelChanged || collegeChanged || programChanged || yearChanged;
+            var anyChange = levelChanged || facultyChanged || collegeChanged || programChanged || yearChanged;
 
             var newLevelName = getSelectedText("LevelId");
+            var newFacultyName = getSelectedText("FacultyId");
             var newCollegeName = getSelectedText("CollegeId");
             var newProgramName = getSelectedText("ProgramId");
             var newYearName = getSelectedText("AcademicYearId");
 
             document.getElementById("dNewLevel").textContent = newLevelName || "—";
+            document.getElementById("dNewFaculty").textContent = newFacultyName || "—";
             document.getElementById("dNewCollege").textContent = newCollegeName || "—";
             document.getElementById("dNewProgram").textContent = newProgramName || "—";
             document.getElementById("dNewYear").textContent = newYearName || "—";
@@ -517,23 +703,48 @@
             var semesterName = $("#SemesterId").val() ? getSelectedText("SemesterId") : "";
             document.getElementById("dNewEnrollSemester").textContent = semesterName || "Not selected";
 
+            // The faculty carries the tenant, so a tenant change is detectable as soon as a
+            // faculty is picked - it does not wait for the program. Compared by id, because a
+            // faculty with no tenant of its own resolves to the central one and must not be
+            // reported as a move just because it has no name.
+            var targetTenantId = newFacultyId > 0 ? _facultyTenantIds[newFacultyId] : null;
+            var targetTenantName = newFacultyId > 0
+                ? (_facultyTenants[newFacultyId] || "Central (default)")
+                : "";
+            var tenantChanged = targetTenantId != null && targetTenantId !== _current.tenantId;
+            // A tenant can only differ when the faculty differs, but folding it in keeps the
+            // "no changes detected" message honest if the faculty/tenant rules ever change.
+            anyChange = anyChange || tenantChanged;
+
+            document.getElementById("dNewTenant").textContent = targetTenantName || "—";
+            if (tenantChanged) {
+                document.getElementById("dTenantTargetName").textContent = targetTenantName;
+                document.getElementById("dTenantWarnTarget").textContent = targetTenantName;
+                document.getElementById("dTenantWarnSource").textContent = _current.tenantName;
+                document.getElementById("dTenantWarnSource2").textContent = _current.tenantName;
+            }
+            document.getElementById("tenantImpact").classList.toggle("hidden", !tenantChanged);
+
             setArrow("arrowLevel", levelChanged);
             setArrow("arrowCollege", collegeChanged);
             setArrow("arrowFaculty", facultyChanged);
             setArrow("arrowProgram", programChanged);
             setArrow("arrowYear", yearChanged);
+            setArrow("arrowTenant", tenantChanged);
 
             setRowColor("dRowLevel", levelChanged);
             setRowColor("dRowCollege", collegeChanged);
             setRowColor("dRowFaculty", facultyChanged);
             setRowColor("dRowProgram", programChanged);
             setRowColor("dRowYear", yearChanged);
+            setRowColor("dRowTenant", tenantChanged);
 
             setNameColor("dNewLevel", levelChanged, false);
             setNameColor("dNewCollege", collegeChanged, false);
             setNameColor("dNewFaculty", facultyChanged, false);
             setNameColor("dNewProgram", programChanged, true);
             setNameColor("dNewYear", yearChanged, false);
+            setNameColor("dNewTenant", tenantChanged, false);
 
             var impact = document.getElementById("enrollmentImpact");
             var noChange = document.getElementById("noChangeMsg");
@@ -546,22 +757,19 @@
             }
 
             var confirmText = document.getElementById("confirmText");
-            if (programChanged) {
-                confirmText.textContent = "This will change the student's program. Prior semester enrollments are closed and kept as history (credits, fees and results preserved), and the student is enrolled into the target semester you select.";
+            if (tenantChanged) {
+                confirmText.textContent = "This will change the student's program and faculty, and move them to the " +
+                    "tenant '" + targetTenantName + "'. The student's record, admission and new enrollment move to " +
+                    "that tenant; their closed semesters stay in '" + _current.tenantName + "' as history. " +
+                    "See the Tenant Impact panel below.";
+            } else if (programChanged) {
+                confirmText.textContent = "This will change the student's program and faculty. Prior semester enrollments are closed and kept as history (credits, fees and results preserved), and the student is enrolled into the target semester you select. The tenant stays '" + _current.tenantName + "'.";
+            } else if (facultyChanged) {
+                confirmText.textContent = "This will change the student's faculty. The student keeps their current program, which must belong to the new faculty. Semester enrollments and results are preserved. The tenant stays '" + _current.tenantName + "'.";
             } else if (collegeChanged) {
-                confirmText.textContent = "This will update the student's college. Semester enrollments and exam registrations are preserved.";
+                confirmText.textContent = "This will update the student's college. Semester enrollments and exam registrations are preserved. The tenant stays '" + _current.tenantName + "'.";
             } else {
-                confirmText.textContent = "This will update the student's details. Semester enrollments are not affected.";
-            }
-
-            if (newProgramId > 0) {
-                $.get(tenantUrl("/Students/StudentTransfers/GetFacultyByProgram"), { programId: newProgramId }, function (data) {
-                    document.getElementById("dNewFaculty").textContent = (data && data.facultyName) ? data.facultyName : _current.facultyName;
-                }).fail(function () {
-                    document.getElementById("dNewFaculty").textContent = _current.facultyName;
-                });
-            } else {
-                document.getElementById("dNewFaculty").textContent = "—";
+                confirmText.textContent = "This will update the student's details. Semester enrollments are not affected. The tenant stays '" + _current.tenantName + "'.";
             }
         }
 
@@ -571,17 +779,63 @@
             return el.options[el.selectedIndex].text;
         }
 
-        var _collegeSeq = 0, _programSeq = 0, _cascadeBusy = false;
+        var _facultySeq = 0, _collegeSeq = 0, _programSeq = 0, _cascadeBusy = false;
+        var _facultyTenants = {};
+        var _facultyTenantIds = {};
 
-        function loadColleges(levelId, selectedCollegeId, callback) {
-            var seq = ++_collegeSeq;
+        function resetSelect(id, placeholder) {
+            var el = $("#" + id);
+            el.select2('destroy');
+            el.empty().append('<option value="">' + placeholder + '</option>');
+            el.select2({ width: 'resolve' });
+        }
+
+        // The faculty is the second step of the cascade and it is also what resolves the
+        // tenant, so its options carry the tenant name through to the read-only display.
+        function loadFaculties(levelId, selectedFacultyId, callback) {
+            var seq = ++_facultySeq;
             if (!levelId) {
-                $("#CollegeId").empty().append('<option value="">Select College</option>');
+                resetSelect("FacultyId", "Select Faculty");
+                updateTenantDisplay(null);
                 if (callback) callback();
                 return;
             }
-            $.get(tenantUrl("/Students/StudentTransfers/GetCollegesByLevel"),
+            $.get(tenantUrl("/Students/StudentTransfers/GetFacultiesByLevel"),
                 { levelId: levelId },
+                function (data) {
+                    if (seq !== _facultySeq) return;
+                    var dropdown = $("#FacultyId");
+                    dropdown.select2('destroy');
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select Faculty</option>');
+                    $.each(data, function (index, item) {
+                        var sel = selectedFacultyId && item.id == selectedFacultyId ? ' selected' : '';
+                        dropdown.append(`<option value="${item.id}"${sel}>${item.name}</option>`);
+                        _facultyTenants[item.id] = item.tenantName;
+                        _facultyTenantIds[item.id] = item.tenantId;
+                    });
+                    dropdown.select2({ width: 'resolve' });
+                    if (callback) callback();
+                });
+        }
+
+        function updateTenantDisplay(facultyId) {
+            var name = facultyId ? (_facultyTenants[facultyId] || "Central (default)") : "";
+            document.getElementById("ResolvedTenant").value =
+                name || "Select a faculty to resolve the tenant";
+        }
+
+        // Colleges are keyed off the faculty's CollegeFaculty affiliations, not off the
+        // level any more, so the list is every college the faculty is affiliated with.
+        function loadColleges(facultyId, selectedCollegeId, callback) {
+            var seq = ++_collegeSeq;
+            if (!facultyId) {
+                resetSelect("CollegeId", "Select College");
+                if (callback) callback();
+                return;
+            }
+            $.get(tenantUrl("/Students/StudentTransfers/GetCollegesByFaculty"),
+                { facultyId: facultyId },
                 function (data) {
                     if (seq !== _collegeSeq) return;
                     var dropdown = $("#CollegeId");
@@ -600,13 +854,14 @@
         function loadPrograms(collegeId, selectedProgramId, callback) {
             var seq = ++_programSeq;
             var levelId = $("#LevelId").val();
+            var facultyId = $("#FacultyId").val();
             if (!collegeId) {
-                $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                resetSelect("ProgramId", "Select Program");
                 if (callback) callback();
                 return;
             }
             $.get(tenantUrl("/Students/StudentTransfers/GetProgramsByCollege"),
-                { collegeId: collegeId, levelId: levelId || null },
+                { collegeId: collegeId, levelId: levelId || null, facultyId: facultyId || null },
                 function (data) {
                     if (seq !== _programSeq) return;
                     var dropdown = $("#ProgramId");
@@ -654,15 +909,19 @@
             $('.select2').select2({ width: 'resolve' });
 
             var initLevelId = @Model.LevelId;
+            var initFacultyId = @(Model.FacultyId?.ToString() ?? "0");
             var initCollegeId = @Model.CollegeId;
             var initProgramId = @(Model.ProgramId?.ToString() ?? "0");
 
             _cascadeBusy = true;
-            loadColleges(initLevelId, initCollegeId, function () {
-                loadPrograms(initCollegeId, initProgramId, function () {
-                    loadSemesters(initProgramId, $("#AcademicYearId").val(), function () {
-                        _cascadeBusy = false;
-                        updateDiagram();
+            loadFaculties(initLevelId, initFacultyId, function () {
+                updateTenantDisplay(initFacultyId || null);
+                loadColleges(initFacultyId, initCollegeId, function () {
+                    loadPrograms(initCollegeId, initProgramId, function () {
+                        loadSemesters(initProgramId, $("#AcademicYearId").val(), function () {
+                            _cascadeBusy = false;
+                            updateDiagram();
+                        });
                     });
                 });
             });
@@ -670,28 +929,31 @@
             $("#LevelId").change(function () {
                 if (_cascadeBusy) return;
                 var levelId = $(this).val();
-                $("#CollegeId").select2('destroy');
-                $("#CollegeId").empty().append('<option value="">Select College</option>');
-                $("#CollegeId").select2({ width: 'resolve' });
-                $("#ProgramId").select2('destroy');
-                $("#ProgramId").empty().append('<option value="">Select Program</option>');
-                $("#ProgramId").select2({ width: 'resolve' });
-                $("#SemesterId").select2('destroy');
-                $("#SemesterId").empty().append('<option value="">Select target semester</option>');
-                $("#SemesterId").select2({ width: 'resolve' });
-                loadColleges(levelId, null);
+                resetSelect("FacultyId", "Select Faculty");
+                resetSelect("CollegeId", "Select College");
+                resetSelect("ProgramId", "Select Program");
+                resetSelect("SemesterId", "Select target semester");
+                updateTenantDisplay(null);
+                loadFaculties(levelId, null);
+                updateDiagram();
+            });
+
+            $("#FacultyId").change(function () {
+                if (_cascadeBusy) return;
+                var facultyId = $(this).val();
+                resetSelect("CollegeId", "Select College");
+                resetSelect("ProgramId", "Select Program");
+                resetSelect("SemesterId", "Select target semester");
+                updateTenantDisplay(facultyId || null);
+                loadColleges(facultyId, null);
                 updateDiagram();
             });
 
             $("#CollegeId").change(function () {
                 if (_cascadeBusy) return;
                 var collegeId = $(this).val();
-                $("#ProgramId").select2('destroy');
-                $("#ProgramId").empty().append('<option value="">Select Program</option>');
-                $("#ProgramId").select2({ width: 'resolve' });
-                $("#SemesterId").select2('destroy');
-                $("#SemesterId").empty().append('<option value="">Select target semester</option>');
-                $("#SemesterId").select2({ width: 'resolve' });
+                resetSelect("ProgramId", "Select Program");
+                resetSelect("SemesterId", "Select target semester");
                 loadPrograms(collegeId, null);
                 updateDiagram();
             });
@@ -720,26 +982,66 @@
                 updateDiagram();
             });
 
-            $("#confirmTransfer").change(function () {
-                $("#btnTransfer").prop("disabled", !this.checked);
-            });
+            // The submit button is gated on BOTH the confirmation box and a non-empty
+            // reason, so an empty reason can never be posted.
+            function refreshSubmitState() {
+                var confirmed = $("#confirmTransfer").is(":checked");
+                var reason = ($("#TransferReason").val() || "").trim();
+                $("#btnTransfer").prop("disabled", !confirmed || reason.length === 0);
+            }
+
+            $("#confirmTransfer").change(refreshSubmitState);
+            $("#TransferReason").on("input", refreshSubmitState);
+            refreshSubmitState();
 
             $("#transferForm").on("submit", function (e) {
                 var level = $("#LevelId").val();
+                var faculty = $("#FacultyId").val();
                 var college = $("#CollegeId").val();
                 var program = $("#ProgramId").val();
                 var ay = $("#AcademicYearId").val();
                 var semester = $("#SemesterId").val();
-                if (!level || !college || !program || !ay || !semester) {
+                var reason = ($("#TransferReason").val() || "").trim();
+                if (!level || !faculty || !college || !program || !ay || !semester) {
                     e.preventDefault();
-                    alert("Please fill in all transfer fields, including the target semester.");
+                    alert("Please fill in all transfer fields, including the faculty and the target semester.");
+                    return false;
+                }
+                if (!reason) {
+                    e.preventDefault();
+                    alert("Please enter a reason for this transfer. It is required.");
                     return false;
                 }
                 var newProgramId = parseInt(program);
+                var newFacultyId = parseInt(faculty);
                 var targetSemester = getSelectedText("SemesterId");
-                var msg = newProgramId !== _current.program
-                    ? "This will transfer the student to a NEW PROGRAM. Prior semester enrollments are closed and kept as history (credits, fees and results preserved), and the student is enrolled into " + targetSemester + ". Continue?"
-                    : "This will update the student's college. Semester enrollments will be preserved. Continue?";
+                var msg;
+                if (newProgramId !== _current.program) {
+                    msg = "This will transfer the student to a NEW PROGRAM. Prior semester enrollments are closed and kept as history (credits, fees and results preserved), and the student is enrolled into " + targetSemester + ". Continue?";
+                } else if (newFacultyId !== _current.faculty) {
+                    msg = "This will change the student's FACULTY. Their program, semester enrollments and results are preserved. Continue?";
+                } else {
+                    msg = "This will update the student's college. Semester enrollments will be preserved. Continue?";
+                }
+                // The faculty decides the tenant. When it differs from the student's current
+                // tenant the student record moves and their closed history stays behind, so
+                // say so up front rather than only in the success message. Compared by id,
+                // not name, so a faculty without a tenant is not reported as a change.
+                var newTenantId = _facultyTenantIds[faculty];
+                if (newTenantId && newTenantId !== _current.tenantId) {
+                    msg += "\n\nTENANT CHANGE\n" +
+                           "The selected faculty is administered by tenant '" +
+                           (_facultyTenants[faculty] || _current.tenantName) +
+                           "', not '" + _current.tenantName + "'.\n\n" +
+                           "Moves to the new tenant:\n" +
+                           "  - Student record, admission record and portal login\n" +
+                           "  - The new semester enrollment you selected\n\n" +
+                           "Stays in '" + _current.tenantName + "':\n" +
+                           "  - @enrollments.Count closed semester enrollment(s), with credits, fees and results\n" +
+                           "  - Their exam registrations are deactivated, not deleted\n\n" +
+                           "Each tenant only sees its own data, so a full transcript has to be requested\n" +
+                           "from '" + _current.tenantName + "' before the transfer.\n\nContinue?";
+                }
                 if (!confirm(msg)) {
                     e.preventDefault();
                     return false;

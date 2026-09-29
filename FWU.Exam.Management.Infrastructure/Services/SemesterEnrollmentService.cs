@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
@@ -251,12 +252,15 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             .AnyAsync(se => se.StudentAdmissionId == admissionId);
         if (alreadyEnrolled) return false;
 
+        // The program's first semester is the lowest Semester.Number. ProgramSemesters
+        // .DisplayOrder is deliberately not used: it is 0 on every row in the database, so
+        // ordering by it is a no-op that only worked because of the tie-break below.
         var firstProgramSemester = await context.ProgramSemesters
             .AsNoTracking()
             .Where(ps => ps.ProgramId == admission.ProgramsId && ps.IsActive)
             .Include(ps => ps.Semester)
-            .OrderBy(ps => ps.DisplayOrder)
-            .ThenBy(ps => ps.Semester!.Number)
+            .OrderBy(ps => ps.Semester!.Number)
+            .ThenBy(ps => ps.SemesterId)
             .FirstOrDefaultAsync();
         if (firstProgramSemester == null) return false;
 
@@ -291,9 +295,13 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         return true;
     }
 
-    public async Task<bool> TransferEnrollmentsAsync(int admissionId, int newProgramId, int newAcademicYearId, int targetSemesterId, string? transferReason = null)
+    public async Task<bool> TransferEnrollmentsAsync(int admissionId, int newProgramId, int newAcademicYearId, int targetSemesterId, string transferReason)
     {
         if (targetSemesterId < 1) return false;
+
+        // The reason is mandatory and is the audit trail for why this student moved, so
+        // reject it before anything is written. Never close enrollments and then bail.
+        if (string.IsNullOrWhiteSpace(transferReason)) return false;
 
         var admission = await context.StudentAdmissions
             .AsNoTracking()
@@ -318,10 +326,12 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                 si.ProgramId == newProgramId);
         if (semesterInstance == null) return false;
 
+        // Program has no TenantId of its own: a program belongs to a tenant through the
+        // faculty that owns it, so that is what decides where the new enrollment is stamped.
         var targetProgram = await context.Programs
             .AsNoTracking()
             .Where(p => p.Id == newProgramId)
-            .Select(p => new { p.ProgramName, p.ProgramCode })
+            .Select(p => new { p.ProgramName, p.ProgramCode, FacultyTenantId = p.Faculty != null ? p.Faculty.TenantId : (int?)null })
             .FirstOrDefaultAsync();
 
         var newProgramLabel = targetProgram == null
@@ -330,9 +340,15 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                 ? targetProgram.ProgramName
                 : $"{targetProgram.ProgramName} ({targetProgram.ProgramCode})";
 
-        var closeReason = string.IsNullOrWhiteSpace(transferReason)
-            ? $"Transferred to {newProgramLabel}"
-            : $"Transferred to {newProgramLabel}: {transferReason!.Trim()}";
+        // Resolve the tenant from the target faculty rather than inheriting the admission's
+        // old one. A faculty with no tenant of its own resolves to the central tenant.
+        var targetTenantId = targetProgram == null
+            ? admission.TenantId
+            : TenantDefaults.Resolve(targetProgram.FacultyTenantId);
+
+        // DropReason is the only free-text field on SemesterEnrollment and this flow is its
+        // sole writer, so "DropReason IS NOT NULL" doubles as the transferred-students list.
+        var closeReason = $"Transferred to {newProgramLabel}: {transferReason.Trim()}";
         if (closeReason.Length > 500) closeReason = closeReason[..500];
 
         var now = DateTime.UtcNow;
@@ -356,7 +372,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
 
         context.SemesterEnrollments.Add(new SemesterEnrollment
         {
-            TenantId = admission.TenantId,
+            TenantId = targetTenantId,
             StudentAdmissionId = admission.Id,
             SemesterInstanceId = semesterInstance.Id,
             EnrollmentStatus = StudentEnrollmentStatus.Active,
@@ -437,17 +453,18 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             .Distinct()
             .ToHashSetAsync();
 
-        // 3. Pre-fetch program semesters for all programs.
+        // 3. Pre-fetch program semesters for all programs, ordered by the semester number
+        // rather than ProgramSemesters.DisplayOrder, which is uniformly 0 in the database.
         var programSemesters = await context.ProgramSemesters
             .AsNoTracking()
             .Where(ps => programIds.Contains(ps.ProgramId) && ps.IsActive)
             .Include(ps => ps.Semester)
-            .OrderBy(ps => ps.DisplayOrder)
+            .OrderBy(ps => ps.Semester!.Number)
             .ToListAsync();
 
         var programSemesterMap = programSemesters
             .GroupBy(ps => ps.ProgramId)
-            .ToDictionary(g => g.Key, g => g.OrderBy(ps => ps.DisplayOrder).ToList());
+            .ToDictionary(g => g.Key, g => g.OrderBy(ps => ps.Semester!.Number).ToList());
 
         // 4. Pre-fetch semester instances matching (AcademicYearId, ProgramId) pairs.
         var academicYearIds = activeEnrollments
@@ -511,11 +528,21 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             if (!programSemesterMap.TryGetValue(admission.ProgramsId, out var programSemesterList))
                 continue;
 
-            var currentOrder = programSemesterList.FirstOrDefault(ps => ps.SemesterId == semester.Id)?.DisplayOrder ?? 0;
-            var nextProgramSemester = programSemesterList.FirstOrDefault(ps => ps.DisplayOrder == currentOrder + 1);
-            if (nextProgramSemester == null) continue;
+            // The next semester is the one that follows in Semester.Number order.
+            // DisplayOrder cannot be used here: it is 0 on every ProgramSemester row in the
+            // database, because the migration that created the table backfilled 0 and the
+            // seeder that would have written real values early-returns once the table has
+            // rows. Arithmetic on it therefore never matches anything, which meant no
+            // student was ever promoted out of a completed semester.
+            var orderedProgramSemesters = programSemesterList
+                .OrderBy(ps => ps.Semester!.Number)
+                .ToList();
+            var currentIndex = orderedProgramSemesters.FindIndex(ps => ps.SemesterId == semester.Id);
+            // A negative index means the current semester is not one of the program's own,
+            // and the last index means there is no next semester to promote into.
+            if (currentIndex < 0 || currentIndex >= orderedProgramSemesters.Count - 1) continue;
 
-            var nextSemester = nextProgramSemester.Semester;
+            var nextSemester = orderedProgramSemesters[currentIndex + 1].Semester;
             if (nextSemester == null) continue;
 
             if (!semesterInstanceMap.TryGetValue(
