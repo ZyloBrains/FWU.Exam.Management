@@ -1,4 +1,3 @@
-@model IEnumerable<AdmitCard>
 @inject UserManager<AppUser> UserManager
 @inject IPermissionService PermissionService
 
@@ -9,41 +8,21 @@
         ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
         : new List<string>();
     bool HasPerm(string permission) => userPerms.Contains(permission);
-    var totalCount = ViewBag.TotalCount ?? Model.Count();
-    var currentPage = ViewBag.CurrentPage ?? 1;
-    var totalPages = ViewBag.TotalPages ?? 1;
-    var pageSize = ViewBag.PageSize ?? 10;
-    var currentSearch = ViewBag.Search as string ?? "";
-    var currentSort = ViewBag.Sort as string ?? "Id";
-    var currentSortDir = ViewBag.SortDir as string ?? "asc";
-    var currentScheduleId = (ViewData["ExamScheduleId"] is SelectList scheduleSelectList && scheduleSelectList.SelectedValue != null)
-        ? scheduleSelectList.SelectedValue.ToString() ?? ""
-        : "";
 }
 
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ openExport: false, showFilters: false }">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-ticket-alt text-indigo-600"></i>
             </div>
             <div>
-    @await Html.PartialAsync("_AlertMessages")
+                @await Html.PartialAsync("_AlertMessages")
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Admit Cards</h1>
                 <p class="text-sm text-gray-500 mt-0.5">Manage admit cards for exams.</p>
             </div>
         </div>
         <div class="flex items-center gap-3">
-            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
-            {
-                RouteValues = new Dictionary<string, string>
-                {
-                    ["search"] = currentSearch,
-                    ["examScheduleId"] = currentScheduleId
-                },
-                ButtonClass = "bg-green-600 hover:bg-green-700",
-                ScopeLabel = " (All)"
-            })
             @if (HasPerm("admitcards.generate"))
             {
                 <a asp-action="Generate" asp-area="Exams"
@@ -53,53 +32,135 @@
             }
             @if (HasPerm("admitcards.download"))
             {
-                <a asp-action="PrintAll" asp-area="Exams" asp-route-examScheduleId="@currentScheduleId"
+                <a href="javascript:void(0)" onclick="downloadAll()" id="downloadAllBtn"
                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
-                    <i class="fas fa-print text-xs"></i> Download All (PDF)
+                    <i class="fas fa-download text-xs"></i> Download All (ZIP)
                 </a>
             }
         </div>
     </div>
 
+    <!-- Search & Filter Card -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <form method="get" asp-action="Index" asp-area="Exams" class="flex flex-col sm:flex-row gap-3">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div class="relative flex-1">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <input type="text" name="search" value="@currentSearch"
-                       placeholder="Search by card number, schedule, registration no, student name..."
-                       class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input id="searchBox" type="search" placeholder="Search by card number, schedule, registration no, student name..."
+                       class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
-            <div class="relative w-full sm:w-48">
-                <select name="examScheduleId" class="select2 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        onchange="this.form.submit()">
-                    <option value="">All Schedules</option>
-                    @if (ViewData["ExamScheduleId"] is SelectList scheduleList)
-                    {
-                        @foreach (var item in scheduleList)
-                        {
-                            <option value="@item.Value" selected="@(item.Selected ? "selected" : null)">@item.Text</option>
-                        }
-                    }
-                </select>
-            </div>
-            <input type="hidden" name="sort" value="@currentSort" />
-            <input type="hidden" name="sortDir" value="@currentSortDir" />
-            <input type="hidden" name="pageSize" value="@pageSize" />
-            <div class="flex gap-2">
-                <button type="submit" class="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-                    Search
+            <div class="flex items-center gap-2">
+                <button type="button" x-on:click="showFilters = !showFilters"
+                        :class="showFilters ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-white text-gray-700 border-gray-200'"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-filter text-xs"></i> Filters
+                    <span x-show="activeFilterCount > 0" x-text="activeFilterCount"
+                          class="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-indigo-500 rounded-full"></span>
                 </button>
-                @if (!string.IsNullOrEmpty(currentSearch))
+                @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
                 {
-                    <a asp-action="Index" asp-area="Exams" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                       class="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
-                        <i class="fas fa-times text-xs"></i> Clear
-                    </a>
-                }
+                    RouteValues = new Dictionary<string, string>(),
+                    ButtonClass = "bg-green-600 hover:bg-green-700",
+                    ScopeLabel = " (All)",
+                    JavascriptCallbacks = new Dictionary<string, string>
+                    {
+                        ["csv"] = "exportCsv()",
+                        ["pdf"] = "exportPdf()",
+                        ["excel"] = "exportExcel()"
+                    }
+                })
             </div>
-        </form>
+        </div>
+
+        <!-- Filter Dropdowns (Collapsible) -->
+        <div x-show="showFilters" x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
+             class="mt-4 pt-4 border-t border-gray-200">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Exam Schedule</label>
+                    <select id="filterExamSchedule" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="">All Schedules</option>
+                        @if (ViewBag.ExamSchedules is SelectList esList)
+                        {
+                            foreach (var item in esList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">College</label>
+                    <select id="filterCollege" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="">All Colleges</option>
+                        @if (ViewBag.Colleges is SelectList cList)
+                        {
+                            foreach (var item in cList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Level</label>
+                    <select id="filterLevel" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="">All Levels</option>
+                        @if (ViewBag.Levels is SelectList lList)
+                        {
+                            foreach (var item in lList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Program</label>
+                    <select id="filterProgram" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="">All Programs</option>
+                        @if (ViewBag.Programs is SelectList pList)
+                        {
+                            foreach (var item in pList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                    <select id="filterStatus" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="">All Statuses</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-3 gap-3">
+                <div class="flex items-center gap-2 text-xs text-gray-400">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Filters apply automatically when changed</span>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <select id="pageSize" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="10">10 / page</option>
+                        <option value="25">25 / page</option>
+                        <option value="50" selected>50 / page</option>
+                        <option value="9999">All</option>
+                    </select>
+                    <button type="button" x-on:click="clearAllFilters()"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                        <i class="fas fa-times text-xs"></i> Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- Desktop Table -->
     <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
         <table class="w-full text-sm text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
@@ -107,194 +168,363 @@
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Card #</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Exam Schedule</th>
-                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
-                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Reg No</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Reg No</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Generated Date</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
-                @{ var serial = (currentPage - 1) * pageSize; }
-                @foreach (var item in Model)
-                {
-                    serial++;
-                    <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
-                        <td class="px-4 py-3 text-gray-500">@serial</td>
-                        <td class="px-4 py-3">
-                            <div class="font-medium text-gray-800">@item.AdmitCardNumber</div>
-                        </td>
-                        <td class="px-4 py-3 text-gray-600">@item.ExamSchedule?.ExamScheduleName</td>
-                        <td class="px-4 py-3 text-gray-600">
-                            @(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.MiddleName} {item.StudentRegistration.LastName}".Trim() : "-")
-                        </td>
-                        <td class="px-4 py-3 text-gray-600 font-mono text-xs">@(item.StudentRegistration?.RegistrationNumber ?? "-")</td>
-                        <td class="px-4 py-3 text-gray-600 text-xs">@item.GeneratedDate.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td class="px-4 py-3">
-                            @if (item.IsActive)
-                            {
-                                <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Active</span>
-                            }
-                            else
-                            {
-                                <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Inactive</span>
-                            }
-                        </td>
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex items-center justify-end gap-1">
-                                <a asp-action="Details" asp-area="Exams" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
-                                    <i class="fas fa-eye text-xs"></i>
-                                </a>
-                                <a asp-action="Download" asp-area="Exams" asp-route-id="@item.Id" class="p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Download">
-                                    <i class="fas fa-download text-xs"></i>
-                                </a>
-                                @if (HasPerm("admitcards.delete"))
-                                {
-                                    <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
-                                        <i class="fas fa-trash text-xs"></i>
-                                    </a>
-                                }
-                            </div>
-                        </td>
-                    </tr>
-                }
+            <tbody id="admitCardsBody" class="divide-y divide-gray-100">
+                <tr>
+                    <td colspan="8" class="px-4 py-20 text-center">
+                        <div class="flex flex-col items-center justify-center">
+                            <i class="fas fa-spinner fa-pulse text-2xl text-indigo-600 mb-4"></i>
+                            <span class="text-sm text-gray-500 font-medium">Loading admit cards...</span>
+                        </div>
+                    </td>
+                </tr>
             </tbody>
         </table>
-        @if (!Model.Any())
-        {
-            <div class="text-center py-16">
-                <i class="fas fa-ticket-alt text-4xl text-gray-300 mb-4"></i>
-                <h3 class="text-sm font-semibold text-gray-900 mb-1">No records found</h3>
-                <p class="text-sm text-gray-500">No admit cards found.</p>
-            </div>
-        }
     </div>
 
-    <div class="lg:hidden space-y-3">
-        @{ var serialMobile = (currentPage - 1) * pageSize; }
-        @if (Model.Any())
-        {
-            @foreach (var item in Model)
-            {
-                serialMobile++;
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                                <span class="text-xs font-bold text-indigo-700">@serialMobile</span>
-                            </div>
-                            <div>
-                                <h3 class="font-semibold text-gray-800 text-sm">@item.AdmitCardNumber</h3>
-                                <p class="text-xs text-gray-500">@item.ExamSchedule?.ExamScheduleName</p>
-                            </div>
-                        </div>
-                        <div>
-                            @if (item.IsActive)
-                            {
-                                <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Active</span>
-                            }
-                            else
-                            {
-                                <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Inactive</span>
-                            }
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
-                        <div class="text-gray-500">Student</div>
-                         <div class="text-gray-800">@(item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.MiddleName} {item.StudentRegistration.LastName}".Trim() : "-")</div>
-                        <div class="text-gray-500">Reg No</div>
-                        <div class="text-gray-800 font-mono text-xs">@(item.StudentRegistration?.RegistrationNumber ?? "-")</div>
-                        <div class="text-gray-500">Generated</div>
-                        <div class="text-gray-800">@item.GeneratedDate.ToString("yyyy-MM-dd")</div>
-                    </div>
-                    <div class="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
-                        <a asp-action="Details" asp-area="Exams" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
-                            <i class="fas fa-eye mr-1"></i> Details
-                        </a>
-                        <a asp-action="Download" asp-area="Exams" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100">
-                            <i class="fas fa-download mr-1"></i> Download
-                        </a>
-                        @if (HasPerm("admitcards.delete"))
-                        {
-                            <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
-                                <i class="fas fa-trash mr-1"></i> Delete
-                            </a>
-                        }
-                    </div>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-                <i class="fas fa-ticket-alt text-4xl text-gray-300 mb-4"></i>
-                <h3 class="text-sm font-semibold text-gray-900 mb-1">No records found</h3>
-                <p class="text-sm text-gray-500">No admit cards found.</p>
-            </div>
-        }
-    </div>
-
-    @if (totalPages > 1)
-    {
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
-            <div class="text-sm text-gray-500 font-medium">
-                Showing <span class="font-semibold text-gray-900">@(((currentPage - 1) * pageSize) + 1)</span>
-                to <span class="font-semibold text-gray-900">@(Math.Min(currentPage * pageSize, totalCount))</span>
-                of <span class="font-semibold text-gray-900">@totalCount</span> entries
-            </div>
-            <div class="flex items-center justify-between sm:justify-end gap-2">
-                @if (currentPage > 1)
-                {
-                    <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir" asp-route-pageSize="@pageSize"
-                       class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
-                        <i class="fas fa-chevron-left text-xs"></i> Previous
-                    </a>
-                }
-                <span class="text-sm font-semibold text-gray-700 min-w-[4rem] text-center">@currentPage / @totalPages</span>
-                @if (currentPage < totalPages)
-                {
-                    <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir" asp-route-pageSize="@pageSize"
-                       class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
-                        Next <i class="fas fa-chevron-right text-xs"></i>
-                    </a>
-                }
-            </div>
+    <!-- Mobile Card Layout -->
+    <div class="lg:hidden space-y-3" id="mobileCardsContainer">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+            <i class="fas fa-spinner fa-pulse text-2xl text-indigo-600 mb-3"></i>
+            <p class="text-sm text-gray-500">Loading admit cards...</p>
         </div>
-    }
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
+        <div class="text-sm text-gray-500 font-medium" id="summaryText">
+            Showing <span class="font-semibold text-gray-900">0</span> to <span class="font-semibold text-gray-900">0</span> of <span class="font-semibold text-gray-900">0</span> entries
+        </div>
+        <div class="flex items-center justify-between sm:justify-end gap-2">
+            <button id="prevPage" class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm">
+                <i class="fas fa-chevron-left text-xs"></i> Previous
+            </button>
+            <span class="text-sm font-semibold text-gray-700 min-w-[4rem] text-center" id="pageInfo">1 / 1</span>
+            <button id="nextPage" class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm">
+                Next <i class="fas fa-chevron-right text-xs"></i>
+            </button>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
-    <link href="~/lib/select2/css/select2.min.css" asp-append-version="true" rel="stylesheet" />
-    <script src="~/lib/select2/js/select2.min.js" asp-append-version="true"></script>
-    <style>
-        .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
-        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
-        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
-    </style>
-    <script>
-        $(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: 'resolve' }); });
-    </script>
     @Html.AntiForgeryToken()
     <script>
-        function deleteRecord(id) {
-            if (!confirm('Are you sure you want to delete this admit card?')) return;
+        (function () {
+            const searchBox = document.getElementById('searchBox');
+            const pageSizeSelect = document.getElementById('pageSize');
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+            const pageInfo = document.getElementById('pageInfo');
+            const summaryText = document.getElementById('summaryText');
+            const tbody = document.getElementById('admitCardsBody');
+            const mobileContainer = document.getElementById('mobileCardsContainer');
 
-            $.ajax({
-                url: '@Url.Action("DeleteAjax", "AdmitCards")',
-                type: 'POST',
-                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
-                success: function (response) {
-                    if (response.success) {
-                        alert(response.message);
-                        location.reload();
-                    } else {
-                        alert('Error: ' + response.message);
-                    }
-                },
-                error: function () {
-                    alert('An error occurred while deleting.');
+            const filterExamSchedule = document.getElementById('filterExamSchedule');
+            const filterCollege = document.getElementById('filterCollege');
+            const filterLevel = document.getElementById('filterLevel');
+            const filterProgram = document.getElementById('filterProgram');
+            const filterStatus = document.getElementById('filterStatus');
+            const filterSelects = [filterExamSchedule, filterCollege, filterLevel, filterProgram, filterStatus];
+
+            let page = 1;
+            let pageSize = parseInt(pageSizeSelect.value, 10);
+            let searchTimeout = null;
+            let totalRecords = 0;
+            let currentSort = 'Id';
+            let currentSortDir = 'asc';
+
+            const base = window.location.pathname.replace(/\/Exams\/AdmitCards.*/, '');
+
+            window.activeFilterCount = 0;
+            const updateFilterCount = () => {
+                let count = 0;
+                filterSelects.forEach(s => { if (s.value) count++; });
+                window.activeFilterCount = count;
+            };
+
+            const getFilterParams = () => {
+                const params = new URLSearchParams();
+                params.append('searchTerm', searchBox.value.trim());
+                params.append('page', page);
+                params.append('pageSize', pageSize);
+                params.append('sort', currentSort);
+                params.append('sortDir', currentSortDir);
+                if (filterExamSchedule.value) params.append('examScheduleId', filterExamSchedule.value);
+                if (filterCollege.value) params.append('collegeId', filterCollege.value);
+                if (filterLevel.value) params.append('levelId', filterLevel.value);
+                if (filterProgram.value) params.append('programId', filterProgram.value);
+                if (filterStatus.value) params.append('status', filterStatus.value);
+                return params.toString();
+            };
+
+            const buildDownloadUrl = () => {
+                const params = new URLSearchParams();
+                if (filterExamSchedule.value) params.append('examScheduleId', filterExamSchedule.value);
+                if (filterCollege.value) params.append('collegeId', filterCollege.value);
+                if (filterLevel.value) params.append('levelId', filterLevel.value);
+                if (filterProgram.value) params.append('programId', filterProgram.value);
+                if (filterStatus.value) params.append('status', filterStatus.value);
+                if (searchBox.value.trim()) params.append('search', searchBox.value.trim());
+                return `${base}/Exams/AdmitCards/DownloadAll?${params.toString()}`;
+            };
+
+            window.clearAllFilters = () => {
+                searchBox.value = '';
+                filterSelects.forEach(s => s.value = '');
+                updateFilterCount();
+                page = 1;
+                loadData();
+            };
+
+            window.downloadAll = () => {
+                window.location.href = buildDownloadUrl();
+            };
+
+            window.exportPdf = () => {
+                const params = new URLSearchParams();
+                if (searchBox.value.trim()) params.append('search', searchBox.value.trim());
+                if (filterExamSchedule.value) params.append('examScheduleId', filterExamSchedule.value);
+                window.open(`${base}/Exams/AdmitCards/ExportToPdf?${params.toString()}`, '_blank');
+            };
+
+            window.exportExcel = () => {
+                const params = new URLSearchParams();
+                if (searchBox.value.trim()) params.append('search', searchBox.value.trim());
+                if (filterExamSchedule.value) params.append('examScheduleId', filterExamSchedule.value);
+                window.location.href = `${base}/Exams/AdmitCards/ExportToExcel?${params.toString()}`;
+            };
+
+            window.exportCsv = () => {
+                const params = new URLSearchParams();
+                if (searchBox.value.trim()) params.append('search', searchBox.value.trim());
+                if (filterExamSchedule.value) params.append('examScheduleId', filterExamSchedule.value);
+                window.location.href = `${base}/Exams/AdmitCards/ExportToCsv?${params.toString()}`;
+            };
+
+            const showLoading = () => {
+                tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-20 text-center">
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="fas fa-spinner fa-pulse text-2xl text-indigo-600 mb-4"></i>
+                        <span class="text-sm text-gray-500 font-medium">Loading admit cards...</span>
+                    </div>
+                </td></tr>`;
+                mobileContainer.innerHTML = `<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                    <i class="fas fa-spinner fa-pulse text-2xl text-indigo-600 mb-3"></i>
+                    <p class="text-sm text-gray-500">Loading admit cards...</p>
+                </div>`;
+            };
+
+            const loadData = async () => {
+                showLoading();
+                try {
+                    const response = await fetch(`${base}/Exams/AdmitCards/GetPagedData?${getFilterParams()}`);
+                    const result = await response.json();
+                    totalRecords = result.totalCount;
+                    renderTable(result.data);
+                    updatePagination();
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                    tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-12 text-center"><div class="flex flex-col items-center"><i class="fas fa-exclamation-triangle text-3xl text-red-400 mb-3"></i><span class="text-sm font-medium text-red-600 mb-1">Failed to load data</span><p class="text-xs text-gray-500">Please refresh the page and try again.</p></div></td></tr>';
+                    mobileContainer.innerHTML = '<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center"><i class="fas fa-exclamation-triangle text-3xl text-red-400 mb-3"></i><span class="text-sm font-medium text-red-600 mb-1">Failed to load data</span><p class="text-xs text-gray-500">Please refresh the page and try again.</p></div>';
+                }
+            };
+
+            const renderStatusBadge = (isActive) => {
+                if (isActive) {
+                    return '<span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Active</span>';
+                }
+                return '<span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Inactive</span>';
+            };
+
+            const renderEmpty = () => `
+                <tr><td colspan="8" class="px-4 py-20 text-center">
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="fas fa-ticket-alt text-4xl text-gray-300 mb-4"></i>
+                        <h3 class="text-sm font-semibold text-gray-900 mb-1">No records found</h3>
+                        <p class="text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
+                    </div>
+                </td></tr>`;
+
+            const renderEmptyMobile = () => `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                    <i class="fas fa-ticket-alt text-4xl text-gray-300 mb-4"></i>
+                    <h3 class="text-sm font-semibold text-gray-900 mb-1">No records found</h3>
+                    <p class="text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
+                </div>`;
+
+            const renderTable = (items) => {
+                if (items.length === 0) {
+                    tbody.innerHTML = renderEmpty();
+                    mobileContainer.innerHTML = renderEmptyMobile();
+                    return;
+                }
+
+                tbody.innerHTML = items.map((item, index) => {
+                    const studentName = item.studentName || '-';
+                    const regNo = item.registrationNumber || '-';
+                    const scheduleName = item.examScheduleName || '-';
+                    const generatedDate = new Date(item.generatedDate).toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                    const canDelete = @(HasPerm("admitcards.delete") ? "true" : "false");
+                    const canDownload = @(HasPerm("admitcards.download") ? "true" : "false");
+
+                    return `
+                    <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='${base}/Exams/AdmitCards/Details/${item.id}'">
+                        <td class="px-4 py-3 text-gray-500">${(page - 1) * pageSize + index + 1}</td>
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-gray-800">${item.admitCardNumber || '-'}</div>
+                        </td>
+                        <td class="px-4 py-3 text-gray-600">${scheduleName}</td>
+                        <td class="px-4 py-3 text-gray-600">${studentName}</td>
+                        <td class="px-4 py-3 text-gray-600 font-mono text-xs">${regNo}</td>
+                        <td class="px-4 py-3 text-gray-600 text-xs">${generatedDate}</td>
+                        <td class="px-4 py-3">${renderStatusBadge(item.isActive)}</td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <a href="${base}/Exams/AdmitCards/Details/${item.id}" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </a>
+                                ${canDownload ? `<a href="${base}/Exams/AdmitCards/Download/${item.id}" onclick="event.stopPropagation()" class="p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Download">
+                                    <i class="fas fa-download text-xs"></i>
+                                </a>` : ''}
+                                ${canDelete ? `<a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('${item.id}')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </a>` : ''}
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
+
+                mobileContainer.innerHTML = items.map((item, index) => {
+                    const studentName = item.studentName || '-';
+                    const regNo = item.registrationNumber || '-';
+                    const scheduleName = item.examScheduleName || '-';
+                    const generatedDate = new Date(item.generatedDate).toLocaleDateString('en-US');
+                    const canDelete = @(HasPerm("admitcards.delete") ? "true" : "false");
+                    const canDownload = @(HasPerm("admitcards.download") ? "true" : "false");
+
+                    return `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                                    <span class="text-xs font-bold text-indigo-700">${(page - 1) * pageSize + index + 1}</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 text-sm">${item.admitCardNumber || '-'}</h3>
+                                    <p class="text-xs text-gray-500">${scheduleName}</p>
+                                </div>
+                            </div>
+                            <div>${renderStatusBadge(item.isActive)}</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
+                            <div class="text-gray-500">Student</div>
+                            <div class="text-gray-800">${studentName}</div>
+                            <div class="text-gray-500">Reg No</div>
+                            <div class="text-gray-800 font-mono text-xs">${regNo}</div>
+                            <div class="text-gray-500">Generated</div>
+                            <div class="text-gray-800">${generatedDate}</div>
+                        </div>
+                        <div class="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
+                            <a href="${base}/Exams/AdmitCards/Details/${item.id}" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
+                                <i class="fas fa-eye mr-1"></i> Details
+                            </a>
+                            ${canDownload ? `<a href="${base}/Exams/AdmitCards/Download/${item.id}" class="flex-1 text-center py-2 text-xs font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100">
+                                <i class="fas fa-download mr-1"></i> Download
+                            </a>` : ''}
+                            ${canDelete ? `<a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('${item.id}')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                                <i class="fas fa-trash mr-1"></i> Delete
+                            </a>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+            };
+
+            const updatePagination = () => {
+                const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+                const start = (page - 1) * pageSize + 1;
+                const end = Math.min(page * pageSize, totalRecords);
+
+                pageInfo.textContent = `${page} / ${totalPages}`;
+                summaryText.innerHTML = `Showing <span class="font-semibold text-gray-900">${totalRecords === 0 ? 0 : start}</span> to <span class="font-semibold text-gray-900">${end}</span> of <span class="font-semibold text-gray-900">${totalRecords}</span> entries`;
+
+                prevBtn.disabled = page <= 1;
+                nextBtn.disabled = page >= totalPages;
+            };
+
+            searchBox.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    page = 1;
+                    loadData();
+                }, 600);
+            });
+
+            searchBox.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    clearTimeout(searchTimeout);
+                    page = 1;
+                    loadData();
                 }
             });
-        }
+
+            filterSelects.forEach(sel => {
+                sel.addEventListener('change', () => {
+                    updateFilterCount();
+                    page = 1;
+                    loadData();
+                });
+            });
+
+            $(pageSizeSelect).on('change', function () {
+                pageSize = parseInt(this.value, 10);
+                page = 1;
+                loadData();
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (page > 1) {
+                    page--;
+                    loadData();
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(totalRecords / pageSize);
+                if (page < totalPages) {
+                    page++;
+                    loadData();
+                }
+            });
+
+            window.deleteRecord = async (id) => {
+                if (!confirm('Are you sure you want to delete this admit card?')) return;
+                try {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                    const response = await fetch(`${base}/Exams/AdmitCards/DeleteAjax`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `id=${id}&__RequestVerificationToken=${encodeURIComponent(token || '')}`
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        alert(result.message);
+                        loadData();
+                    } else {
+                        alert('Error: ' + result.message);
+                    }
+                } catch (error) {
+                    alert('An error occurred while deleting.');
+                }
+            };
+
+            loadData();
+        })();
     </script>
 }

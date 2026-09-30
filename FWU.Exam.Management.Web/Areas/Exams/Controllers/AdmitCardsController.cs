@@ -6,8 +6,11 @@ using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Authorization;
+using FWU.Exam.Management.Web.Helpers;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -19,35 +22,43 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("admitcards.view")]
 public class AdmitCardsController(
     IAdmitCardService admitCardService,
-    AppDbContext context) : Controller
+    AppDbContext context,
+    IUserContext userContext,
+    IWebHostEnvironment env) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
+    public async Task<IActionResult> Index()
     {
-        var (items, totalCount) = await admitCardService.GetAdmitCardsAsync(page, pageSize, search, sort, sortDir, examScheduleId);
+        ViewBag.ExamSchedules = new SelectList(await context.ExamSchedules.AsNoTracking().ApplyScope(userContext).Select(es => new { es.Id, es.ExamScheduleName }).ToListAsync(), "Id", "ExamScheduleName");
+        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ApplyScope(userContext).OrderBy(c => c.Name).ToListAsync(), "Id", "Name");
+        ViewBag.Levels = new SelectList(await context.Levels.AsNoTracking().OrderBy(l => l.LevelName).ToListAsync(), "Id", "LevelName");
+        ViewBag.Programs = new SelectList(await context.Programs.AsNoTracking().ApplyScope(userContext).OrderBy(p => p.ProgramName).ToListAsync(), "Id", "ProgramName");
 
-        ViewBag.TotalCount = totalCount;
-        ViewBag.CurrentPage = page;
-        ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-        ViewBag.PageSize = pageSize;
-        ViewBag.Search = search;
-        ViewBag.Sort = sort;
-        ViewBag.SortDir = sortDir;
-        ViewBag.ExamScheduleId = examScheduleId;
+        return View();
+    }
 
-        ViewData["ExamScheduleId"] = new SelectList(context.ExamSchedules.AsNoTracking().Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
+    [HttpGet]
+    public async Task<IActionResult> GetPagedData(string searchTerm = "", int page = 1, int pageSize = 10,
+        string sort = "Id", string sortDir = "asc",
+        int? examScheduleId = null, int? collegeId = null, int? levelId = null,
+        int? programId = null, string? status = null)
+    {
+        var (items, totalCount) = await admitCardService.GetPagedDataAsync(
+            searchTerm, page, pageSize, sort, sortDir,
+            examScheduleId, collegeId, levelId, programId, status);
 
-        return View(items);
+        return Json(new { data = items, totalCount });
     }
 
     [RequirePermission("admitcards.generate")]
     public async Task<IActionResult> Generate(int? examScheduleId)
     {
-        ViewData["ExamScheduleId"] = new SelectList(context.ExamSchedules.AsNoTracking().Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
+        ViewData["ExamScheduleId"] = new SelectList(context.ExamSchedules.AsNoTracking().ApplyScope(userContext).Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
 
         if (examScheduleId.HasValue)
         {
             var registrations = await context.ExamRegistrations
                 .Where(er => er.ExamScheduleId == examScheduleId.Value && er.IsActive && er.Status >= Domain.Enums.RegistrationStatus.CollegeVerified)
+                .ApplyScope(userContext)
                 .Include(er => er.College)
                 .ToListAsync();
 
@@ -86,10 +97,20 @@ public class AdmitCardsController(
     }
 
     [RequirePermission("admitcards.download")]
-    public async Task<IActionResult> PrintAll(int? examScheduleId, string? search = null)
+    public async Task<IActionResult> DownloadAll(int? examScheduleId, int? collegeId, int? levelId,
+        int? programId, string? status, string? search = null)
     {
-        var items = await admitCardService.GetAdmitCardsForPrintAsync(examScheduleId, search);
-        return View(items);
+        var items = await admitCardService.GetAdmitCardsForDownloadAsync(
+            examScheduleId, collegeId, levelId, programId, status, search);
+
+        if (items.Count == 0)
+        {
+            TempData["ErrorMessage"] = "No admit cards found for the selected filters.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var zipBytes = AdmitCardPdfExporter.BuildZip(items, env.WebRootPath);
+        return File(zipBytes, "application/zip", $"AdmitCards_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
     }
 
     [RequirePermission("admitcards.download")]
