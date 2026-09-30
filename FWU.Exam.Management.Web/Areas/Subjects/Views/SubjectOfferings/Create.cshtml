@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <form asp-action="Create" method="post" @@submit.prevent="submitForm()">
+    <form asp-action="Create" method="post" x-ref="soForm" @@submit.prevent="submitForm()">
         <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2 mb-4"></div>
 
         <div class="bg-white rounded-lg shadow border border-gray-200 p-4 mb-4">
@@ -315,7 +315,14 @@
                         alert('Please add at least one subject to at least one semester.');
                         return;
                     }
-                    this.$el.submit();
+                    // x-data sits on the wrapper div, so $el is the div and has no
+                    // submit() method. Reference the form directly instead.
+                    const form = this.$refs.soForm;
+                    if (!form) {
+                        alert('Could not locate the form. Please reload the page and try again.');
+                        return;
+                    }
+                    form.submit();
                 }
             };
         }

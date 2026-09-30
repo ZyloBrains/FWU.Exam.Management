@@ -17,9 +17,9 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
 [RequirePermission("collegeprograms.view")]
-public class CollegeProgramsController(ICollegeProgramService collegeProgramService) : Controller
+public class CollegeProgramsController(ICollegeProgramService collegeProgramService, ILogger<CollegeProgramsController> logger) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "collegename", string sortDir = "asc", int pageSize = 10)
+public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "collegename", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir);
 
@@ -30,6 +30,10 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
+
+        // Colleges with no programs yet. Queried separately from the paginated rows
+        // so a college is never shown as empty just because its programs are on another page.
+        ViewBag.CollegesWithoutPrograms = await collegeProgramService.GetCollegesWithoutProgramsAsync();
 
         return View(items);
     }
@@ -113,10 +117,20 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
     }
 
     [RequirePermission("collegeprograms.create")]
-    public async Task<IActionResult> Create()
+    public async Task<IActionResult> Create(int? collegeId)
     {
         var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
-        ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name");
+
+        if (collegeId.HasValue && colleges.All(c => c.Id != collegeId.Value))
+        {
+            return NotFound();
+        }
+
+        ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name", collegeId);
+        ViewBag.LockedCollegeId = collegeId;
+        ViewBag.LockedCollegeName = collegeId.HasValue
+            ? colleges.First(c => c.Id == collegeId.Value).Name
+            : null;
 
         var programsData = programs.Select(p => new
         {
@@ -174,13 +188,33 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
                 IsActive = p.IsActive
             }).ToList();
 
-            await collegeProgramService.CreateCollegeProgramsAsync(collegePrograms);
-            TempData["SuccessMessage"] = $"{collegePrograms.Count} college program(s) created successfully.";
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await collegeProgramService.CreateCollegeProgramsAsync(collegePrograms);
+                TempData["SuccessMessage"] = $"{collegePrograms.Count} college program(s) created successfully.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex)
+            {
+                logger.LogError(ex, "Failed to create {Count} college program(s) for college {CollegeId}.", collegePrograms.Count, model.CollegeId);
+                ModelState.AddModelError("", "One or more programs could not be saved. A program may already be assigned to this college.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to create {Count} college program(s) for college {CollegeId}.", collegePrograms.Count, model.CollegeId);
+                ModelState.AddModelError("", $"An error occurred while saving: {ex.Message}");
+            }
         }
 
         var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
         ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name", model.CollegeId);
+
+        // Keep the college locked if the user arrived here from a specific college's "Add Program" button.
+        model.CollegeLocked = model.CollegeLocked && colleges.Any(c => c.Id == model.CollegeId);
+        ViewBag.LockedCollegeId = model.CollegeLocked ? model.CollegeId : (int?)null;
+        ViewBag.LockedCollegeName = model.CollegeLocked
+            ? colleges.First(c => c.Id == model.CollegeId).Name
+            : null;
 
         var programsData = programs.Select(p => new
         {

@@ -16,6 +16,8 @@
         ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
         : new List<string>();
     bool HasPerm(string permission) => userPerms.Contains(permission);
+    var collegesWithoutPrograms = ViewBag.CollegesWithoutPrograms as List<FWU.Exam.Management.Domain.Entities.Colleges.College> ?? new List<FWU.Exam.Management.Domain.Entities.Colleges.College>();
+    var canCreate = HasPerm("collegeprograms.create");
 }
 
 <div class="space-y-6" x-data="{ openExport: false }">
@@ -101,20 +103,35 @@
             var collegeId = "c" + collegeIdx;
             collegeIdx++;
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <button @@click="expandedCollege = expandedCollege === '@collegeId' ? null : '@collegeId'"
-                        class="w-full flex items-center justify-between px-5 py-4 bg-gradient-to-r from-purple-50 to-white hover:from-purple-100 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center">
+                <div class="w-full flex items-center justify-between gap-3 px-5 py-4 bg-gradient-to-r from-purple-50 to-white hover:from-purple-100 transition-colors">
+                    <button @@click="expandedCollege = expandedCollege === '@collegeId' ? null : '@collegeId'"
+                            class="flex items-center gap-3 flex-1 min-w-0 text-left">
+                        <div class="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                             <i class="fas fa-school text-purple-600 text-sm"></i>
                         </div>
-                        <div class="text-left">
-                            <h2 class="text-base font-bold text-gray-800">@collegeGroup.CollegeName</h2>
+                        <div class="text-left min-w-0">
+                            <h2 class="text-base font-bold text-gray-800 truncate">@collegeGroup.CollegeName</h2>
                             <p class="text-xs text-gray-500">Code: @collegeGroup.CollegeCode · @collegeGroup.Programs.Count() program(s)</p>
                         </div>
+                    </button>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        @if (canCreate)
+                        {
+                            <a asp-action="Create" asp-route-collegeId="@collegeGroup.CollegeId"
+                               class="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow-sm"
+                               title="Add a program to @collegeGroup.CollegeName">
+                                <i class="fas fa-plus"></i>
+                                <span class="hidden xl:inline">Add Program</span>
+                            </a>
+                        }
+                        <button @@click="expandedCollege = expandedCollege === '@collegeId' ? null : '@collegeId'"
+                                class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-purple-100 transition"
+                                aria-label="Toggle programs for @collegeGroup.CollegeName">
+                            <i class="fas fa-chevron-down text-gray-400 transition-transform"
+                               :class="{ 'rotate-180': expandedCollege === '@collegeId' }"></i>
+                        </button>
                     </div>
-                    <i class="fas fa-chevron-down text-gray-400 transition-transform"
-                       :class="{ 'rotate-180': expandedCollege === '@collegeId' }"></i>
-                </button>
+                </div>
 
                 <div x-show="expandedCollege === '@collegeId'"
                      x-transition:enter="transition ease-out duration-200"
@@ -196,18 +213,33 @@
             var collegeIdMobile = "cm" + collegeIdxMobile;
             collegeIdxMobile++;
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <button @@click="expandedCollegeMobile = expandedCollegeMobile === '@collegeIdMobile' ? null : '@collegeIdMobile'"
-                        class="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-50 to-white hover:from-purple-100 transition-colors">
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-school text-purple-500 text-sm"></i>
-                        <div class="text-left">
-                            <h2 class="text-sm font-bold text-gray-800">@collegeGroup.CollegeName</h2>
+                <div class="w-full flex items-center justify-between gap-2 px-4 py-3 bg-gradient-to-r from-purple-50 to-white hover:from-purple-100 transition-colors">
+                    <button @@click="expandedCollegeMobile = expandedCollegeMobile === '@collegeIdMobile' ? null : '@collegeIdMobile'"
+                            class="flex items-center gap-2 flex-1 min-w-0 text-left">
+                        <i class="fas fa-school text-purple-500 text-sm flex-shrink-0"></i>
+                        <div class="text-left min-w-0">
+                            <h2 class="text-sm font-bold text-gray-800 truncate">@collegeGroup.CollegeName</h2>
                             <p class="text-xs text-gray-400">@collegeGroup.Programs.Count() program(s)</p>
                         </div>
+                    </button>
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        @if (canCreate)
+                        {
+                            <a asp-action="Create" asp-route-collegeId="@collegeGroup.CollegeId"
+                               class="inline-flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition shadow-sm"
+                               title="Add a program to @collegeGroup.CollegeName">
+                                <i class="fas fa-plus"></i>
+                                <span>Add</span>
+                            </a>
+                        }
+                        <button @@click="expandedCollegeMobile = expandedCollegeMobile === '@collegeIdMobile' ? null : '@collegeIdMobile'"
+                                class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-purple-100 transition"
+                                aria-label="Toggle programs for @collegeGroup.CollegeName">
+                            <i class="fas fa-chevron-down text-gray-400 transition-transform text-xs"
+                               :class="{ 'rotate-180': expandedCollegeMobile === '@collegeIdMobile' }"></i>
+                        </button>
                     </div>
-                    <i class="fas fa-chevron-down text-gray-400 transition-transform text-xs"
-                       :class="{ 'rotate-180': expandedCollegeMobile === '@collegeIdMobile' }"></i>
-                </button>
+                </div>
 
                 <div x-show="expandedCollegeMobile === '@collegeIdMobile'"
                      x-transition:enter="transition ease-out duration-200"
@@ -272,6 +304,45 @@
             </div>
         }
     </div>
+
+    @if (collegesWithoutPrograms.Count > 0)
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-dashed border-amber-300 bg-amber-50/40 p-4 sm:p-5">
+            <div class="flex items-start gap-3 mb-3">
+                <div class="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-school text-amber-600 text-sm"></i>
+                </div>
+                <div class="min-w-0">
+                    <h2 class="text-sm font-bold text-gray-800">
+                        Colleges with no programs
+                        <span class="ml-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                            @collegesWithoutPrograms.Count
+                        </span>
+                    </h2>
+                    <p class="text-xs text-gray-500 mt-0.5">These colleges have no programs yet. Add their first program to make them appear in the list above.</p>
+                </div>
+            </div>
+
+            @if (canCreate)
+            {
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    @foreach (var college in collegesWithoutPrograms)
+                    {
+                        <a asp-action="Create" asp-route-collegeId="@college.Id"
+                           class="flex items-center justify-between gap-2 bg-white border border-amber-200 hover:border-amber-400 hover:bg-amber-50 rounded-lg px-3 py-2.5 transition group">
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold text-gray-800 truncate">@college.Name</p>
+                                <p class="text-xs text-gray-400">Code: @college.Code</p>
+                            </div>
+                            <span class="inline-flex items-center gap-1 bg-purple-600 group-hover:bg-purple-700 text-white text-xs font-semibold px-2.5 py-1.5 rounded-md transition flex-shrink-0">
+                                <i class="fas fa-plus"></i>Add Program
+                            </span>
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    }
 
     <!-- Pagination + Page Size Selector -->
     @if (totalPages > 1)

@@ -48,15 +48,19 @@ public class CollegeProgramService(AppDbContext context, IUserContext userContex
 
     public async Task CreateCollegeProgramAsync(CollegeProgram collegeProgram)
     {
-        await EnsureProgramBelongsToAffiliatedFacultyAsync(collegeProgram);
+        collegeProgram.TenantId = AppDbContext.GetCurrentTenantId();
         context.CollegePrograms.Add(collegeProgram);
         await context.SaveChangesAsync();
     }
 
     public async Task CreateCollegeProgramsAsync(List<CollegeProgram> collegePrograms)
     {
+        var tenantId = AppDbContext.GetCurrentTenantId();
+
         foreach (var collegeProgram in collegePrograms)
-            await EnsureProgramBelongsToAffiliatedFacultyAsync(collegeProgram);
+        {
+            collegeProgram.TenantId = tenantId;
+        }
 
         context.CollegePrograms.AddRange(collegePrograms);
         await context.SaveChangesAsync();
@@ -72,7 +76,19 @@ public class CollegeProgramService(AppDbContext context, IUserContext userContex
 
     public async Task UpdateCollegeProgramAsync(CollegeProgram collegeProgram)
     {
-        await EnsureProgramBelongsToAffiliatedFacultyAsync(collegeProgram);
+        // The edit form does not post TenantId, so preserve it from the stored row.
+        // Without this the update writes TenantId = 0 and fails the tenant foreign key.
+        var existing = await context.CollegePrograms
+            .AsNoTracking()
+            .Where(cp => cp.Id == collegeProgram.Id)
+            .Select(cp => new { cp.TenantId })
+            .FirstOrDefaultAsync();
+
+        if (existing != null)
+        {
+            collegeProgram.TenantId = existing.TenantId;
+        }
+
         context.CollegePrograms.Update(collegeProgram);
         await context.SaveChangesAsync();
     }
@@ -100,24 +116,18 @@ public class CollegeProgramService(AppDbContext context, IUserContext userContex
         return (colleges, programs);
     }
 
-    private async Task EnsureProgramBelongsToAffiliatedFacultyAsync(CollegeProgram collegeProgram)
+    public async Task<List<College>> GetCollegesWithoutProgramsAsync()
     {
-        var programFacultyId = await context.Programs
-            .Where(p => p.Id == collegeProgram.ProgramId)
-            .Select(p => (int?)p.FacultyId)
-            .FirstOrDefaultAsync();
+        var collegesWithPrograms = context.CollegePrograms
+            .Select(cp => cp.CollegeId)
+            .Distinct();
 
-        if (programFacultyId == null)
-            return;
-
-        var isAffiliated = await context.CollegeFaculties
-            .AnyAsync(cf => cf.CollegeId == collegeProgram.CollegeId && cf.FacultyId == programFacultyId);
-
-        if (!isAffiliated)
-        {
-            throw new InvalidOperationException(
-                "The college is not affiliated with the program's faculty. Affiliate the college to the faculty before offering its programs.");
-        }
+        return await context.Colleges
+            .ApplyScope(userContext)
+            .Where(c => !collegesWithPrograms.Contains(c.Id))
+            .AsNoTracking()
+            .OrderBy(c => c.Name)
+            .ToListAsync();
     }
 
     private IQueryable<CollegeProgram> BuildQuery(string? search)

@@ -17,4 +17,10 @@ public interface ICollegeProgramService
     Task DeleteCollegeProgramAsync(int id);
     Task<bool> CollegeProgramExistsAsync(int id);
     Task<(List<College> Colleges, List<Program> Programs)> GetSelectListsAsync();
+
+    /// <summary>
+    /// Colleges in the current scope that have no CollegeProgram rows yet.
+    /// Queried independently of any pagination so the counts stay accurate.
+    /// </summary>
+    Task<List<College>> GetCollegesWithoutProgramsAsync();
 }
