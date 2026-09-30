@@ -19,20 +19,40 @@
         </div>
     </div>
 
-    <form asp-action="Create" method="post" @@submit.prevent="submitForm()">
+    <form asp-action="Create" method="post" x-ref="cpForm" @@submit.prevent="submitForm()">
         <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2 mb-4"></div>
 
         <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-6 mb-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                    <label asp-for="CollegeId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">College</label>
-                    <select asp-for="CollegeId" asp-items="ViewBag.CollegeId"
-                            x-on:change="initExistingPrograms()"
-                            class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                        <option value="">-- Select College --</option>
-                    </select>
-                    <span asp-validation-for="CollegeId" class="text-xs text-red-500 mt-1 block"></span>
-                </div>
+                @if (ViewBag.LockedCollegeId != null)
+                {
+                    <input type="hidden" asp-for="CollegeId" />
+                    <input type="hidden" name="CollegeLocked" value="True" />
+                    <div>
+                        <span class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">College</span>
+                        <div class="flex items-center gap-3 border border-green-200 bg-green-50 rounded-md px-3 py-2">
+                            <i class="fas fa-school text-green-600"></i>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-green-800 truncate">@ViewBag.LockedCollegeName</p>
+                                <p class="text-xs text-green-600">Adding programs to this college</p>
+                            </div>
+                            <i class="fas fa-lock text-green-500 text-xs ml-auto" title="Change the college from the College Programs list"></i>
+                        </div>
+                        <span asp-validation-for="CollegeLocked" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                }
+                else
+                {
+                    <div>
+                        <label asp-for="CollegeId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">College</label>
+                        <select asp-for="CollegeId" asp-items="ViewBag.CollegeId"
+                                x-on:change="initExistingPrograms()"
+                                class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                            <option value="">-- Select College --</option>
+                        </select>
+                        <span asp-validation-for="CollegeId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                }
             </div>
         </div>
 
@@ -231,12 +251,15 @@
 
                 init() {
                     this.allPrograms = @Html.Raw(ViewBag.ProgramsJson ?? "[]");
+                    // The college may already be chosen (arrived from a college's "Add Program" button),
+                    // so load the already-assigned list up front instead of waiting for a dropdown change.
+                    this.initExistingPrograms();
                 },
 
                 async initExistingPrograms() {
-                    const collegeId = document.getElementById('CollegeId').value;
+                    const collegeId = document.getElementById('CollegeId')?.value;
                     if (collegeId) {
-                        const resp = await fetch(`/Colleges/CollegePrograms/GetExistingPrograms?collegeId=${collegeId}`);
+                        const resp = await fetch('@Url.Action("GetExistingPrograms", "CollegePrograms")?collegeId=' + encodeURIComponent(collegeId));
                         this.existingProgramIds = await resp.json();
                     } else {
                         this.existingProgramIds = [];
@@ -288,7 +311,14 @@
                         alert('Please add at least one program.');
                         return;
                     }
-                    this.$el.submit();
+                    // x-data sits on the wrapper div, so $el is the div and has no
+                    // submit() method. Reference the form directly instead.
+                    const form = this.$refs.cpForm;
+                    if (!form) {
+                        alert('Could not locate the form. Please reload the page and try again.');
+                        return;
+                    }
+                    form.submit();
                 }
             };
         }
