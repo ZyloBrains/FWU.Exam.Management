@@ -19,29 +19,39 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 [RequirePermission("collegeprograms.view")]
 public class CollegeProgramsController(ICollegeProgramService collegeProgramService, ILogger<CollegeProgramsController> logger) : Controller
 {
-public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "collegename", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "collegename", string sortDir = "asc", int pageSize = 25)
     {
-        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir);
+        // Page over colleges, not over CollegeProgram rows, so a college's programs are
+        // never split across pages.
+        var (colleges, totalCollegeCount, totalProgramCount) =
+            await collegeProgramService.GetPagedCollegesWithProgramsAsync(page, pageSize, search, sort, sortDir);
 
-        ViewBag.TotalCount = totalCount;
+        if (page < 1) page = 1;
+        var totalPages = pageSize <= 0 ? 1 : (int)Math.Ceiling((double)totalCollegeCount / pageSize);
+        if (totalPages > 0 && page > totalPages) page = totalPages;
+
+        ViewBag.TotalCollegeCount = totalCollegeCount;
+        ViewBag.TotalProgramCount = totalProgramCount;
         ViewBag.CurrentPage = page;
-        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        ViewBag.TotalPages = totalPages;
         ViewBag.PageSize = pageSize;
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
+        ViewBag.PageStudents = colleges.Sum(c => c.TotalStudents);
 
-        // Colleges with no programs yet. Queried separately from the paginated rows
-        // so a college is never shown as empty just because its programs are on another page.
+        // Colleges with no programs yet. Queried separately from the paginated groups
+        // so a college is never shown as empty just because it is on another page.
         ViewBag.CollegesWithoutPrograms = await collegeProgramService.GetCollegesWithoutProgramsAsync();
 
-        return View(items);
+        return View(colleges);
     }
 
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Id", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(string? search = null, string sort = "collegename", string sortDir = "asc")
     {
-        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
+        // Exports cover every matching row, not just the page on screen.
+        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("College Code,College Name,Program Code,Program Name,Affiliation Date,Number of Students,Remarks,Status");
@@ -58,29 +68,28 @@ public async Task<IActionResult> Index(int page = 1, string? search = null, stri
                           $"{(cp.IsActive ? "Active" : "Inactive")}");
         }
 
-        var fileName = $"CollegePrograms_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        var fileName = $"CollegePrograms_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "Id", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(string? search = null, string sort = "collegename", string sortDir = "asc")
     {
-        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(search, sort, sortDir);
 
-        ViewBag.CurrentPage = page;
-        ViewBag.PageSize = pageSize;
         ViewBag.TotalCount = totalCount;
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
+        ViewBag.TotalColleges = items.Select(cp => cp.CollegeId).Distinct().Count();
 
         return View("PrintPdf", items);
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "Id", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(string? search = null, string sort = "collegename", string sortDir = "asc")
     {
-        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(search, sort, sortDir);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("College Programs");
@@ -113,7 +122,7 @@ public async Task<IActionResult> Index(int page = 1, string? search = null, stri
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
         var content = stream.ToArray();
-        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"CollegePrograms_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"CollegePrograms_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
     }
 
     [RequirePermission("collegeprograms.create")]

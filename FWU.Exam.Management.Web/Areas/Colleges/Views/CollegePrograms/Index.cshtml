@@ -1,13 +1,15 @@
-@model IEnumerable<FWU.Exam.Management.Domain.Entities.Colleges.CollegeProgram>
+@model List<FWU.Exam.Management.Application.DTOs.CollegeProgramGroupDto>
 @inject UserManager<AppUser> UserManager
 @inject IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "College Programs";
-    var totalCount = ViewBag.TotalCount ?? Model.Count();
+    var totalCollegeCount = ViewBag.TotalCollegeCount ?? Model.Count;
+    var totalProgramCount = ViewBag.TotalProgramCount ?? Model.Sum(c => c.ProgramCount);
     var currentPage = ViewBag.CurrentPage ?? 1;
     var totalPages = ViewBag.TotalPages ?? 1;
-    var pageSize = ViewBag.PageSize ?? 10;
+    var pageSize = ViewBag.PageSize ?? 25;
+    var pageStudents = ViewBag.PageStudents ?? Model.Sum(c => c.TotalStudents);
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "collegename";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
@@ -18,6 +20,17 @@
     bool HasPerm(string permission) => userPerms.Contains(permission);
     var collegesWithoutPrograms = ViewBag.CollegesWithoutPrograms as List<FWU.Exam.Management.Domain.Entities.Colleges.College> ?? new List<FWU.Exam.Management.Domain.Entities.Colleges.College>();
     var canCreate = HasPerm("collegeprograms.create");
+
+    // Only college-level sort options; program-level ordering inside a group is fixed.
+    var sortOptions = new (string Value, string Label)[]
+    {
+        ("collegename", "College Name"),
+        ("collegecode", "College Code"),
+        ("programcount", "Program Count"),
+        ("activemembers", "Active Programs"),
+        ("studentcount", "Student Count")
+    };
+    var nextSortDir = string.Equals(currentSortDir, "asc", StringComparison.OrdinalIgnoreCase) ? "desc" : "asc";
 }
 
 <div class="space-y-6" x-data="{ openExport: false }">
@@ -30,7 +43,8 @@
     @await Html.PartialAsync("_AlertMessages")
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">College Programs</h1>
                 <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
-                    <span class="font-semibold text-gray-700">@totalCount</span> records
+                    <span class="font-semibold text-gray-700">@totalCollegeCount</span> colleges ·
+                    <span class="font-semibold text-gray-700">@totalProgramCount</span> programs
                 </p>
                 <p class="text-xs text-gray-400 mt-1 max-w-xl">
                     Manages programs affiliated to each college with affiliation details and status.
@@ -46,8 +60,7 @@
                     ["sort"] = currentSort,
                     ["sortDir"] = currentSortDir
                 },
-                ButtonClass = "bg-purple-600 hover:bg-purple-700",
-                ScopeLabel = " (All)"
+                ButtonClass = "bg-purple-600 hover:bg-purple-700"
             })
             @if (HasPerm("collegeprograms.create"))
             {
@@ -66,8 +79,19 @@
                        placeholder="Search by college name, program name, code..."
                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" />
             </div>
-            <input type="hidden" name="sort" value="@currentSort" />
-            <input type="hidden" name="sortDir" value="@currentSortDir" />
+            <div class="flex items-center gap-2">
+                <select name="sort" class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                    @foreach (var option in sortOptions)
+                    {
+                        <option value="@option.Value" selected="@(string.Equals(currentSort, option.Value, StringComparison.OrdinalIgnoreCase))">@option.Label</option>
+                    }
+                </select>
+                <button type="submit" name="sortDir" value="@nextSortDir"
+                        title="@(nextSortDir == "asc" ? "Sort ascending" : "Sort descending")"
+                        class="px-3 py-2.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                    <i class="fas @(string.Equals(currentSortDir, "asc", StringComparison.OrdinalIgnoreCase) ? "fa-sort-up" : "fa-sort-down")"></i>
+                </button>
+            </div>
             <div class="flex gap-2">
                 <button type="submit" class="px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
                     Search
@@ -83,22 +107,9 @@
         </form>
     </div>
 
-    @{
-        var grouped = Model
-            .GroupBy(cp => new { cp.College?.Id, cp.College?.Name, cp.College?.Code })
-            .OrderBy(g => g.Key.Name)
-            .Select(g => new
-            {
-                CollegeName = g.Key.Name,
-                CollegeCode = g.Key.Code,
-                CollegeId = g.Key.Id,
-                Programs = g.OrderBy(cp => cp.Program?.ProgramName)
-            });
-    }
-
     @{ var collegeIdx = 0; }
     <div class="hidden lg:block space-y-6" x-data="{ expandedCollege: null }">
-        @foreach (var collegeGroup in grouped)
+        @foreach (var collegeGroup in Model)
         {
             var collegeId = "c" + collegeIdx;
             collegeIdx++;
@@ -111,7 +122,10 @@
                         </div>
                         <div class="text-left min-w-0">
                             <h2 class="text-base font-bold text-gray-800 truncate">@collegeGroup.CollegeName</h2>
-                            <p class="text-xs text-gray-500">Code: @collegeGroup.CollegeCode · @collegeGroup.Programs.Count() program(s)</p>
+                            <p class="text-xs text-gray-500">
+                                Code: @collegeGroup.CollegeCode · @collegeGroup.ProgramCount program(s) ·
+                                @collegeGroup.ActiveProgramCount active · @collegeGroup.TotalStudents.ToString("N0") students
+                            </p>
                         </div>
                     </button>
                     <div class="flex items-center gap-2 flex-shrink-0">
@@ -152,7 +166,7 @@
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             @{ var idx = 0; }
-                            @foreach (var item in collegeGroup.Programs)
+@foreach (var item in collegeGroup.Programs)
                             {
                                 idx++;
                                 <tr class="hover:bg-gray-50/50 transition-colors">
@@ -201,14 +215,18 @@
         {
             <div class="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-200">
                 <i class="fas fa-graduation-cap text-4xl mb-3 opacity-50"></i>
-                <p>No college programs found.</p>
+                <p>No colleges with programs found.</p>
+                @if (!string.IsNullOrEmpty(currentSearch))
+                {
+                    <p class="text-xs mt-1">No college has a program matching “@currentSearch”.</p>
+                }
             </div>
         }
     </div>
 
     @{ var collegeIdxMobile = 0; }
     <div class="lg:hidden space-y-4" x-data="{ expandedCollegeMobile: null }">
-        @foreach (var collegeGroup in grouped)
+        @foreach (var collegeGroup in Model)
         {
             var collegeIdMobile = "cm" + collegeIdxMobile;
             collegeIdxMobile++;
@@ -219,7 +237,7 @@
                         <i class="fas fa-school text-purple-500 text-sm flex-shrink-0"></i>
                         <div class="text-left min-w-0">
                             <h2 class="text-sm font-bold text-gray-800 truncate">@collegeGroup.CollegeName</h2>
-                            <p class="text-xs text-gray-400">@collegeGroup.Programs.Count() program(s)</p>
+                            <p class="text-xs text-gray-400">@collegeGroup.ProgramCount program(s) · @collegeGroup.TotalStudents.ToString("N0") students</p>
                         </div>
                     </button>
                     <div class="flex items-center gap-1.5 flex-shrink-0">
@@ -300,13 +318,19 @@
         {
             <div class="text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-500">
                 <i class="fas fa-graduation-cap text-4xl mb-3 opacity-50"></i>
-                <p>No college programs found.</p>
+                <p>No colleges with programs found.</p>
+                @if (!string.IsNullOrEmpty(currentSearch))
+                {
+                    <p class="text-xs mt-1">No college has a program matching “@currentSearch”.</p>
+                }
             </div>
         }
     </div>
 
     @if (collegesWithoutPrograms.Count > 0)
     {
+        <!-- Colleges with no programs yet. These cannot appear in the accordions above
+             because those are built from existing CollegeProgram rows. -->
         <div class="bg-white rounded-xl shadow-sm border border-dashed border-amber-300 bg-amber-50/40 p-4 sm:p-5">
             <div class="flex items-start gap-3 mb-3">
                 <div class="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -376,16 +400,17 @@
                 <div>
                     <p class="text-xs sm:text-sm text-gray-700">
                         Showing <span class="font-medium">@(((currentPage - 1) * pageSize) + 1)</span>
-                        to <span class="font-medium">@(Math.Min(currentPage * pageSize, totalCount))</span>
-                        of <span class="font-medium">@totalCount</span> results
+                        to <span class="font-medium">@Math.Min(currentPage * pageSize, totalCollegeCount)</span>
+                        of <span class="font-medium">@totalCollegeCount</span> colleges
+                        (<span class="font-medium">@totalProgramCount</span> programs,
+                        <span class="font-medium">@pageStudents.ToString("N0")</span> students on this page)
                     </p>
                 </div>
                 <div class="flex items-center gap-4">
                     <div class="flex items-center gap-2">
-                        <label class="text-xs sm:text-sm text-gray-700">Rows:</label>
+                        <label class="text-xs sm:text-sm text-gray-700">Colleges:</label>
                         <select class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-purple-500 focus:border-purple-500"
                                 onchange="window.location.href='@Url.Action("Index", new { search = currentSearch, sort = currentSort, sortDir = currentSortDir, pageSize = "__val__" })'.replace('__val__', this.value)">
-                            <option value="10" selected="@(pageSize == 10)">10</option>
                             <option value="25" selected="@(pageSize == 25)">25</option>
                             <option value="50" selected="@(pageSize == 50)">50</option>
                             <option value="100" selected="@(pageSize == 100)">100</option>
