@@ -7,8 +7,8 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface IExamScheduleService
 {
-    Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, string? examTypeName = null);
-    Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, string? examTypeName = null);
+    Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, string? examTypeName = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null);
+    Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, string? examTypeName = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null);
     Task<ExamSchedule?> GetExamScheduleByIdAsync(int id);
     Task CreateExamScheduleAsync(ExamSchedule examSchedule);
     Task UpdateExamScheduleAsync(ExamSchedule examSchedule);
