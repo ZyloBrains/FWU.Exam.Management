@@ -14,9 +14,9 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class ExamScheduleService(AppDbContext context, IUserContext userContext, ITenantContext tenantContext) : IExamScheduleService
 {
-    public async Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, string? examTypeName = null)
+    public async Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, string? examTypeName = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null)
     {
-        var query = BuildQuery(search, sort, sortDir, examTypeName).ApplyScope(userContext);
+        var query = BuildQuery(search, sort, sortDir, examTypeName, academicYearId, programId, examTypeId, status).ApplyScope(userContext);
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -50,9 +50,9 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext,
             await context.SaveChangesAsync();
     }
 
-    public async Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, string? examTypeName = null)
+    public async Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, string? examTypeName = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null)
     {
-        var query = BuildQuery(search, "Id", "asc", examTypeName).ApplyScope(userContext);
+        var query = BuildQuery(search, "Id", "asc", examTypeName, academicYearId, programId, examTypeId, status).ApplyScope(userContext);
         return await query
             .Select(e => new ExamSchedule
             {
@@ -590,12 +590,37 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext,
         return await context.ExamRegistrations.ApplyScope(userContext).CountAsync(r => r.ExamScheduleId == scheduleId);
     }
 
-    private IQueryable<ExamSchedule> BuildQuery(string? search, string sort, string sortDir, string? examTypeName = null)
+    private IQueryable<ExamSchedule> BuildQuery(string? search, string sort, string sortDir, string? examTypeName = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null)
     {
         var query = context.ExamSchedules.AsNoTracking();
 
         if (!string.IsNullOrEmpty(examTypeName))
             query = query.Where(s => s.ExamType != null && s.ExamType.Name == examTypeName);
+
+        if (academicYearId.HasValue)
+            query = query.Where(s => s.SemesterInstance != null && s.SemesterInstance.AcademicYearId == academicYearId.Value);
+
+        if (programId.HasValue)
+            query = query.Where(s => s.ProgramId == programId.Value);
+
+        if (examTypeId.HasValue)
+            query = query.Where(s => s.ExamTypeId == examTypeId.Value);
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            var todayDate = DateOnly.FromDateTime(DateTime.Today);
+            var todayDateTime = DateTime.Today;
+
+            query = status.ToLower() switch
+            {
+                "active" => query.Where(s => s.IsActive && (s.EndDate == null || s.EndDate >= todayDate
+                    || (s.ExtendedDate != null && s.ExtendedDate >= todayDateTime))),
+                "expired" => query.Where(s => s.IsActive && s.EndDate != null && s.EndDate < todayDate
+                    && (s.ExtendedDate == null || s.ExtendedDate < todayDateTime)),
+                "inactive" => query.Where(s => !s.IsActive),
+                _ => query
+            };
+        }
 
         if (!string.IsNullOrEmpty(search))
         {
