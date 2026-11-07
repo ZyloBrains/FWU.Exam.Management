@@ -26,12 +26,19 @@ public class ExamSchedulesController(
     IExamScheduleService examScheduleService,
     IAuditLogWriter auditLogWriter) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10,
+        int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null)
     {
-        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir,
+            academicYearId: academicYearId, programId: programId, examTypeId: examTypeId, status: status);
 
         var scheduleIds = items.Select(i => i.Id).ToList();
         var registrationCounts = await examScheduleService.GetRegistrationCountsAsync(scheduleIds);
+
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
+        ViewBag.AcademicYears = new SelectList(selectLists.AcademicYears, "Id", "Name", academicYearId);
+        ViewBag.Programs = new SelectList(selectLists.Programs, "Id", "Name", programId);
+        ViewBag.ExamTypes = new SelectList(selectLists.ExamTypes, "Id", "Name", examTypeId);
 
         ViewBag.RegistrationCounts = registrationCounts;
         ViewBag.TotalCount = totalCount;
@@ -41,14 +48,18 @@ public class ExamSchedulesController(
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
+        ViewBag.AcademicYearId = academicYearId;
+        ViewBag.ProgramId = programId;
+        ViewBag.ExamTypeId = examTypeId;
+        ViewBag.Status = status;
 
         return View(items);
     }
 
 
-    public async Task<IActionResult> ExportToCsv(string? search = null)
+    public async Task<IActionResult> ExportToCsv(string? search = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null)
     {
-        var items = await examScheduleService.GetFilteredItemsAsync(search);
+        var items = await examScheduleService.GetFilteredItemsAsync(search, academicYearId: academicYearId, programId: programId, examTypeId: examTypeId, status: status);
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,Exam Schedule Name,Code,Academic Year,Level,Exam Type,Start Date (BS),End Date (BS),Start Date (AD),End Date (AD),Published Date,Start Time,End Time,Is Active,Extended Date,Extended Date Charge,Admission Card Release Date,Remarks");
@@ -78,16 +89,16 @@ public class ExamSchedulesController(
         return File(csvBytes, "text/csv", "ExamSchedules.csv");
     }
 
-    public async Task<IActionResult> ExportToPdf(string? search = null)
+    public async Task<IActionResult> ExportToPdf(string? search = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null)
     {
-        var items = await examScheduleService.GetFilteredItemsAsync(search);
+        var items = await examScheduleService.GetFilteredItemsAsync(search, academicYearId: academicYearId, programId: programId, examTypeId: examTypeId, status: status);
         return View("PrintPdf", items);
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(string? search = null)
+    public async Task<IActionResult> ExportToExcel(string? search = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null)
     {
-        var items = await examScheduleService.GetFilteredItemsAsync(search);
+        var items = await examScheduleService.GetFilteredItemsAsync(search, academicYearId: academicYearId, programId: programId, examTypeId: examTypeId, status: status);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("ExamSchedules");
