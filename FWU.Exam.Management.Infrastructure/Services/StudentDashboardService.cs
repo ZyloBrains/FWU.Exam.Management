@@ -23,6 +23,10 @@ public class StudentDashboardService(
     ILogger<StudentDashboardService> logger,
     IKhaltiService khaltiService) : IStudentDashboardService
 {
+    // The service is scoped to one request. The registration-id chain is otherwise
+    // re-executed once per schedule per helper in the Exam Forms listing.
+    private readonly Dictionary<string, List<int>> _studentExamRegistrationIdsCache = new(StringComparer.Ordinal);
+
     public async Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email)
     {
         return await RegistrationQuery()
@@ -1082,6 +1086,7 @@ public class StudentDashboardService(
             registration.SemesterEnrollmentId = semesterEnrollmentId.Value;
         }
         await context.SaveChangesAsync();
+        _studentExamRegistrationIdsCache.Remove(userId);
         logger.LogInformation("CreateExamRegistrationAsync: ExamRegistration created. RegId={RegId}, ScheduleId={ScheduleId}, UserId={UserId}, VoucherId={VoucherId}", registration.Id, examScheduleId, userId, voucher.Id);
 
         // Resolve the batch grading scheme once so every row created below is
@@ -1130,7 +1135,8 @@ public class StudentDashboardService(
                 var previousResult = await context.ExamSubjectResults!
                     .AsNoTracking()
                     .Where(esr => esr.SubjectOfferingId == subjectOfferingId
-                               && previousScheduleIds.Contains(esr.ExamScheduleId ?? 0)
+                               && esr.ExamScheduleId.HasValue
+                               && previousScheduleIds.Contains(esr.ExamScheduleId.Value)
                                && esr.ExamRegistration != null
                                && esr.ExamRegistration.IsActive
                                && esr.IsActive)
@@ -1213,7 +1219,8 @@ public class StudentDashboardService(
 
         return await context.ExamSubjectResults!
             .AsNoTracking()
-            .Where(esr => scheduleIds.Contains(esr.ExamScheduleId ?? 0)
+            .Where(esr => esr.ExamScheduleId.HasValue
+                       && scheduleIds.Contains(esr.ExamScheduleId.Value)
                        && esr.IsActive
                        && esr.ExamRegistration != null
                        && esr.ExamRegistration.IsActive
@@ -1298,10 +1305,18 @@ public class StudentDashboardService(
 
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
 
-        var results = await context.ExamRegistrations!
+        // Keep the legacy fallback (no voucher-linked registrations -> all results
+        // for the semester) but as a separate branch. The old "empty || contains"
+        // OR made EF emit a predicate that prevented an index seek on ExamScheduleId
+        // for every student who does have registrations.
+        var registrationQuery = context.ExamRegistrations!
             .AsNoTracking()
-            .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive
-                      && (studentErIds.Count == 0 || studentErIds.Contains(er.Id)))
+            .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive);
+
+        if (studentErIds.Count > 0)
+            registrationQuery = registrationQuery.Where(er => studentErIds.Contains(er.Id));
+
+        var results = await registrationQuery
             .SelectMany(er => er.ExamSubjectResults!)
             .Where(esr => esr.IsActive
                        && (!string.IsNullOrEmpty(esr.GradeLetter)
@@ -1400,7 +1415,17 @@ public class StudentDashboardService(
 
     private async Task<List<int>> GetStudentExamRegistrationIdsAsync(string userId)
     {
-        var user = await context.Users.FindAsync(userId);
+        if (_studentExamRegistrationIdsCache.TryGetValue(userId, out var cached))
+            return cached;
+
+        var ids = await LoadStudentExamRegistrationIdsAsync(userId);
+        _studentExamRegistrationIdsCache[userId] = ids;
+        return ids;
+    }
+
+    private async Task<List<int>> LoadStudentExamRegistrationIdsAsync(string userId)
+    {
+        var user = await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
         if (user?.Email == null) return [];
 
         var sr = await context.StudentRegistrations!
