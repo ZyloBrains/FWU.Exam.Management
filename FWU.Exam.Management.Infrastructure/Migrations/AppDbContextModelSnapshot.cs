@@ -1246,8 +1246,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("AcademicYearId");
 
-                    b.HasIndex("ApplicationVoucherId");
-
                     b.HasIndex("CollegeId");
 
                     b.HasIndex("ExamCenterId");
@@ -1262,6 +1260,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasFilter("[SymbolNumber] IS NOT NULL AND [SymbolNumber] <> ''");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("ApplicationVoucherId", "IsActive")
+                        .HasFilter("[ApplicationVoucherId] IS NOT NULL");
 
                     b.HasIndex("ExamScheduleId", "ProgramsId", "IsActive");
 
@@ -1411,13 +1412,13 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("LevelId");
 
-                    b.HasIndex("ProgramId");
-
                     b.HasIndex("SemesterInstanceId");
 
                     b.HasIndex("TenantId", "ExamScheduleCode")
                         .IsUnique()
                         .HasFilter("[ExamScheduleCode] IS NOT NULL");
+
+                    b.HasIndex("ProgramId", "IsActive", "SemesterInstanceId");
 
                     b.ToTable("ExamSchedules");
                 });
