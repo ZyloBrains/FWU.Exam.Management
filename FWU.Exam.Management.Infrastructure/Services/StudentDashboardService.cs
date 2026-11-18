@@ -1803,10 +1803,13 @@ public class StudentDashboardService(
     }
 
     /// <summary>
-    /// Returns true when the student has at least one active exam registration that has
-    /// moved past college verification (status != Pending and != Rejected). Used to lock
-    /// the student's profile so verified photo/signature and mandatory details cannot be
-    /// changed from the student portal.
+    /// Returns true when the student has at least one active exam registration, on a
+    /// currently active and non-expired exam schedule, with an explicit verified status
+    /// (CollegeVerified, AdminVerified, Registered or Withheld). Used to lock the student's
+    /// profile so verified photo/signature and mandatory details cannot be changed
+    /// from the student portal. Forms belonging to expired or deactivated schedules
+    /// no longer lock the profile, so students can update their details for a new
+    /// exam schedule.
     /// </summary>
     public async Task<bool> HasVerifiedExamFormAsync(string userId)
     {
@@ -1821,13 +1824,29 @@ public class StudentDashboardService(
 
         if (voucherIds.Count == 0) return false;
 
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var todayDateTime = DateTime.Today;
+
         return await context.ExamRegistrations!
             .AsNoTracking()
             .AnyAsync(er => er.ApplicationVoucherId != null
                           && voucherIds.Contains(er.ApplicationVoucherId!.Value)
                           && er.IsActive
-                          && er.Status != RegistrationStatus.Pending
-                          && er.Status != RegistrationStatus.Rejected);
+                          // Only an explicitly verified status locks the profile.
+                          // Pending (1), Rejected (6) and undefined values (e.g. 0
+                          // on admin-created rows) are not verified forms.
+                          && (er.Status == RegistrationStatus.CollegeVerified
+                              || er.Status == RegistrationStatus.AdminVerified
+                              || er.Status == RegistrationStatus.Registered
+                              || er.Status == RegistrationStatus.Withheld)
+                          && er.ExamSchedule != null
+                          && er.ExamSchedule.IsActive
+                          // Same definition of "expired" used by the exam schedule screen:
+                          // EndDate unless a still-valid ExtendedDate overrides it.
+                          && (!er.ExamSchedule.EndDate.HasValue
+                              || er.ExamSchedule.EndDate.Value >= today
+                              || (er.ExamSchedule.ExtendedDate.HasValue
+                                  && er.ExamSchedule.ExtendedDate.Value >= todayDateTime)));
     }
 
     public async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath)
