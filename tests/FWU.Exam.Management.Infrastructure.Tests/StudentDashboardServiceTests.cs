@@ -61,6 +61,7 @@ public class StudentDashboardServiceTests
     }
 
     [Theory]
+    [InlineData((RegistrationStatus)0, false)]
     [InlineData(RegistrationStatus.Pending, false)]
     [InlineData(RegistrationStatus.CollegeVerified, true)]
     [InlineData(RegistrationStatus.AdminVerified, true)]
@@ -87,6 +88,77 @@ public class StudentDashboardServiceTests
         var result = await service.HasVerifiedExamFormAsync(UserId);
 
         Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public async Task HasVerifiedExamFormAsync_ReturnsFalse_WhenVerifiedFormScheduleExpired()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 11));
+            var er = TestData.ExamRegistration(1, 11, 1);
+            er.Status = RegistrationStatus.CollegeVerified;
+            ctx.ExamRegistrations.Add(er);
+        });
+
+        var service = CreateService(db);
+
+        var result = await service.HasVerifiedExamFormAsync(UserId);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task HasVerifiedExamFormAsync_ReturnsTrue_WhenExpiredScheduleHasFutureExtension()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            var schedule = TestData.Schedule(11, 2, TestData.Regular, Past, null);
+            schedule.ExtendedDate = DateTime.Today.AddDays(5);
+            ctx.ExamSchedules.Add(schedule);
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 11));
+            var er = TestData.ExamRegistration(1, 11, 1);
+            er.Status = RegistrationStatus.CollegeVerified;
+            ctx.ExamRegistrations.Add(er);
+        });
+
+        var service = CreateService(db);
+
+        var result = await service.HasVerifiedExamFormAsync(UserId);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task HasVerifiedExamFormAsync_ReturnsFalse_WhenVerifiedFormScheduleInactive()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Future, null, isActive: false));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 11));
+            var er = TestData.ExamRegistration(1, 11, 1);
+            er.Status = RegistrationStatus.CollegeVerified;
+            ctx.ExamRegistrations.Add(er);
+        });
+
+        var service = CreateService(db);
+
+        var result = await service.HasVerifiedExamFormAsync(UserId);
+
+        Assert.False(result);
     }
 
     [Fact]
