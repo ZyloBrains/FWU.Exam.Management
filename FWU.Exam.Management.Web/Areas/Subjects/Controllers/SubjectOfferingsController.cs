@@ -197,8 +197,44 @@ public class SubjectOfferingsController : Controller
     public async Task<JsonResult> GetSemestersForCreate(int programId, int curriculumVersionId)
     {
         var semesters = await _subjectOfferingService.GetSemestersForOfferingAsync(programId, curriculumVersionId);
-        return Json(semesters.Select(s => new { s.SemesterId, s.SemesterNumber, s.SemesterName, s.SubjectCount }));
+        var offerings = curriculumVersionId > 0
+            ? await _subjectOfferingService.GetSubjectOfferingsByCurriculumVersionAsync(curriculumVersionId, includeInactive: true)
+            : new List<SubjectOffering>();
+        var bySemester = offerings.GroupBy(o => o.SemesterId).ToDictionary(g => g.Key, g => g.ToList());
+
+        return Json(semesters.Select(s => new
+        {
+            s.SemesterId,
+            s.SemesterNumber,
+            s.SemesterName,
+            s.SubjectCount,
+            subjects = bySemester.TryGetValue(s.SemesterId, out var list)
+                ? list.Select(MapOfferingForForm).ToList()
+                : new List<object>()
+        }));
     }
+
+    private static object MapOfferingForForm(SubjectOffering o) => new
+    {
+        id = o.SubjectCatalogId,
+        offeringId = o.Id,
+        isArchived = !o.IsActive,
+        code = o.SubjectCatalog?.SubjectCode ?? "",
+        name = o.SubjectCatalog?.SubjectName ?? "",
+        type = o.SubjectCatalog?.SubjectType?.Name ?? "",
+        credits = o.SubjectCatalog?.CreditHours,
+        isCompulsory = o.IsCompulsory,
+        displayOrder = o.DisplayOrder,
+        hasTheory = o.HasTheory,
+        hasPractical = o.HasPractical,
+        hasInternal = o.HasInternal,
+        theoryFullMarks = o.TheoryFullMarks,
+        theoryPassMarks = o.TheoryPassMarks,
+        practicalFullMarks = o.PracticalFullMarks,
+        practicalPassMarks = o.PracticalPassMarks,
+        internalTheoryFullMarks = o.InternalTheoryFullMarks,
+        internalTheoryPassMarks = o.InternalTheoryPassMarks
+    };
 
     public async Task<IActionResult> Create(int? curriculumVersionId)
     {
@@ -214,19 +250,25 @@ public class SubjectOfferingsController : Controller
             : new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
 
         var semesterJson = new List<object>();
-        var initialExisting = new Dictionary<int, List<int>>();
+        var loadedExistingCount = 0;
         if (version != null)
         {
             var yearSemesters = await _subjectOfferingService.GetSemestersForOfferingAsync(version.ProgramId, version.Id);
+            var existingOfferings = await _subjectOfferingService.GetSubjectOfferingsByCurriculumVersionAsync(version.Id, includeInactive: true);
+            var bySemester = existingOfferings.GroupBy(o => o.SemesterId).ToDictionary(g => g.Key, g => g.ToList());
+
             foreach (var s in yearSemesters)
             {
-                semesterJson.Add(new { semesterId = s.SemesterId, semesterName = s.SemesterName, subjects = Array.Empty<object>() });
+                var offerings = bySemester.TryGetValue(s.SemesterId, out var list) ? list : new List<SubjectOffering>();
+                var subjects = offerings.Select(MapOfferingForForm).ToList();
+                loadedExistingCount += offerings.Count(o => o.IsActive);
+
+                semesterJson.Add(new { semesterId = s.SemesterId, semesterName = s.SemesterName, subjects });
             }
-            initialExisting = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(version.ProgramId, version.Id);
         }
 
+        ViewBag.LoadedExistingCount = loadedExistingCount;
         ViewBag.InitialSemestersJson = JsonSerializer.Serialize(semesterJson);
-        ViewBag.InitialExistingJson = JsonSerializer.Serialize(initialExisting);
 
         ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(subjectCatalogs.Select(s => new
         {
@@ -253,19 +295,72 @@ public class SubjectOfferingsController : Controller
 
         var groups = model.Semesters ?? new List<SemesterSubjectOfferingGroup>();
         var populated = groups.Where(g => g.Subjects is { Count: > 0 }).ToList();
+        var visibleSemesterIds = groups.Select(g => g.SemesterId).Where(id => id > 0).ToHashSet();
 
-        if (populated.Count == 0)
-            ModelState.AddModelError("", "Please add at least one subject to at least one semester.");
+        var cvOfferings = model.CurriculumVersionId > 0 && model.ProgramId > 0
+            ? await _subjectOfferingService.GetSubjectOfferingsByCurriculumVersionAsync(model.CurriculumVersionId, includeInactive: true)
+            : new List<SubjectOffering>();
 
+        var activeOfferings = cvOfferings.Where(o => o.IsActive).ToList();
+        var activeById = cvOfferings.ToDictionary(o => o.Id);
+        var activeByKey = activeOfferings.ToDictionary(o => (o.SemesterId, o.SubjectCatalogId), o => o.Id);
+        var visibleActive = activeOfferings.Where(o => visibleSemesterIds.Contains(o.SemesterId)).ToList();
+        ViewBag.LoadedExistingCount = visibleActive.Count;
+
+        // Allow saving an empty form only when it removes everything currently offered.
+        if (populated.Count == 0 && visibleActive.Count == 0)
+            ModelState.AddModelError("", "Add at least one subject or remove an existing subject to save changes.");
+
+        var keptIds = new HashSet<int>();
+
+        // Pass 1 - validate the identity of every subject that claims to be an existing offering.
         for (var g = 0; g < groups.Count; g++)
         {
             var group = groups[g];
-            if (group.Subjects == null || group.Subjects.Count == 0) continue;
+            if (group.Subjects == null) continue;
 
             for (var i = 0; i < group.Subjects.Count; i++)
             {
-                if (group.Subjects[i].SubjectCatalogId <= 0)
+                var item = group.Subjects[i];
+                if (item.SubjectCatalogId <= 0)
                     ModelState.AddModelError($"Semesters[{g}].Subjects[{i}].{nameof(SubjectOfferingItemViewModel.SubjectCatalogId)}", "Please select a valid subject.");
+
+                if (item.OfferingId is not > 0) continue;
+
+                if (!activeById.TryGetValue(item.OfferingId.Value, out var current)
+                    || current.ProgramId != model.ProgramId
+                    || current.SemesterId != group.SemesterId
+                    || current.SubjectCatalogId != item.SubjectCatalogId)
+                {
+                    ModelState.AddModelError($"Semesters[{g}].Subjects[{i}].{nameof(SubjectOfferingItemViewModel.OfferingId)}",
+                        "This subject offering no longer matches the selected curriculum version. Reload the page and try again.");
+                }
+                else
+                {
+                    keptIds.Add(item.OfferingId.Value);
+                }
+            }
+        }
+
+        // Pass 2 - reject duplicates inside the form and against offerings that are not being kept.
+        var postedKeys = new HashSet<(int SemesterId, int SubjectCatalogId)>();
+        for (var g = 0; g < groups.Count; g++)
+        {
+            var group = groups[g];
+            if (group.Subjects == null) continue;
+
+            for (var i = 0; i < group.Subjects.Count; i++)
+            {
+                var item = group.Subjects[i];
+                if (item.SubjectCatalogId <= 0) continue;
+
+                if (!postedKeys.Add((group.SemesterId, item.SubjectCatalogId)))
+                    ModelState.AddModelError($"Semesters[{g}].Subjects[{i}].{nameof(SubjectOfferingItemViewModel.SubjectCatalogId)}",
+                        "This subject is already listed for the semester.");
+
+                if (activeByKey.TryGetValue((group.SemesterId, item.SubjectCatalogId), out var activeId) && !keptIds.Contains(activeId))
+                    ModelState.AddModelError($"Semesters[{g}].Subjects[{i}].{nameof(SubjectOfferingItemViewModel.SubjectCatalogId)}",
+                        $"This subject is already offered in semester \"{group.SemesterName}\" for the selected program and curriculum version.");
             }
         }
 
@@ -286,65 +381,119 @@ public class SubjectOfferingsController : Controller
             }
         }
 
+        // The evaluation scheme of an offering used by exams/assignments is locked,
+        // exactly as it is on the single-offering Edit page. Restoring an archived
+        // offering keeps its original marks, so it is only blocked when the user
+        // actually edited them.
         if (ModelState.IsValid)
         {
-            var existingBySemester = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(model.ProgramId, model.CurriculumVersionId);
-            foreach (var group in populated)
+            for (var g = 0; g < groups.Count; g++)
             {
-                if (existingBySemester.TryGetValue(group.SemesterId, out var existing))
+                var group = groups[g];
+                if (group.Subjects == null) continue;
+
+                for (var i = 0; i < group.Subjects.Count; i++)
                 {
-                    var duplicateCount = group.Subjects!.Count(s => existing.Contains(s.SubjectCatalogId));
-                    if (duplicateCount > 0)
-                        ModelState.AddModelError("", $"{duplicateCount} subject(s) already exist in semester \"{group.SemesterName}\" for the selected program and curriculum version.");
+                    var item = group.Subjects[i];
+                    if (item.OfferingId is not > 0 || !activeById.TryGetValue(item.OfferingId.Value, out var current)) continue;
+                    if (!MarksChanged(current, item)) continue;
+
+                    if (await _subjectOfferingService.IsSubjectOfferingReferencedAsync(current.Id))
+                    {
+                        ModelState.AddModelError("",
+                            $"The evaluation scheme of \"{current.SubjectCatalog?.SubjectCode}\" cannot be changed because it has been used in exams or college admin assignments.");
+                    }
                 }
             }
         }
 
         if (ModelState.IsValid)
         {
-            var offerings = new List<SubjectOffering>();
+            var toCreate = new List<SubjectOffering>();
+            var toUpdate = new List<SubjectOffering>();
+            var restoredCount = 0;
+
             foreach (var group in populated)
             {
-                offerings.AddRange(group.Subjects!.Select(s => new SubjectOffering
+                foreach (var item in group.Subjects!)
                 {
-                    SubjectCatalogId = s.SubjectCatalogId,
-                    ProgramId = model.ProgramId,
-                    SemesterId = group.SemesterId,
-                    CurriculumVersionId = model.CurriculumVersionId,
-                    IsCompulsory = s.IsCompulsory,
-                    DisplayOrder = s.DisplayOrder,
-                    HasTheory = s.HasTheory,
-                    HasPractical = s.HasPractical,
-                    HasInternal = s.HasInternal,
-                    TheoryFullMarks = s.TheoryFullMarks,
-                    TheoryPassMarks = s.TheoryPassMarks,
-                    PracticalFullMarks = s.PracticalFullMarks,
-                    PracticalPassMarks = s.PracticalPassMarks,
-                    InternalTheoryFullMarks = s.InternalTheoryFullMarks,
-                    InternalTheoryPassMarks = s.InternalTheoryPassMarks
-                }));
+                    var offering = new SubjectOffering
+                    {
+                        SubjectCatalogId = item.SubjectCatalogId,
+                        ProgramId = model.ProgramId,
+                        SemesterId = group.SemesterId,
+                        CurriculumVersionId = model.CurriculumVersionId,
+                        IsActive = true,
+                        IsCompulsory = item.IsCompulsory,
+                        DisplayOrder = item.DisplayOrder,
+                        HasTheory = item.HasTheory,
+                        HasPractical = item.HasPractical,
+                        HasInternal = item.HasInternal,
+                        TheoryFullMarks = item.TheoryFullMarks,
+                        TheoryPassMarks = item.TheoryPassMarks,
+                        PracticalFullMarks = item.PracticalFullMarks,
+                        PracticalPassMarks = item.PracticalPassMarks,
+                        InternalTheoryFullMarks = item.InternalTheoryFullMarks,
+                        InternalTheoryPassMarks = item.InternalTheoryPassMarks
+                    };
+
+                    if (item.OfferingId is > 0)
+                    {
+                        var current = activeById[item.OfferingId.Value];
+                        offering.Id = current.Id;
+                        offering.TenantId = current.TenantId;
+                        if (!current.IsActive) restoredCount++;
+                        toUpdate.Add(offering);
+                    }
+                    else
+                    {
+                        toCreate.Add(offering);
+                    }
+                }
             }
+
+            // Anything that was on the page but was not posted back has been removed by the user.
+            // Only semesters rendered on the page are considered, so unrelated legacy rows are safe.
+            var toArchive = visibleActive.Where(o => !keptIds.Contains(o.Id)).Select(o => o.Id).ToList();
 
             try
             {
-                foreach (var group in populated)
-                    await _subjectOfferingService.EnsureSemesterAssignedToProgramAsync(model.ProgramId, group.SemesterId);
+                foreach (var semesterId in visibleSemesterIds)
+                    await _subjectOfferingService.EnsureSemesterAssignedToProgramAsync(model.ProgramId, semesterId);
 
-                await _subjectOfferingService.CreateSubjectOfferingsAsync(offerings);
+                await _subjectOfferingService.SaveSubjectOfferingChangesAsync(toCreate, toUpdate, toArchive);
             }
             catch (DbUpdateException)
             {
-                ModelState.AddModelError("", "A database error occurred. One or more subject offerings may already exist.");
+                ModelState.AddModelError("", "A database error occurred. No changes were saved. Please reload the page and try again.");
                 await PopulateCreateViewDataOnErrorAsync(model);
                 return View(model);
             }
-            TempData["SuccessMessage"] = $"{offerings.Count} subject offering(s) created successfully.";
+
+            var messageParts = new List<string>();
+            if (toCreate.Count > 0) messageParts.Add($"{toCreate.Count} added");
+            if (restoredCount > 0) messageParts.Add($"{restoredCount} restored");
+            var changedCount = toUpdate.Count - restoredCount;
+            if (changedCount > 0) messageParts.Add($"{changedCount} updated");
+            if (toArchive.Count > 0) messageParts.Add($"{toArchive.Count} removed");
+            TempData["SuccessMessage"] = (messageParts.Count > 0 ? string.Join(", ", messageParts) : "No changes") + ".";
             return RedirectToAction(nameof(Index));
         }
 
         await PopulateCreateViewDataOnErrorAsync(model);
         return View(model);
     }
+
+    private static bool MarksChanged(SubjectOffering current, SubjectOfferingItemViewModel item) =>
+        current.HasTheory != item.HasTheory
+        || current.HasPractical != item.HasPractical
+        || current.HasInternal != item.HasInternal
+        || current.TheoryFullMarks != item.TheoryFullMarks
+        || current.TheoryPassMarks != item.TheoryPassMarks
+        || current.PracticalFullMarks != item.PracticalFullMarks
+        || current.PracticalPassMarks != item.PracticalPassMarks
+        || current.InternalTheoryFullMarks != item.InternalTheoryFullMarks
+        || current.InternalTheoryPassMarks != item.InternalTheoryPassMarks;
 
     private async Task PopulateCreateViewDataOnErrorAsync(SubjectOfferingBulkCreateViewModel model)
     {
@@ -374,9 +523,13 @@ public class SubjectOfferingsController : Controller
                 subjects = group.Subjects?.Select(s =>
                 {
                     catalogMap.TryGetValue(s.SubjectCatalogId, out var cat);
+                    // Keep restored items in the selected list after a validation error.
+                    // IsArchived is only a UI flag; the save path relies on OfferingId.
                     return new
                     {
                         id = s.SubjectCatalogId,
+                        offeringId = s.OfferingId ?? 0,
+                        isArchived = false,
                         code = cat?.SubjectCode ?? "",
                         name = cat?.SubjectName ?? "",
                         isCompulsory = s.IsCompulsory,
@@ -396,12 +549,15 @@ public class SubjectOfferingsController : Controller
         }
         ViewBag.InitialSemestersJson = JsonSerializer.Serialize(semesterJson);
 
-        ViewBag.InitialExistingJson = "{}";
-        if (model.ProgramId > 0 && model.CurriculumVersionId > 0)
-        {
-            var existing = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(model.ProgramId, model.CurriculumVersionId);
-            ViewBag.InitialExistingJson = JsonSerializer.Serialize(existing);
-        }
+        // Keep the original active count so removal summaries and the Save button
+        // stay correct when the page is redisplayed after a validation error.
+        var visibleSemesterIds = (model.Semesters ?? new List<SemesterSubjectOfferingGroup>())
+            .Select(g => g.SemesterId).Where(id => id > 0).ToHashSet();
+        var activeCount = model.CurriculumVersionId > 0
+            ? (await _subjectOfferingService.GetSubjectOfferingsByCurriculumVersionAsync(model.CurriculumVersionId))
+                .Count(o => o.IsActive && visibleSemesterIds.Contains(o.SemesterId))
+            : 0;
+        ViewBag.LoadedExistingCount = activeCount;
     }
 
     [RequirePermission("subjectofferings.edit")]
