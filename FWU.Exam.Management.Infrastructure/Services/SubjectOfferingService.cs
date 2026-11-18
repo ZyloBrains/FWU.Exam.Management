@@ -127,6 +127,66 @@ public class SubjectOfferingService : ISubjectOfferingService
         await _context.SaveChangesAsync();
     }
 
+    public async Task SaveSubjectOfferingChangesAsync(
+        IReadOnlyList<SubjectOffering> offeringsToCreate,
+        IReadOnlyList<SubjectOffering> offeringsToUpdate,
+        IReadOnlyList<int> offeringIdsToArchive)
+    {
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        // Archive first so an offering being restored cannot collide with the
+        // active-only unique index while another offering with the same key is
+        // still active in this batch.
+        if (offeringIdsToArchive.Count > 0)
+        {
+            var ids = offeringIdsToArchive.ToList();
+            var offerings = await _context.SubjectOfferings
+                .Where(so => ids.Contains(so.Id))
+                .ToListAsync();
+
+            foreach (var offering in offerings)
+                offering.IsActive = false;
+
+            await _context.SaveChangesAsync();
+        }
+
+        if (offeringsToCreate.Count > 0)
+            _context.SubjectOfferings.AddRange(offeringsToCreate);
+
+        if (offeringsToUpdate.Count > 0)
+        {
+            var updateIds = offeringsToUpdate.Select(o => o.Id).ToList();
+            var tracked = await _context.SubjectOfferings
+                .Where(so => updateIds.Contains(so.Id))
+                .ToDictionaryAsync(so => so.Id);
+
+            foreach (var desired in offeringsToUpdate)
+            {
+                if (!tracked.TryGetValue(desired.Id, out var current)) continue;
+
+                current.SubjectCatalogId = desired.SubjectCatalogId;
+                current.ProgramId = desired.ProgramId;
+                current.SemesterId = desired.SemesterId;
+                current.CurriculumVersionId = desired.CurriculumVersionId;
+                current.IsActive = desired.IsActive;
+                current.IsCompulsory = desired.IsCompulsory;
+                current.DisplayOrder = desired.DisplayOrder;
+                current.HasTheory = desired.HasTheory;
+                current.HasPractical = desired.HasPractical;
+                current.HasInternal = desired.HasInternal;
+                current.TheoryFullMarks = desired.TheoryFullMarks;
+                current.TheoryPassMarks = desired.TheoryPassMarks;
+                current.PracticalFullMarks = desired.PracticalFullMarks;
+                current.PracticalPassMarks = desired.PracticalPassMarks;
+                current.InternalTheoryFullMarks = desired.InternalTheoryFullMarks;
+                current.InternalTheoryPassMarks = desired.InternalTheoryPassMarks;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
+    }
+
     public async Task ArchiveSubjectOfferingAsync(int id)
     {
         var subjectOffering = await _context.SubjectOfferings.FindAsync(id);
@@ -397,7 +457,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .FirstOrDefaultAsync(cv => cv.Id == id);
     }
 
-    public async Task<List<SubjectOffering>> GetSubjectOfferingsByCurriculumVersionAsync(int curriculumVersionId)
+    public async Task<List<SubjectOffering>> GetSubjectOfferingsByCurriculumVersionAsync(int curriculumVersionId, bool includeInactive = false)
     {
         return await _context.SubjectOfferings
             .Include(so => so.SubjectCatalog)
@@ -405,7 +465,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(so => so.Semester)
             .AsNoTracking()
             .ApplyScope(_userContext)
-            .Where(so => so.IsActive && so.CurriculumVersionId == curriculumVersionId)
+            .Where(so => (includeInactive || so.IsActive) && so.CurriculumVersionId == curriculumVersionId)
             .OrderBy(so => so.Semester != null ? so.Semester.Number : 0)
             .ThenBy(so => so.DisplayOrder)
             .ThenBy(so => so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "")
