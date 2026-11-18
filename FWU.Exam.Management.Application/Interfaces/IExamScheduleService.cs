@@ -10,8 +10,8 @@ public interface IExamScheduleService
     Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, string? examTypeName = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null);
     Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, string? examTypeName = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null);
     Task<ExamSchedule?> GetExamScheduleByIdAsync(int id);
-    Task CreateExamScheduleAsync(ExamSchedule examSchedule);
-    Task UpdateExamScheduleAsync(ExamSchedule examSchedule);
+    Task CreateExamScheduleAsync(ExamSchedule examSchedule, int? minElectiveSubjects = null);
+    Task UpdateExamScheduleAsync(ExamSchedule examSchedule, int? minElectiveSubjects = null);
     Task DeleteExamScheduleAsync(int id);
     Task<DeletePreviewDto> GetDeletePreviewAsync(int id);
     Task<bool> ExamScheduleExistsAsync(int id);
@@ -24,4 +24,5 @@ public interface IExamScheduleService
     Task DeleteExamSlotAsync(int slotId);
     Task<Dictionary<int, int>> GetRegistrationCountsAsync(List<int> scheduleIds);
     Task<int> GetRegistrationCountAsync(int scheduleId);
+    Task<ExamScheduleElectiveConfigDto> GetElectiveConfigAsync(int programId, int semesterInstanceId, int? examScheduleId = null);
 }

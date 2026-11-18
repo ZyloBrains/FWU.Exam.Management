@@ -536,19 +536,26 @@ public class StudentDashboardController(
 
         if (isRegular)
         {
-            subjectList = subjects.Select(s => new SubjectFeeDetail
+            subjectList = subjects.Select(s =>
             {
-                SubjectOfferingId = s.Id,
-                SubjectName = s.SubjectCatalog?.SubjectName,
-                SubjectCode = s.SubjectCatalog?.SubjectCode,
-                HasTheory = s.HasTheory,
-                HasPractical = s.HasPractical,
-                PracticalFee = s.HasPractical ? practicalFee : 0,
-                IsSelected = s.IsCompulsory,
-                IsFailed = false,
-                IsCompulsory = s.IsCompulsory,
-                SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
-                SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
+                var isCompulsoryType = IsCompulsorySubjectTypeName(s.SubjectCatalog?.SubjectType?.Name, s.SubjectCatalog?.SubjectType?.Code);
+                var isCompulsory = s.IsCompulsory || isCompulsoryType;
+                var isElective = !isCompulsory && (s.SubjectCatalog?.SubjectTypeId ?? 0) > 0;
+                return new SubjectFeeDetail
+                {
+                    SubjectOfferingId = s.Id,
+                    SubjectName = s.SubjectCatalog?.SubjectName,
+                    SubjectCode = s.SubjectCatalog?.SubjectCode,
+                    HasTheory = s.HasTheory,
+                    HasPractical = s.HasPractical,
+                    PracticalFee = s.HasPractical ? practicalFee : 0,
+                    IsSelected = isCompulsory,
+                    IsFailed = false,
+                    IsCompulsory = isCompulsory,
+                    IsElective = isElective,
+                    SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
+                    SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
+                };
             }).ToList();
             selectedSubjectIds = subjectList.Where(s => s.IsCompulsory).Select(s => s.SubjectOfferingId).ToList();
         }
@@ -570,6 +577,9 @@ public class StudentDashboardController(
             subjectList = selectable.Select(s =>
             {
                 var failedLegs = failedLegsById.GetValueOrDefault(s.Id);
+                var isCompulsoryType = IsCompulsorySubjectTypeName(s.SubjectCatalog?.SubjectType?.Name, s.SubjectCatalog?.SubjectType?.Code);
+                var isCompulsory = s.IsCompulsory || isCompulsoryType;
+                var isElective = !isCompulsory && (s.SubjectCatalog?.SubjectTypeId ?? 0) > 0;
                 return new SubjectFeeDetail
                 {
                     SubjectOfferingId = s.Id,
@@ -580,23 +590,29 @@ public class StudentDashboardController(
                     PracticalFee = s.HasPractical ? practicalFee : 0,
                     // Free-select mode mirrors the regular form's starting point:
                     // compulsory subjects arrive pre-ticked (both available legs).
-                    IsSelected = knownFailures || s.IsCompulsory,
+                    IsSelected = knownFailures || isCompulsory,
                     IsFailed = knownFailures,
                     FailedTheory = failedLegs.HasFlag(ReExamLegs.Theory),
                     FailedPractical = failedLegs.HasFlag(ReExamLegs.Practical),
                     SelectedTheory = knownFailures
                         ? failedLegs.HasFlag(ReExamLegs.Theory)
-                        : s.IsCompulsory && s.HasTheory,
+                        : isCompulsory && s.HasTheory,
                     SelectedPractical = knownFailures
                         ? failedLegs.HasFlag(ReExamLegs.Practical)
-                        : s.IsCompulsory && s.HasPractical,
-                    IsCompulsory = s.IsCompulsory,
+                        : isCompulsory && s.HasPractical,
+                    IsCompulsory = isCompulsory,
+                    IsElective = isElective,
                     SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
                     SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
                 };
             }).ToList();
             selectedSubjectIds = subjectList.Where(s => s.IsSelected).Select(s => s.SubjectOfferingId).ToList();
         }
+
+        var availableElectiveSubjects = subjectList.Count(s => s.IsElective);
+        var minElectiveSubjects = Math.Max(0, schedule.MinElectiveSubjects);
+        if (minElectiveSubjects > availableElectiveSubjects)
+            minElectiveSubjects = availableElectiveSubjects;
 
         var vm = new ExamPaymentViewModel
         {
@@ -621,7 +637,9 @@ public class StudentDashboardController(
                 Id = pt.Id,
                 Name = pt.PaymentTypeName,
                 LogoUrl = pt.LogoUrl
-            }).ToList()
+            }).ToList(),
+            AvailableElectiveSubjects = availableElectiveSubjects,
+            MinElectiveSubjects = minElectiveSubjects
         };
 
         if (!isRegular)
@@ -1888,18 +1906,29 @@ public class StudentDashboardController(
                 return (false, "Selected subject is not part of this exam schedule.");
         }
 
-        var electiveGroups = offerings
-            .Where(o => !o.IsCompulsory && o.SubjectCatalog != null)
-            .GroupBy(o => o.SubjectCatalog!.SubjectTypeId);
+        var electiveOfferings = offerings
+            .Where(o => !o.IsCompulsory
+                && (o.SubjectCatalog?.SubjectTypeId ?? 0) > 0
+                && !IsCompulsorySubjectTypeName(o.SubjectCatalog?.SubjectType?.Name, o.SubjectCatalog?.SubjectType?.Code))
+            .ToList();
 
-        foreach (var group in electiveGroups)
+        var availableElectives = electiveOfferings.Count;
+        var requiredElectives = Math.Max(0, schedule.MinElectiveSubjects);
+        if (requiredElectives > availableElectives)
+            requiredElectives = availableElectives;
+
+        var selectedElectiveCount = electiveOfferings.Count(o => subjectIds.Contains(o.Id));
+        if (requiredElectives == 0)
         {
-            var groupName = group.First().SubjectCatalog?.SubjectType?.Name ?? group.Key.ToString();
-            var selectedCount = group.Count(o => subjectIds.Contains(o.Id));
-            if (selectedCount == 0)
-                return (false, $"Please select at least one elective subject from {groupName}.");
-            if (selectedCount > 1)
-                return (false, $"Only one subject can be selected from {groupName}.");
+            if (selectedElectiveCount != 0)
+                return (false, "No elective subjects should be selected for this exam schedule.");
+            return (true, null);
+        }
+        if (availableElectives > 0 && selectedElectiveCount != requiredElectives)
+        {
+            return (false, requiredElectives == 1
+                ? "Please select exactly 1 elective subject."
+                : $"Please select exactly {requiredElectives} elective subjects.");
         }
 
         return (true, null);
@@ -2566,6 +2595,17 @@ public class StudentDashboardController(
         ["F"] = 0.0m,
         ["NG"] = 0.0m
     };
+
+    private static bool IsCompulsorySubjectTypeName(string? name, string? code)
+    {
+        var n = (name ?? string.Empty).Trim();
+        var c = (code ?? string.Empty).Trim();
+        return n.Equals("Compulsory", StringComparison.OrdinalIgnoreCase)
+            || n.Equals("Comp", StringComparison.OrdinalIgnoreCase)
+            || c.Equals("COMP", StringComparison.OrdinalIgnoreCase)
+            || c.Equals("C", StringComparison.OrdinalIgnoreCase)
+            || n.Contains("Compulsory", StringComparison.OrdinalIgnoreCase);
+    }
 
     private static bool IsScheduleDeadlinePassed(ExamSchedule schedule)
     {

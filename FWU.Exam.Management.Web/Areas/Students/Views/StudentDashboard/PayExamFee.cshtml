@@ -3,8 +3,8 @@
 @{
     ViewData["Title"] = "Pay Exam Fee";
     var compulsorySubjects = Model.Subjects.Where(s => s.IsCompulsory).ToList();
-    var electiveGroups = Model.Subjects.Where(s => !s.IsCompulsory).GroupBy(s => s.SubjectTypeId).ToList();
-    var electiveSubjects = electiveGroups.SelectMany(g => g).ToList();
+    var electiveSubjects = Model.Subjects.Where(s => s.IsElective).ToList();
+    var reexamElectiveGroups = Model.Subjects.Where(s => !s.IsCompulsory && !s.IsElective == false ? !s.IsCompulsory : !s.IsCompulsory).Where(s => !s.IsCompulsory).GroupBy(s => s.SubjectTypeId).ToList();
 }
 
 <div class="min-h-screen pb-24 sm:pb-6">
@@ -99,7 +99,14 @@
                 <p class="mt-0.5 text-xs sm:text-sm opacity-80">
                     @if (Model.IsRegular)
                     {
-                        <text>Compulsory subjects are auto-selected. Tick elective subjects below to include them.</text>
+                        if (Model.AvailableElectiveSubjects > 0)
+                        {
+                            <text>Compulsory subjects are auto-selected. Select exactly @Model.MinElectiveSubjects elective subject@(Model.MinElectiveSubjects == 1 ? "" : "s") from the list below (available: @Model.AvailableElectiveSubjects).</text>
+                        }
+                        else
+                        {
+                            <text>Compulsory subjects are auto-selected.</text>
+                        }
                     }
                     else
                     {
@@ -242,132 +249,179 @@
             }
         }
 
-        @if (electiveGroups.Any())
+        @if (Model.IsRegular && electiveSubjects.Any())
         {
-            @foreach (var group in electiveGroups)
-            {
-                var groupName = group.First().SubjectTypeName ?? "Elective Subjects";
-                var groupSubjects = group.ToList();
-                <div class="elective-group">
-                    <div class="px-4 sm:px-6 py-3 bg-purple-50 border-b border-gray-200">
-                        <div class="flex items-center justify-between gap-2">
-                            <h4 class="text-sm font-semibold text-purple-700 uppercase tracking-wider">Elective Subjects - @groupName</h4>
-                            @if (Model.IsRegular)
+            <div class="elective-section">
+                <div class="px-4 sm:px-6 py-3 bg-purple-50 border-b border-gray-200">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                        <h4 class="text-sm font-semibold text-purple-700 uppercase tracking-wider">Elective Subjects</h4>
+                        <span class="text-xs font-medium text-purple-700">Select exactly @Model.MinElectiveSubjects (available: @Model.AvailableElectiveSubjects)</span>
+                    </div>
+                </div>
+                <div class="fee-header">
+                    <span></span>
+                    <span class="text-left text-xs font-semibold text-gray-500">SN</span>
+                    <span class="text-left text-xs font-semibold text-gray-500">Subject</span>
+                    <span class="text-left text-xs font-semibold text-gray-500">Code</span>
+                    <span class="text-center text-xs font-semibold text-gray-500">Theory</span>
+                    <span class="text-center text-xs font-semibold text-gray-500">Practical</span>
+                    <span class="text-right text-xs font-semibold text-gray-500">Practical Fee</span>
+                </div>
+                @for (int i = 0; i < electiveSubjects.Count; i++)
+                {
+                    var subj = electiveSubjects[i];
+                    var rowBg = subj.IsSelected ? "bg-purple-50/30" : "bg-white";
+                    <div class="fee-row subject-card @rowBg hover:bg-gray-50">
+                        <div class="c-check">
+                            <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
+                                   data-practical-fee="@subj.PracticalFee"
+                                   data-elective="1"
+                                   class="subject-checkbox elective-checkbox rounded border-gray-300 h-5 w-5 sm:h-4 sm:w-4"
+                                   onchange="updateTotals()" checked="@(subj.IsSelected ? "checked" : null)" />
+                        </div>
+                        <div class="c-sn text-sm text-gray-700">@(i + 1)</div>
+                        <div class="c-sub">
+                            <p class="text-sm font-medium text-gray-800 truncate">@subj.SubjectName</p>
+                            <div class="mt-1 flex items-center gap-1.5 flex-wrap">
+                                <span class="text-xs text-gray-500 md:hidden">@subj.SubjectCode</span>
+                                @if (!string.IsNullOrWhiteSpace(subj.SubjectTypeName))
+                                {
+                                    <span class="inline-flex items-center px-1.5 py-px rounded text-[10px] font-medium bg-purple-100 text-purple-700">@subj.SubjectTypeName</span>
+                                }
+                                @if (subj.HasTheory)
+                                {
+                                    <span class="inline-flex items-center px-1.5 py-px rounded text-[10px] font-medium bg-blue-100 text-blue-700">Theory</span>
+                                }
+                                @if (subj.HasPractical)
+                                {
+                                    <span class="inline-flex items-center px-1.5 py-px rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">Practical</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="c-code text-sm text-gray-500">@subj.SubjectCode</div>
+                        <div class="c-theory">
+                            @if (subj.HasTheory)
                             {
-                                <label class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 cursor-pointer select-none">
-                                    <input type="checkbox" onchange="toggleAllElec(this)" class="rounded border-gray-300 h-5 w-5 sm:h-4 sm:w-4" />
-                                    Select One
-                                </label>
+                                <i class="fas fa-check text-green-500"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-times text-gray-300"></i>
                             }
                         </div>
-                        @if (!Model.IsRegular)
-                        {
-                            <p class="text-xs text-purple-600 mt-1">Tick the papers you need to re-sit — theory and/or practical. Practical papers carry an additional fee.</p>
-                        }
+                        <div class="c-prac">
+                            @if (subj.HasPractical)
+                            {
+                                <i class="fas fa-check text-green-500"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-times text-gray-300"></i>
+                            }
+                        </div>
+                        <div class="c-fee text-sm font-semibold @(Model.IsFeeExempt ? "text-emerald-600" : "text-gray-800")">
+                            @(Model.IsFeeExempt ? "Waived" : $"Rs {subj.PracticalFee:N0}")
+                        </div>
                     </div>
-                    <div class="fee-header">
-                        <span></span>
-                        <span class="text-left text-xs font-semibold text-gray-500">SN</span>
-                        <span class="text-left text-xs font-semibold text-gray-500">Subject</span>
-                        <span class="text-left text-xs font-semibold text-gray-500">Code</span>
-                        <span class="text-center text-xs font-semibold text-gray-500">Theory</span>
-                        <span class="text-center text-xs font-semibold text-gray-500">Practical</span>
-                        <span class="text-right text-xs font-semibold text-gray-500">Practical Fee</span>
-                    </div>
-                    @for (int i = 0; i < groupSubjects.Count; i++)
-                    {
-                        var subj = groupSubjects[i];
-                        var rowBg = subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-purple-50/30") : "bg-white";
-                        <div class="fee-row subject-card @rowBg hover:bg-gray-50 @(Model.IsRegular ? "" : "reexam-row")">
-                            <div class="c-check">
-                                @if (Model.IsRegular)
-                                {
-                                    <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
-                                           data-practical-fee="@subj.PracticalFee"
-                                           data-subject-type-id="@subj.SubjectTypeId"
-                                           class="subject-checkbox elective-checkbox rounded border-gray-300 h-5 w-5 sm:h-4 sm:w-4"
-                                           onchange="onSubjectChange(this)" checked="@(subj.IsSelected ? "checked" : null)" />
-                                }
+                }
+                <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
+                    <span class="text-sm font-semibold text-gray-700">Elective Subtotal (selected):</span>
+                    <span class="text-sm font-semibold @(Model.IsFeeExempt ? "text-emerald-600" : "text-gray-700")" id="electiveSubtotal">@(Model.IsFeeExempt ? "Waived" : "Rs 0")</span>
+                </div>
+            </div>
+        }
+        else if (!Model.IsRegular)
+        {
+            var nonCompulsoryGroups = Model.Subjects.Where(s => !s.IsCompulsory).GroupBy(s => s.SubjectTypeId).ToList();
+            if (nonCompulsoryGroups.Any())
+            {
+                @foreach (var group in nonCompulsoryGroups)
+                {
+                    var groupName = group.First().SubjectTypeName ?? "Elective Subjects";
+                    var groupSubjects = group.ToList();
+                    <div class="elective-group">
+                        <div class="px-4 sm:px-6 py-3 bg-purple-50 border-b border-gray-200">
+                            <div class="flex items-center justify-between gap-2">
+                                <h4 class="text-sm font-semibold text-purple-700 uppercase tracking-wider">@groupName</h4>
                             </div>
-                            <div class="c-sn text-sm text-gray-700">@(i + 1)</div>
-                            <div class="c-sub">
-                                <p class="text-sm font-medium text-gray-800 truncate">@subj.SubjectName</p>
-                                <div class="mt-1 md:hidden flex items-center gap-1.5 flex-wrap">
-                                    <span class="text-xs text-gray-500">@subj.SubjectCode</span>
+                            <p class="text-xs text-purple-600 mt-1">Tick the papers you need to re-sit — theory and/or practical. Practical papers carry an additional fee.</p>
+                        </div>
+                        <div class="fee-header">
+                            <span></span>
+                            <span class="text-left text-xs font-semibold text-gray-500">SN</span>
+                            <span class="text-left text-xs font-semibold text-gray-500">Subject</span>
+                            <span class="text-left text-xs font-semibold text-gray-500">Code</span>
+                            <span class="text-center text-xs font-semibold text-gray-500">Theory</span>
+                            <span class="text-center text-xs font-semibold text-gray-500">Practical</span>
+                            <span class="text-right text-xs font-semibold text-gray-500">Practical Fee</span>
+                        </div>
+                        @for (int i = 0; i < groupSubjects.Count; i++)
+                        {
+                            var subj = groupSubjects[i];
+                            var rowBg = subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-purple-50/30") : "bg-white";
+                            <div class="fee-row subject-card @rowBg hover:bg-gray-50 reexam-row">
+                                <div class="c-check"></div>
+                                <div class="c-sn text-sm text-gray-700">@(i + 1)</div>
+                                <div class="c-sub">
+                                    <p class="text-sm font-medium text-gray-800 truncate">@subj.SubjectName</p>
+                                    <div class="mt-1 md:hidden flex items-center gap-1.5 flex-wrap">
+                                        <span class="text-xs text-gray-500">@subj.SubjectCode</span>
+                                    </div>
+                                </div>
+                                <div class="c-code text-sm text-gray-500">@subj.SubjectCode</div>
+                                <div class="c-theory">
+                                    @if (subj.HasTheory)
+                                    {
+                                        <label class="inline-flex items-center gap-1 cursor-pointer select-none @(subj.FailedTheory ? "text-red-600" : "text-gray-600")">
+                                            <input type="checkbox" class="leg-checkbox rounded border-gray-300 h-4 w-4"
+                                                   data-offering="@subj.SubjectOfferingId" data-leg="T"
+                                                   onchange="updateTotals()"
+                                                   checked="@(subj.SelectedTheory ? "checked" : null)" />
+                                            @if (subj.FailedTheory)
+                                            {
+                                                <span class="px-1 py-0.5 rounded bg-red-100 text-[10px] font-semibold text-red-600">Failed</span>
+                                            }
+                                        </label>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-times text-gray-300"></i>
+                                    }
+                                </div>
+                                <div class="c-prac">
+                                    @if (subj.HasPractical)
+                                    {
+                                        <label class="inline-flex items-center gap-1 cursor-pointer select-none @(subj.FailedPractical ? "text-red-600" : "text-gray-600")">
+                                            <input type="checkbox" class="leg-checkbox rounded border-gray-300 h-4 w-4"
+                                                   data-offering="@subj.SubjectOfferingId" data-leg="P"
+                                                   data-practical-fee="@subj.PracticalFee"
+                                                   onchange="updateTotals()"
+                                                   checked="@(subj.SelectedPractical ? "checked" : null)" />
+                                            @if (subj.FailedPractical)
+                                            {
+                                                <span class="px-1 py-0.5 rounded bg-red-100 text-[10px] font-semibold text-red-600">Failed</span>
+                                            }
+                                        </label>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-times text-gray-300"></i>
+                                    }
+                                </div>
+                                <div class="c-fee text-sm font-semibold @(Model.IsFeeExempt ? "text-emerald-600" : "text-gray-800")">
+                                    @if (Model.IsFeeExempt)
+                                    {
+                                        <text>Waived</text>
+                                    }
+                                    else
+                                    {
+                                        <span class="fee-cell" data-offering="@subj.SubjectOfferingId"><span class="text-gray-300">&mdash;</span></span>
+                                    }
                                 </div>
                             </div>
-                            <div class="c-code text-sm text-gray-500">@subj.SubjectCode</div>
-                            <div class="c-theory">
-                                @if (!Model.IsRegular && subj.HasTheory)
-                                {
-                                    <label class="inline-flex items-center gap-1 cursor-pointer select-none @(subj.FailedTheory ? "text-red-600" : "text-gray-600")">
-                                        <input type="checkbox" class="leg-checkbox rounded border-gray-300 h-4 w-4"
-                                               data-offering="@subj.SubjectOfferingId" data-leg="T"
-                                               onchange="updateTotals()"
-                                               checked="@(subj.SelectedTheory ? "checked" : null)" />
-                                        @if (subj.FailedTheory)
-                                        {
-                                            <span class="px-1 py-0.5 rounded bg-red-100 text-[10px] font-semibold text-red-600">Failed</span>
-                                        }
-                                    </label>
-                                }
-                                else if (subj.HasTheory)
-                                {
-                                    <i class="fas fa-check text-green-500"></i>
-                                }
-                                else
-                                {
-                                    <i class="fas fa-times text-gray-300"></i>
-                                }
-                            </div>
-                            <div class="c-prac">
-                                @if (!Model.IsRegular && subj.HasPractical)
-                                {
-                                    <label class="inline-flex items-center gap-1 cursor-pointer select-none @(subj.FailedPractical ? "text-red-600" : "text-gray-600")">
-                                        <input type="checkbox" class="leg-checkbox rounded border-gray-300 h-4 w-4"
-                                               data-offering="@subj.SubjectOfferingId" data-leg="P"
-                                               data-practical-fee="@subj.PracticalFee"
-                                               onchange="updateTotals()"
-                                               checked="@(subj.SelectedPractical ? "checked" : null)" />
-                                        @if (subj.FailedPractical)
-                                        {
-                                            <span class="px-1 py-0.5 rounded bg-red-100 text-[10px] font-semibold text-red-600">Failed</span>
-                                        }
-                                    </label>
-                                }
-                                else if (subj.HasPractical)
-                                {
-                                    <i class="fas fa-check text-green-500"></i>
-                                }
-                                else
-                                {
-                                    <i class="fas fa-times text-gray-300"></i>
-                                }
-                            </div>
-                            <div class="c-fee text-sm font-semibold @(Model.IsFeeExempt ? "text-emerald-600" : "text-gray-800")">
-                                @if (Model.IsFeeExempt)
-                                {
-                                    <text>Waived</text>
-                                }
-                                else if (Model.IsRegular)
-                                {
-                                    <text>Rs @subj.PracticalFee.ToString("N0")</text>
-                                }
-                                else
-                                {
-                                    <span class="fee-cell" data-offering="@subj.SubjectOfferingId"><span class="text-gray-300">&mdash;</span></span>
-                                }
-                            </div>
-                        </div>
-                    }
-                    @if (Model.IsRegular)
-                    {
-                        <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
-                            <span class="text-sm font-semibold text-gray-700">Elective Subtotal:</span>
-                            <span class="text-sm font-semibold @(Model.IsFeeExempt ? "text-emerald-600" : "text-gray-700")">@(Model.IsFeeExempt ? "Waived" : $"Rs {groupSubjects.Sum(s => s.PracticalFee):N0}")</span>
-                        </div>
-                    }
-                </div>
+                        }
+                    </div>
+                }
             }
         }
 
@@ -662,48 +716,23 @@
             }, 300);
         }
 
+        var isRegular = @Model.IsRegular.ToString().ToLowerInvariant();
+        var minElectiveSubjects = @Model.MinElectiveSubjects;
+        var availableElectiveSubjects = @Model.AvailableElectiveSubjects;
+
         function onSubjectChange(cb) {
-            var typeId = cb.getAttribute('data-subject-type-id');
-            if (typeId) {
-                var group = document.querySelectorAll('.subject-checkbox[data-subject-type-id="' + typeId + '"]');
-                if (cb.checked) {
-                    group.forEach(function(other) {
-                        if (other !== cb && other.checked) {
-                            other.checked = false;
-                        }
-                    });
-                } else {
-                    var anyChecked = Array.prototype.some.call(group, function(other) {
-                        return other !== cb && other.checked;
-                    });
-                    if (!anyChecked) {
-                        cb.checked = true;
-                        showErrorToast('At least one elective must be selected from this group.');
-                    }
-                }
-            }
             updateTotals();
         }
 
         function validateElectiveGroups() {
-            var groups = {};
-            document.querySelectorAll('.subject-checkbox.elective-checkbox').forEach(function(cb) {
-                var typeId = cb.getAttribute('data-subject-type-id');
-                if (typeId && !(typeId in groups)) groups[typeId] = 0;
-            });
-            document.querySelectorAll('.subject-checkbox.elective-checkbox:checked').forEach(function(cb) {
-                var typeId = cb.getAttribute('data-subject-type-id');
-                if (typeId && (typeId in groups)) groups[typeId]++;
-            });
-            for (var typeId in groups) {
-                if (groups[typeId] === 0) {
-                    return 'Please select at least one elective subject from each elective group.';
-                }
+            if (!isRegular) return null;
+            if (availableElectiveSubjects <= 0) return null;
+            var selectedElectives = document.querySelectorAll('.subject-checkbox.elective-checkbox:checked').length;
+            if (selectedElectives !== minElectiveSubjects) {
+                return 'Please select exactly ' + minElectiveSubjects + ' elective subject' + (minElectiveSubjects === 1 ? '' : 's') + '.';
             }
             return null;
         }
-
-        var isRegular = @Model.IsRegular.ToString().ToLowerInvariant();
 
         function collectSelection() {
             var ids = [];
@@ -758,50 +787,23 @@
                 }
             });
 
+            if (isRegular) {
+                var electiveSubtotal = 0;
+                document.querySelectorAll('.subject-checkbox.elective-checkbox:checked').forEach(function(cb) {
+                    electiveSubtotal += parseFloat(cb.getAttribute('data-practical-fee') || 0);
+                });
+                var electiveSubtotalEl = document.getElementById('electiveSubtotal');
+                if (electiveSubtotalEl) electiveSubtotalEl.innerText = 'Rs ' + electiveSubtotal.toLocaleString();
+            }
+
             var formatted = parseFloat(document.getElementById('hfAmount').value).toLocaleString();
             document.getElementById('stickyTotal').innerText = 'Rs ' + formatted;
             var sheetTotal = document.getElementById('sheetTotal');
             if (sheetTotal) sheetTotal.innerText = 'Rs ' + formatted;
             document.getElementById('stickyCount').innerText = selectedCount + ' selected';
-            document.querySelectorAll('.elective-group').forEach(function(group) {
-                var box = group.querySelector('input[type="checkbox"][onchange="toggleAllElec(this)"]');
-                var groupBoxes = group.querySelectorAll('.subject-checkbox.elective-checkbox');
-                if (box && groupBoxes.length > 0) {
-                    var anyChecked = Array.prototype.some.call(groupBoxes, function(cb) { return cb.checked; });
-                    box.checked = anyChecked;
-                }
-            });
         }
 
         function toggleAllElec(source) {
-            var group = source.closest('.elective-group');
-            var electives = group ? Array.prototype.slice.call(group.querySelectorAll('.subject-checkbox.elective-checkbox')) : [];
-            if (source.checked) {
-                var hasSelection = electives.some(function(cb) { return cb.checked; });
-                if (hasSelection) {
-                    var kept = false;
-                    electives.forEach(function(cb) {
-                        if (cb.checked && !kept) {
-                            kept = true;
-                        } else {
-                            cb.checked = false;
-                        }
-                    });
-                } else {
-                    electives.forEach(function(cb, idx) { cb.checked = idx === 0; });
-                }
-            } else {
-                var checkedBox = null;
-                electives.forEach(function(cb) {
-                    if (cb.checked && !checkedBox) checkedBox = cb;
-                    cb.checked = false;
-                });
-                if (checkedBox) {
-                    checkedBox.checked = true;
-                    updateTotals();
-                    showErrorToast('At least one elective must be selected from this group.');
-                }
-            }
             updateTotals();
         }
 
