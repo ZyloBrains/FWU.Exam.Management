@@ -110,7 +110,7 @@
                     }
                     else
                     {
-                        <text>Your failed papers are pre-selected. For each subject, tick the papers (theory and/or practical) you need to re-sit.</text>
+                        <text>Select the papers (theory and/or practical) you need to re-sit. Failed papers are marked and pre-selected where applicable.</text>
                     }
                 </p>
             </div>
@@ -142,7 +142,7 @@
                 <h4 class="text-sm font-semibold text-blue-700 uppercase tracking-wider">Compulsory Subjects</h4>
                 @if (!Model.IsRegular)
                 {
-                    <p class="text-xs text-blue-600 mt-1">Tick the papers you need to re-sit — theory and/or practical. Practical papers carry an additional fee.</p>
+                    <p class="text-xs text-blue-600 mt-1">Select the papers you need to re-sit (theory and/or practical). Failed papers are marked where applicable. Practical papers carry an additional fee.</p>
                 }
             </div>
             <div class="fee-header">
@@ -344,7 +344,7 @@
                             <div class="flex items-center justify-between gap-2">
                                 <h4 class="text-sm font-semibold text-purple-700 uppercase tracking-wider">@groupName</h4>
                             </div>
-                            <p class="text-xs text-purple-600 mt-1">Tick the papers you need to re-sit — theory and/or practical. Practical papers carry an additional fee.</p>
+                            <p class="text-xs text-purple-600 mt-1">Select the papers you need to re-sit (theory and/or practical). Failed papers are marked where applicable. Practical papers carry an additional fee.</p>
                         </div>
                         <div class="fee-header">
                             <span></span>
@@ -816,6 +816,10 @@
                 showErrorToast(groupError);
                 return;
             }
+            if (!isRegular && collectSelection().ids.length === 0) {
+                showErrorToast('Please select at least one exam paper (theory or practical).');
+                return;
+            }
             var amount = document.getElementById('hfAmount').value;
             if (amount == 0 || amount === '0') {
                 showErrorToast('Please select at least one exam paper to proceed with payment.');
@@ -844,6 +848,10 @@
             var groupError = isRegular ? validateElectiveGroups() : null;
             if (groupError) {
                 showErrorToast(groupError);
+                return;
+            }
+            if (!isRegular && collectSelection().ids.length === 0) {
+                showErrorToast('Please select at least one exam paper (theory or practical).');
                 return;
             }
             var amount = document.getElementById('hfAmount').value;
@@ -880,6 +888,10 @@
             var groupError = isRegular ? validateElectiveGroups() : null;
             if (groupError) {
                 showErrorToast(groupError);
+                return;
+            }
+            if (!isRegular && collectSelection().ids.length === 0) {
+                showErrorToast('Please select at least one exam paper (theory or practical).');
                 return;
             }
             // Lock both Submit Form buttons so a fast double-click cannot
