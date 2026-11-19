@@ -163,7 +163,7 @@
                         @if (Model.IsRegular)
                         {
                             <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
-                                   data-practical-fee="@subj.PracticalFee"
+                                   data-practical-fee="@subj.PracticalFee.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                    class="subject-checkbox rounded border-gray-300 h-5 w-5 sm:h-4 sm:w-4"
                                    onchange="updateTotals()"
                                    @(subj.IsSelected ? "checked disabled" : null) />
@@ -206,7 +206,7 @@
                             <label class="inline-flex items-center gap-1 cursor-pointer select-none @(subj.FailedPractical ? "text-red-600" : "text-gray-600")">
                                 <input type="checkbox" class="leg-checkbox rounded border-gray-300 h-4 w-4"
                                        data-offering="@subj.SubjectOfferingId" data-leg="P"
-                                       data-practical-fee="@subj.PracticalFee"
+                                       data-practical-fee="@subj.PracticalFee.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                        onchange="updateTotals()"
                                        checked="@(subj.SelectedPractical ? "checked" : null)" />
                                 @if (subj.FailedPractical)
@@ -274,7 +274,7 @@
                     <div class="fee-row subject-card @rowBg hover:bg-gray-50">
                         <div class="c-check">
                             <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
-                                   data-practical-fee="@subj.PracticalFee"
+                                   data-practical-fee="@subj.PracticalFee.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                    data-elective="1"
                                    class="subject-checkbox elective-checkbox rounded border-gray-300 h-5 w-5 sm:h-4 sm:w-4"
                                    onchange="updateTotals()" checked="@(subj.IsSelected ? "checked" : null)" />
@@ -394,7 +394,7 @@
                                         <label class="inline-flex items-center gap-1 cursor-pointer select-none @(subj.FailedPractical ? "text-red-600" : "text-gray-600")">
                                             <input type="checkbox" class="leg-checkbox rounded border-gray-300 h-4 w-4"
                                                    data-offering="@subj.SubjectOfferingId" data-leg="P"
-                                                   data-practical-fee="@subj.PracticalFee"
+                                                   data-practical-fee="@subj.PracticalFee.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                                    onchange="updateTotals()"
                                                    checked="@(subj.SelectedPractical ? "checked" : null)" />
                                             @if (subj.FailedPractical)
@@ -793,7 +793,10 @@
                     electiveSubtotal += parseFloat(cb.getAttribute('data-practical-fee') || 0);
                 });
                 var electiveSubtotalEl = document.getElementById('electiveSubtotal');
-                if (electiveSubtotalEl) electiveSubtotalEl.innerText = 'Rs ' + electiveSubtotal.toLocaleString();
+                if (electiveSubtotalEl) {
+                    var isFeeExempt = @(Model.IsFeeExempt.ToString().ToLowerInvariant());
+                    electiveSubtotalEl.innerText = isFeeExempt ? 'Waived' : ('Rs ' + electiveSubtotal.toLocaleString());
+                }
             }
 
             var formatted = parseFloat(document.getElementById('hfAmount').value).toLocaleString();
