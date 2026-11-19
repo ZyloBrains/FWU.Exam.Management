@@ -1,10 +1,12 @@
 @model FWU.Exam.Management.Domain.Entities.Exams.ExamSchedule
+@using FWU.Exam.Management.Application.DTOs
 
 @{
     ViewData["Title"] = "Edit Exam Schedule";
     var today = DateOnly.FromDateTime(DateTime.Today);
     var minStartDate = Model.StartDate.HasValue && Model.StartDate.Value >= today ? DateTime.Today.ToString("yyyy-MM-dd") : "";
     var minEndDate = Model.EndDate.HasValue && Model.EndDate.Value >= today ? DateTime.Today.ToString("yyyy-MM-dd") : "";
+    var electiveConfig = ViewBag.ElectiveConfig as ExamScheduleElectiveConfigDto ?? new ExamScheduleElectiveConfigDto { AvailableElectives = 0, MinElectiveSubjects = Model?.MinElectiveSubjects ?? 1 };
 }
 
 <div class="space-y-6">
@@ -139,6 +141,12 @@
                     <input asp-for="PracticalSubjectFee" type="number" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 200" />
                     <span asp-validation-for="PracticalSubjectFee" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
+                <div class="md:col-span-2">
+                    <label asp-for="MinElectiveSubjects" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Required Elective Subjects (Total)</label>
+                    <input asp-for="MinElectiveSubjects" type="number" min="0" max="@electiveConfig.AvailableElectives" class="w-full md:w-64 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" id="MinElectiveSubjects" />
+                    <p class="text-xs text-gray-500 mt-1" id="electiveConfigInfo">Available elective subjects: <span id="availableElectivesCount">@electiveConfig.AvailableElectives</span>. Students must select exactly this many electives in total (no subject-type grouping).</p>
+                    <span asp-validation-for="MinElectiveSubjects" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
                 <div class="flex items-center gap-3 pt-4">
                     <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" />
                     <label asp-for="IsActive" class="text-xs sm:text-sm font-medium text-gray-700">Active</label>
@@ -202,6 +210,25 @@
             el.prop('disabled', true).select2({ width: 'resolve' });
         }
 
+        function loadElectiveConfig() {
+            var programId = $('#ProgramId').val();
+            var semesterInstanceId = $('#SemesterInstanceId').val();
+            if (!programId || !semesterInstanceId) {
+                $('#availableElectivesCount').text('0');
+                $('#MinElectiveSubjects').attr('max', 0);
+                return;
+            }
+            $.getJSON(tenantUrl('/Exams/ExamSchedules/GetElectiveConfig'), { programId: programId, semesterInstanceId: semesterInstanceId }, function (data) {
+                var available = data && typeof data.availableElectives !== 'undefined' ? data.availableElectives : 0;
+                var min = data && typeof data.minElectiveSubjects !== 'undefined' ? data.minElectiveSubjects : 0;
+                $('#availableElectivesCount').text(available);
+                $('#MinElectiveSubjects').attr('max', available);
+                if (min > available) min = available;
+                if (min < 0) min = 0;
+                $('#MinElectiveSubjects').val(min);
+            });
+        }
+
         function loadSemesters(academicYearId, programId, preferredSemesterId) {
             resetSelect('#SemesterInstanceId', '-- Select Semester --');
 
@@ -217,6 +244,7 @@
                 if (preferredSemesterId && data.some(function (s) { return s.id == preferredSemesterId; })) {
                     el.val(String(preferredSemesterId));
                 }
+                loadElectiveConfig();
             });
         }
 
@@ -239,11 +267,19 @@
                 }
             });
 
+            $('#SemesterInstanceId').on('change', function () {
+                loadElectiveConfig();
+            });
+
             if (initialProgramId && initialProgramId !== '0') {
                 if (initialAcademicYearId && initialAcademicYearId !== '0') {
                     $('#AcademicYearId').val(initialAcademicYearId).trigger('change');
                     loadSemesters(initialAcademicYearId, initialProgramId, initialSemesterInstanceId);
+                } else {
+                    loadElectiveConfig();
                 }
+            } else {
+                loadElectiveConfig();
             }
         });
 

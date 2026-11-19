@@ -1374,6 +1374,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<int?>("LevelId")
                         .HasColumnType("int");
 
+                    b.Property<int>("MinElectiveSubjects")
+                        .HasColumnType("int");
+
                     b.Property<decimal?>("PracticalSubjectFee")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
