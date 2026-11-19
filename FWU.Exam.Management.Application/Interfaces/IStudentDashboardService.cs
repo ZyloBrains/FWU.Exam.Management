@@ -57,7 +57,7 @@ public interface IStudentDashboardService
     Task<bool> HasFailedSubjectsInSemesterAsync(string userId, int semesterId, int programId);
     bool IsReExamType(string? examTypeName);
     Task<bool> HasAnyExamResultsInSemesterAsync(string userId, int semesterId, int programId);
-    Task<bool> IsEligibleForReExamAsync(string userId, int semesterId, int programId);
+    Task<bool> IsEligibleForReExamAsync(string userId, ExamSchedule schedule, StudentRegistration student);
     Task<List<int>> GetFailedSubjectOfferingIdsForSemesterAsync(string userId, int semesterId, int programId);
     Task<List<FailedSubjectOption>> GetFailedSubjectOptionsForStudentAsync(int examScheduleId, string userId);
     Task<List<AdmitCard>> GetAdmitCardsForStudentAsync(string userId, int studentRegistrationId);

@@ -561,11 +561,10 @@ public class StudentDashboardController(
         }
         else
         {
-            // Re-exam forms: students with recorded failures get exactly those
-            // subjects (their own curriculum version) with the failed exam legs
-            // pre-ticked. Students with no result history yet choose freely from
-            // THEIR batch curriculum. Each subject offers its available papers:
-            // theory and/or practical; a ticked practical leg adds the fee.
+            // Re-exam forms: students with recorded failures select only failed
+            // subjects/legs (pre-ticked). Students with no result history yet can
+            // choose freely from THEIR batch curriculum, but no compulsory or
+            // elective subjects/legs are auto-selected.
             var failedOptions = await dashboardService.GetFailedSubjectOptionsForStudentAsync(examScheduleId, user.Id);
             var knownFailures = failedOptions.Count > 0;
             var failedLegsById = failedOptions.ToDictionary(o => o.SubjectOfferingId, o => o.FailedLegs);
@@ -580,6 +579,8 @@ public class StudentDashboardController(
                 var isCompulsoryType = IsCompulsorySubjectTypeName(s.SubjectCatalog?.SubjectType?.Name, s.SubjectCatalog?.SubjectType?.Code);
                 var isCompulsory = s.IsCompulsory || isCompulsoryType;
                 var isElective = !isCompulsory && (s.SubjectCatalog?.SubjectTypeId ?? 0) > 0;
+                var selectedTheory = knownFailures && failedLegs.HasFlag(ReExamLegs.Theory);
+                var selectedPractical = knownFailures && failedLegs.HasFlag(ReExamLegs.Practical);
                 return new SubjectFeeDetail
                 {
                     SubjectOfferingId = s.Id,
@@ -588,18 +589,12 @@ public class StudentDashboardController(
                     HasTheory = s.HasTheory,
                     HasPractical = s.HasPractical,
                     PracticalFee = s.HasPractical ? practicalFee : 0,
-                    // Free-select mode mirrors the regular form's starting point:
-                    // compulsory subjects arrive pre-ticked (both available legs).
-                    IsSelected = knownFailures || isCompulsory,
-                    IsFailed = knownFailures,
+                    IsSelected = selectedTheory || selectedPractical,
+                    IsFailed = failedLegs != ReExamLegs.None,
                     FailedTheory = failedLegs.HasFlag(ReExamLegs.Theory),
                     FailedPractical = failedLegs.HasFlag(ReExamLegs.Practical),
-                    SelectedTheory = knownFailures
-                        ? failedLegs.HasFlag(ReExamLegs.Theory)
-                        : isCompulsory && s.HasTheory,
-                    SelectedPractical = knownFailures
-                        ? failedLegs.HasFlag(ReExamLegs.Practical)
-                        : isCompulsory && s.HasPractical,
+                    SelectedTheory = selectedTheory,
+                    SelectedPractical = selectedPractical,
                     IsCompulsory = isCompulsory,
                     IsElective = isElective,
                     SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
@@ -938,7 +933,7 @@ public class StudentDashboardController(
         // charge-delta math and every stored log carry unambiguous data.
         selection = await NormalizeLegacySelectionLegsAsync(examScheduleId, selection);
 
-        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection);
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection, user.Id);
         if (!selectionValidation.Ok)
         {
             TempData["ErrorMessage"] = selectionValidation.Error;
@@ -1052,7 +1047,7 @@ public class StudentDashboardController(
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
         var selection = ReExamSubjectSelection.Parse(selectedSubjectIds);
 
-        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection);
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection, user.Id);
         if (!selectionValidation.Ok)
         {
             TempData["ErrorMessage"] = selectionValidation.Error;
@@ -1115,7 +1110,7 @@ public class StudentDashboardController(
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
         var selection = ReExamSubjectSelection.Parse(selectedSubjectIds);
 
-        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection);
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection, user.Id);
         if (!selectionValidation.Ok)
         {
             TempData["ErrorMessage"] = selectionValidation.Error;
@@ -1561,7 +1556,7 @@ public class StudentDashboardController(
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
         var selection = ReExamSubjectSelection.Parse(selectedSubjectIds);
 
-        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection);
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, selection, user.Id);
         if (!selectionValidation.Ok)
         {
             TempData["ErrorMessage"] = selectionValidation.Error;
@@ -1887,14 +1882,14 @@ public class StudentDashboardController(
     private async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(AppUser user) =>
         await dashboardService.GetMissingMandatoryProfileFieldsAsync(user.Id, user.Email, user.PhoneNumber, user.ProfilePath, user.SignaturePath);
 
-    private async Task<(bool Ok, string? Error)> ValidateSubjectSelectionAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection)
+    private async Task<(bool Ok, string? Error)> ValidateSubjectSelectionAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection, string userId)
     {
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
         if (schedule == null)
             return (false, "Exam schedule not found.");
 
         if (dashboardService.IsReExamType(schedule.ExamType?.Name))
-            return await ValidateReExamSubjectSelectionAsync(examScheduleId, selection);
+            return await ValidateReExamSubjectSelectionAsync(examScheduleId, selection, userId);
 
         var subjectIds = selection.Keys.ToList();
 
@@ -1939,9 +1934,9 @@ public class StudentDashboardController(
     // resolves to. Membership is therefore validated against every offering of
     // the same program + semester number regardless of version. Each chosen leg
     // must actually be offered by that subject (HasTheory/HasPractical) and at
-    // least one leg must be ticked per subject. The elective-group rule is
-    // skipped (students may sit what they failed).
-    private async Task<(bool Ok, string? Error)> ValidateReExamSubjectSelectionAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection)
+    // least one leg must be ticked per subject. When the student has recorded
+    // failures, selection is restricted to failed subjects/legs only.
+    private async Task<(bool Ok, string? Error)> ValidateReExamSubjectSelectionAsync(int examScheduleId, Dictionary<int, ReExamLegs> selection, string userId)
     {
         if (selection.Count == 0)
             return (false, "Please select at least one subject.");
@@ -1959,6 +1954,12 @@ public class StudentDashboardController(
             .Select(so => new { so.Id, so.HasTheory, so.HasPractical })
             .ToListAsync();
         var offeringLookup = offerings.ToDictionary(o => o.Id);
+
+        var failedOptions = await dashboardService.GetFailedSubjectOptionsForStudentAsync(examScheduleId, userId);
+        var restrictToFailed = failedOptions.Count > 0;
+        var failedLegsById = restrictToFailed
+            ? failedOptions.ToDictionary(o => o.SubjectOfferingId, o => o.FailedLegs)
+            : new Dictionary<int, ReExamLegs>();
 
         foreach (var (offeringId, legs) in selection)
         {
@@ -1980,6 +1981,17 @@ public class StudentDashboardController(
                 return (false, "One of the selected subjects does not offer a theory paper.");
             if (effectiveLegs.HasFlag(ReExamLegs.Practical) && !offering.HasPractical)
                 return (false, "One of the selected subjects does not offer a practical paper.");
+
+            if (restrictToFailed)
+            {
+                if (!failedLegsById.TryGetValue(offeringId, out var failedLegs) || failedLegs == ReExamLegs.None)
+                    return (false, "Only failed subjects can be selected for this exam form.");
+
+                if (effectiveLegs.HasFlag(ReExamLegs.Theory) && !failedLegs.HasFlag(ReExamLegs.Theory))
+                    return (false, "Only failed exam papers can be selected for this subject.");
+                if (effectiveLegs.HasFlag(ReExamLegs.Practical) && !failedLegs.HasFlag(ReExamLegs.Practical))
+                    return (false, "Only failed exam papers can be selected for this subject.");
+            }
         }
 
         return (true, null);

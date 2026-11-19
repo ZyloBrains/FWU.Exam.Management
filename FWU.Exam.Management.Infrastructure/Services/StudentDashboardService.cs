@@ -128,15 +128,19 @@ public class StudentDashboardService(
 
             if (IsReExamType(schedule.ExamType?.Name))
             {
-                // Re-exams target papers of already-completed semesters: a student only
-                // ever sees forms for semesters strictly below their highest enrolled
-                // one. Eligibility then requires recorded failures, or no result
-                // history at all (legacy data not yet imported).
-                if (maxEnrolledSemesterNumber == null
-                    || schedule.SemesterInstance!.Semester!.Number >= maxEnrolledSemesterNumber.Value)
+                // Re-exam/partial forms target papers of completed or current semesters.
+                // Allow schedules at or below the student's highest enrolled semester;
+                // cross-cohort partials may use a different semester instance/academic
+                // year than the student's enrollment. Eligibility requires recorded
+                // failures, or no result history at all for that semester (legacy data).
+                if (maxEnrolledSemesterNumber == null)
                     continue;
 
-                if (!await IsEligibleForReExamAsync(userId, schedule.SemesterInstance.SemesterId, student.ProgramId ?? 0))
+                var scheduleSemesterNumber = schedule.SemesterInstance!.Semester!.Number;
+                if (scheduleSemesterNumber > maxEnrolledSemesterNumber.Value)
+                    continue;
+
+                if (!await IsEligibleForReExamAsync(userId, schedule, student))
                     continue;
             }
             else if (!enrolledSemesterInstanceIds.Contains(schedule.SemesterInstanceId))
@@ -1229,15 +1233,57 @@ public class StudentDashboardService(
             .AnyAsync();
     }
 
-    public async Task<bool> IsEligibleForReExamAsync(string userId, int semesterId, int programId)
+    public async Task<bool> IsEligibleForReExamAsync(string userId, ExamSchedule schedule, StudentRegistration student)
     {
-        // Students with recorded failures qualify normally. Students with no result
-        // history at all (legacy data not yet imported) are allowed through; the
-        // gate tightens automatically once real results exist.
+        var semesterId = schedule.SemesterInstance?.SemesterId ?? 0;
+        var programId = schedule.ProgramId;
+
+        // Students with recorded failures qualify normally.
         if (await HasFailedSubjectsInSemesterAsync(userId, semesterId, programId))
             return true;
 
-        return !await HasAnyExamResultsInSemesterAsync(userId, semesterId, programId);
+        // Students with any recorded result history (and no failures) are not eligible.
+        if (await HasAnyExamResultsInSemesterAsync(userId, semesterId, programId))
+            return false;
+
+        // No result history: allow partial/re-exam forms only for students from an
+        // academic year below the exam schedule's academic year.
+        return IsAcademicYearBelowSchedule(student, schedule);
+    }
+
+    private static bool IsAcademicYearBelowSchedule(StudentRegistration student, ExamSchedule schedule)
+    {
+        var studentAy = student.AcademicYear;
+        var scheduleAy = schedule.SemesterInstance?.AcademicYear;
+
+        if (studentAy == null || scheduleAy == null)
+            return false;
+
+        if (studentAy.StartDate.HasValue && scheduleAy.StartDate.HasValue)
+            return studentAy.StartDate.Value < scheduleAy.StartDate.Value;
+
+        if (TryExtractYear(studentAy.AcademicYearCode) is int sy && TryExtractYear(scheduleAy.AcademicYearCode) is int scy)
+            return sy < scy;
+        if (TryExtractYear(studentAy.AcademicYearName) is int syn && TryExtractYear(scheduleAy.AcademicYearName) is int scyn)
+            return syn < scyn;
+
+        return studentAy.Id < scheduleAy.Id;
+    }
+
+    private static int? TryExtractYear(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        for (var i = 0; i <= value.Length - 4; i++)
+        {
+            if (!char.IsDigit(value[i]) || !char.IsDigit(value[i + 1]) || !char.IsDigit(value[i + 2]) || !char.IsDigit(value[i + 3]))
+                continue;
+
+            if (int.TryParse(value.AsSpan(i, 4), out var year) && year >= 1900 && year <= 2100)
+                return year;
+        }
+
+        return null;
     }
 
     public async Task<List<FailedSubjectOption>> GetFailedSubjectOptionsForStudentAsync(int examScheduleId, string userId)
