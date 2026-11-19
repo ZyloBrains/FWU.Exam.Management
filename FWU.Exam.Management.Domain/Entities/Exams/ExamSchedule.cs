@@ -65,6 +65,10 @@ public class ExamSchedule : ITenantScoped
     [Display(Name = "Practical Subject Fee")]
     public decimal? PracticalSubjectFee { get; set; }
 
+    [Range(0, int.MaxValue)]
+    [Display(Name = "Minimum Elective Subjects")]
+    public int MinElectiveSubjects { get; set; } = 1;
+
     [Display(Name = "Admission Card Release Date")]
     public DateTime? AdmissionCardReleaseDate { get; set; }
 

@@ -198,19 +198,20 @@ public class ExamSchedulesController(
     {
         var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists);
+        ViewBag.ElectiveConfig = new ExamScheduleElectiveConfigDto { AvailableElectives = 0, MinElectiveSubjects = 1 };
         return View();
     }
 
     [HttpPost]
     [RequirePermission("examschedules.create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,ProgramId,SemesterInstanceId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Create([Bind("Id,ProgramId,SemesterInstanceId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,MinElectiveSubjects,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (ModelState.IsValid)
         {
             try
             {
-                await examScheduleService.CreateExamScheduleAsync(examSchedule);
+                await examScheduleService.CreateExamScheduleAsync(examSchedule, examSchedule.MinElectiveSubjects);
             }
             catch (InvalidOperationException ex)
             {
@@ -226,6 +227,7 @@ public class ExamSchedulesController(
             {
                 var retrySelectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
                 PopulateDropdowns(retrySelectLists, examSchedule);
+                ViewBag.ElectiveConfig = await GetElectiveConfigForViewAsync(examSchedule.ProgramId, examSchedule.SemesterInstanceId, examSchedule.MinElectiveSubjects, null);
                 return View(examSchedule);
             }
 
@@ -235,6 +237,7 @@ public class ExamSchedulesController(
         }
         var selectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
         PopulateDropdowns(selectLists, examSchedule);
+        ViewBag.ElectiveConfig = await GetElectiveConfigForViewAsync(examSchedule.ProgramId, examSchedule.SemesterInstanceId, examSchedule.MinElectiveSubjects, null);
         return View(examSchedule);
     }
 
@@ -248,13 +251,14 @@ public class ExamSchedulesController(
 
         var selectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
         PopulateDropdowns(selectLists, examSchedule);
+        ViewBag.ElectiveConfig = await GetElectiveConfigForViewAsync(examSchedule.ProgramId, examSchedule.SemesterInstanceId, examSchedule.MinElectiveSubjects, examSchedule.Id);
         return View(examSchedule);
     }
 
     [HttpPost]
     [RequirePermission("examschedules.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,ProgramId,SemesterInstanceId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,ProgramId,SemesterInstanceId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,MinElectiveSubjects,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (id != examSchedule.Id) return NotFound();
 
@@ -265,13 +269,14 @@ public class ExamSchedulesController(
                 var existing = await examScheduleService.GetExamScheduleByIdAsync(id);
                 if (existing is null) return NotFound();
                 examSchedule.TenantId = existing.TenantId;
-                await examScheduleService.UpdateExamScheduleAsync(examSchedule);
+                await examScheduleService.UpdateExamScheduleAsync(examSchedule, examSchedule.MinElectiveSubjects);
             }
             catch (InvalidOperationException ex)
             {
                 TempData["ErrorMessage"] = ex.Message;
                 var retrySelectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
                 PopulateDropdowns(retrySelectLists, examSchedule);
+                ViewBag.ElectiveConfig = await GetElectiveConfigForViewAsync(examSchedule.ProgramId, examSchedule.SemesterInstanceId, examSchedule.MinElectiveSubjects, examSchedule.Id);
                 return View(examSchedule);
             }
             catch (DbUpdateConcurrencyException)
@@ -287,6 +292,7 @@ public class ExamSchedulesController(
         }
         var selectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
         PopulateDropdowns(selectLists, examSchedule);
+        ViewBag.ElectiveConfig = await GetElectiveConfigForViewAsync(examSchedule.ProgramId, examSchedule.SemesterInstanceId, examSchedule.MinElectiveSubjects, examSchedule.Id);
         return View(examSchedule);
     }
 
@@ -355,6 +361,31 @@ public class ExamSchedulesController(
     {
         var programs = await examScheduleService.GetProgramsByAcademicYearAsync(academicYearId);
         return Json(programs);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetElectiveConfig(int programId, int semesterInstanceId, int? examScheduleId = null)
+    {
+        if (programId <= 0 || semesterInstanceId <= 0)
+            return Json(new ExamScheduleElectiveConfigDto { AvailableElectives = 0, MinElectiveSubjects = 1 });
+
+        var config = await examScheduleService.GetElectiveConfigAsync(programId, semesterInstanceId, examScheduleId);
+        return Json(config);
+    }
+
+    private async Task<ExamScheduleElectiveConfigDto> GetElectiveConfigForViewAsync(int programId, int semesterInstanceId, int? postedMin, int? examScheduleId)
+    {
+        if (programId <= 0 || semesterInstanceId <= 0)
+            return new ExamScheduleElectiveConfigDto { AvailableElectives = 0, MinElectiveSubjects = postedMin ?? 1 };
+
+        var config = await examScheduleService.GetElectiveConfigAsync(programId, semesterInstanceId, examScheduleId);
+        if (postedMin.HasValue)
+        {
+            var min = Math.Max(0, postedMin.Value);
+            if (min > config.AvailableElectives) min = config.AvailableElectives;
+            config.MinElectiveSubjects = min;
+        }
+        return config;
     }
 
     [HttpGet]

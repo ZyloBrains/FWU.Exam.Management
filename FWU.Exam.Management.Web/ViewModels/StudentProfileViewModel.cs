@@ -103,6 +103,7 @@ public class SubjectFeeDetail
     public bool SelectedPractical { get; set; }
 
     public bool IsCompulsory { get; set; }
+    public bool IsElective { get; set; }
     public int SubjectTypeId { get; set; }
     public string? SubjectTypeName { get; set; }
 }
@@ -137,6 +138,8 @@ public class ExamPaymentViewModel
     public bool IsRegular { get; set; }
     public List<int> SelectedSubjectIds { get; set; } = new();
     public List<PaymentTypeDetail> PaymentTypes { get; set; } = new();
+    public int MinElectiveSubjects { get; set; }
+    public int AvailableElectiveSubjects { get; set; }
 }
 
 public class MarksheetViewModel
