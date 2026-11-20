@@ -149,15 +149,15 @@
                         <!-- Target Semester -->
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                                Target Semester <span class="text-red-600">*</span>
+                                Target Semester <span id="semesterRequiredMark" class="text-red-600">*</span>
                             </label>
-                            <select name="semesterId" id="SemesterId" required
+                            <select name="semesterId" id="SemesterId"
                                     class="select2 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="">Select target semester</option>
                             </select>
-                            <p class="text-xs text-gray-500 mt-1">
-                                The semester the student is enrolled into after the transfer. Prior enrollments are
-                                closed and kept as history; this is a required choice and is never inferred.
+                            <p id="semesterHelp" class="text-xs text-gray-500 mt-1">
+                                Required when the program or academic year changes. Prior enrollments are then
+                                closed and kept as history; the target semester is never inferred.
                             </p>
                         </div>
 
@@ -632,6 +632,8 @@
             college: @Model.CollegeId,
             program: @(Model.ProgramId?.ToString() ?? "0"),
             year: @Model.AcademicYearId,
+            hasEnrollment: @(enrollments.Count > 0 ? "true" : "false"),
+            enrollmentCount: @enrollments.Count,
             levelName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentLevel)),
             collegeName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentCollege)),
             facultyName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(currentFaculty)),
@@ -672,7 +674,25 @@
             }
         }
 
+        // Mirrors the server: enrollments are recreated only for a program/year change or
+        // when the student has no enrollment yet. The target semester is required only then.
+        function enrollmentWillBeRecreated() {
+            var newProgramId = parseInt($("#ProgramId").val()) || 0;
+            var newYearId = parseInt($("#AcademicYearId").val()) || 0;
+            return newProgramId !== _current.program || newYearId !== _current.year || !_current.hasEnrollment;
+        }
+
+        function syncSemesterRequirement() {
+            var needed = enrollmentWillBeRecreated();
+            $("#SemesterId").prop("required", needed);
+            document.getElementById("semesterRequiredMark").classList.toggle("hidden", !needed);
+            document.getElementById("semesterHelp").textContent = needed
+                ? "The semester the student is enrolled into after the transfer. Prior enrollments are closed and kept as history; this is a required choice and is never inferred."
+                : "Not used for this change: the current semester enrollment is preserved. Choose a different program or academic year to select a target semester.";
+        }
+
         function updateDiagram() {
+            syncSemesterRequirement();
             var newLevelId = parseInt($("#LevelId").val()) || 0;
             var newFacultyId = parseInt($("#FacultyId").val()) || 0;
             var newCollegeId = parseInt($("#CollegeId").val()) || 0;
@@ -764,6 +784,8 @@
                     "See the Tenant Impact panel below.";
             } else if (programChanged) {
                 confirmText.textContent = "This will change the student's program and faculty. Prior semester enrollments are closed and kept as history (credits, fees and results preserved), and the student is enrolled into the target semester you select. The tenant stays '" + _current.tenantName + "'.";
+            } else if (yearChanged || !_current.hasEnrollment) {
+                confirmText.textContent = "This will close prior semester enrollments (kept as history with credits, fees and results preserved) and enroll the student into the target semester you select. The tenant stays '" + _current.tenantName + "'.";
             } else if (facultyChanged) {
                 confirmText.textContent = "This will change the student's faculty. The student keeps their current program, which must belong to the new faculty. Semester enrollments and results are preserved. The tenant stays '" + _current.tenantName + "'.";
             } else if (collegeChanged) {
@@ -1002,9 +1024,15 @@
                 var ay = $("#AcademicYearId").val();
                 var semester = $("#SemesterId").val();
                 var reason = ($("#TransferReason").val() || "").trim();
-                if (!level || !faculty || !college || !program || !ay || !semester) {
+                if (!level || !faculty || !college || !program || !ay) {
                     e.preventDefault();
-                    alert("Please fill in all transfer fields, including the faculty and the target semester.");
+                    alert("Please fill in all transfer fields, including the faculty and the academic year.");
+                    return false;
+                }
+                var recreateEnrollments = enrollmentWillBeRecreated();
+                if (recreateEnrollments && !semester) {
+                    e.preventDefault();
+                    alert("Please select the target semester for this program or academic year change.");
                     return false;
                 }
                 if (!reason) {
@@ -1014,10 +1042,13 @@
                 }
                 var newProgramId = parseInt(program);
                 var newFacultyId = parseInt(faculty);
-                var targetSemester = getSelectedText("SemesterId");
+                var newYearId = parseInt(ay);
+                var targetSemester = recreateEnrollments ? getSelectedText("SemesterId") : "";
                 var msg;
                 if (newProgramId !== _current.program) {
                     msg = "This will transfer the student to a NEW PROGRAM. Prior semester enrollments are closed and kept as history (credits, fees and results preserved), and the student is enrolled into " + targetSemester + ". Continue?";
+                } else if (newYearId !== _current.year || !_current.hasEnrollment) {
+                    msg = "This will close prior semester enrollments (kept as history with credits, fees and results preserved) and enroll the student into " + targetSemester + ". Continue?";
                 } else if (newFacultyId !== _current.faculty) {
                     msg = "This will change the student's FACULTY. Their program, semester enrollments and results are preserved. Continue?";
                 } else {
@@ -1035,10 +1066,18 @@
                            "', not '" + _current.tenantName + "'.\n\n" +
                            "Moves to the new tenant:\n" +
                            "  - Student record, admission record and portal login\n" +
-                           "  - The new semester enrollment you selected\n\n" +
+                           (recreateEnrollments
+                               ? "  - The new semester enrollment you selected\n"
+                               : "  - No new semester enrollment is created for this change\n") +
+                           "\n" +
                            "Stays in '" + _current.tenantName + "':\n" +
-                           "  - @enrollments.Count closed semester enrollment(s), with credits, fees and results\n" +
-                           "  - Their exam registrations are deactivated, not deleted\n\n" +
+                           (recreateEnrollments
+                               ? _current.enrollmentCount > 0
+                                   ? "  - " + _current.enrollmentCount + " closed semester enrollment(s), with credits, fees and results\n" +
+                                     "  - Their exam registrations are deactivated, not deleted\n"
+                                   : "  - No prior semester enrollment to close\n"
+                               : "  - " + _current.enrollmentCount + " existing semester enrollment(s) are left in place\n") +
+                           "\n" +
                            "Each tenant only sees its own data, so a full transcript has to be requested\n" +
                            "from '" + _current.tenantName + "' before the transfer.\n\nContinue?";
                 }

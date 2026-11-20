@@ -318,7 +318,13 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                 ps.IsActive);
         if (programSemester == null) return false;
 
+        // The operator may be administered by a different tenant from the target program.
+        // SemesterInstance is ITenantScoped, so the normal query filter would hide a valid
+        // target and make the transfer fail even though the faculty/program were explicitly
+        // selected. Resolve it across tenants; the tenant of the NEW enrollment is decided
+        // by the target faculty below, not by the operator's context.
         var semesterInstance = await context.SemesterInstances
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .FirstOrDefaultAsync(si =>
                 si.SemesterId == programSemester.SemesterId &&
@@ -328,7 +334,11 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
 
         // Program has no TenantId of its own: a program belongs to a tenant through the
         // faculty that owns it, so that is what decides where the new enrollment is stamped.
+        // Faculty is ITenantScoped, so its navigation would be filtered out for an operator
+        // from another tenant and resolve as null, silently falling back to the OLD tenant.
+        // The tenant must come from the selected target faculty regardless of who is signed in.
         var targetProgram = await context.Programs
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(p => p.Id == newProgramId)
             .Select(p => new { p.ProgramName, p.ProgramCode, FacultyTenantId = p.Faculty != null ? p.Faculty.TenantId : (int?)null })
@@ -353,13 +363,17 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
 
         var now = DateTime.UtcNow;
 
-        // Close prior enrollments instead of deleting them so the student's
+        // Close prior ACTIVE enrollments instead of deleting them so the student's
         // transcript (credits, grade points, fees, results) and every linked
         // ExamRegistration survive. ExamRegistration.SemesterEnrollmentId is
         // deliberately left intact, which also keeps the
         // ExamRegistration -> SemesterEnrollment -> StudentAdmission chain walkable.
+        // Already-closed rows are left alone: their DropDate/DropReason are the audit
+        // trail of the transfer that closed THEM and must survive later transfers.
         var existingEnrollments = await context.SemesterEnrollments
-            .Where(se => se.StudentAdmissionId == admissionId)
+            .IgnoreQueryFilters()
+            .Where(se => se.StudentAdmissionId == admissionId
+                      && se.EnrollmentStatus == StudentEnrollmentStatus.Active)
             .ToListAsync();
         foreach (var enrollment in existingEnrollments)
         {

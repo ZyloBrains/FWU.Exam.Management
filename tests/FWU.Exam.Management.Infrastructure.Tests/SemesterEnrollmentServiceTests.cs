@@ -6,6 +6,7 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace FWU.Exam.Management.Infrastructure.Tests;
@@ -968,6 +969,95 @@ public class SemesterEnrollmentServiceTests
         var created = Assert.Single(rows, e => e.Id != 1);
         Assert.Equal(1, created.SemesterInstanceId);
         Assert.Equal(StudentEnrollmentStatus.Active, created.EnrollmentStatus);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_LeavesEarlierTransferHistoryUntouched()
+    {
+        var firstTransferDate = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+
+            // Row 1 was closed by an earlier transfer. Row 2 is the current active one.
+            var earlier = TestData.Enrollment(1, 1, 2, StudentEnrollmentStatus.Inactive);
+            earlier.DropDate = firstTransferDate;
+            earlier.DropReason = "Transferred to Previous Program (PREV): first move";
+            ctx.SemesterEnrollments.Add(earlier);
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(2, 1, 2));
+
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 90,
+                TenantId = TestData.TenantId,
+                SemesterId = 1,
+                AcademicYearId = TestData.AcademicYearId,
+                ProgramId = TestData.ProgramIdOther
+            });
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(
+            1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "second move");
+
+        Assert.True(transferred);
+        var rows = db.Context.SemesterEnrollments!.ToList();
+        Assert.Equal(3, rows.Count);
+
+        // The earlier transfer's audit trail must survive the second transfer unchanged.
+        var earlier = Assert.Single(rows, e => e.Id == 1);
+        Assert.Equal(StudentEnrollmentStatus.Inactive, earlier.EnrollmentStatus);
+        Assert.Equal(firstTransferDate, earlier.DropDate);
+        Assert.Equal("Transferred to Previous Program (PREV): first move", earlier.DropReason);
+        Assert.Equal(2, earlier.SemesterInstanceId);
+
+        var justClosed = Assert.Single(rows, e => e.Id == 2);
+        Assert.Equal(StudentEnrollmentStatus.Inactive, justClosed.EnrollmentStatus);
+        Assert.StartsWith("Transferred to ", justClosed.DropReason);
+        Assert.Contains("second move", justClosed.DropReason);
+
+        var created = Assert.Single(rows, e => e.Id == 3);
+        Assert.Equal(StudentEnrollmentStatus.Active, created.EnrollmentStatus);
+        Assert.Equal(90, created.SemesterInstanceId);
+    }
+
+    [Fact]
+    public async Task TransferEnrollmentsAsync_ResolvesTargetInstanceOutsideOperatorTenant()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+
+            // The operator is on tenant 1, but the target faculty and its semester instance
+            // live on tenant 5. The global tenant filter must not hide that instance.
+            SeedTenant(ctx, 5, "OTH");
+            ctx.Faculties.Add(new Faculty { Id = 50, Name = "Other Faculty", OfficeCode = "OTH", TenantId = 5 });
+            ctx.Programs.Local.Single(p => p.Id == TestData.ProgramIdOther).FacultyId = 50;
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 90,
+                TenantId = 5,
+                SemesterId = 1,
+                AcademicYearId = TestData.AcademicYearId,
+                ProgramId = TestData.ProgramIdOther
+            });
+        });
+        var service = CreateService(db);
+
+        var transferred = await service.TransferEnrollmentsAsync(
+            1, TestData.ProgramIdOther, TestData.AcademicYearId, targetSemesterId: 1, transferReason: "Cross-tenant move");
+
+        Assert.True(transferred);
+        var created = Assert.Single(
+            db.Context.SemesterEnrollments!.IgnoreQueryFilters().ToList(), e => e.Id != 1);
+        Assert.Equal(90, created.SemesterInstanceId);
+        Assert.Equal(5, created.TenantId);
     }
 
     private static void SeedProgramSemesters(AppDbContext ctx)

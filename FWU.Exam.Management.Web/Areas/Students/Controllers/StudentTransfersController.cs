@@ -202,6 +202,7 @@ public class StudentTransfersController(
         if (admission != null)
         {
             var enrollments = await context.SemesterEnrollments
+                .IgnoreQueryFilters()
                 .Include(se => se.SemesterInstance).ThenInclude(si => si!.Semester)
                 .Include(se => se.SemesterInstance).ThenInclude(si => si!.AcademicYear)
                 .Include(se => se.ExamRegistrations).ThenInclude(er => er!.ExamSchedule)
@@ -244,15 +245,16 @@ public class StudentTransfersController(
             return RedirectToAction(nameof(Transfer), new { id });
         }
 
-        // The target semester is a required choice: it decides which SemesterInstance the
-        // student is actually enrolled into, and it is what makes the closed history rows
-        // unambiguous. Never guess it.
-        if (semesterId <= 0)
+        if (academicYearId <= 0)
         {
-            TempData["ErrorMessage"] = "Please select the semester you are transferring the student into.";
+            TempData["ErrorMessage"] = "Please select the academic year you are transferring the student into.";
             return RedirectToAction(nameof(Transfer), new { id });
         }
 
+        // The target semester is required only when enrollments will actually be recreated
+        // (program/year change, or no existing enrollment). It is validated below, once we
+        // can tell, so a college-only change does not force the user to pick a semester
+        // that would then be ignored.
         // The faculty drives the rest of the cascade and, through TenantDefaults, the
         // tenant. It is a required choice, not something inferred from the program.
         if (facultyId <= 0)
@@ -349,16 +351,29 @@ public class StudentTransfersController(
         bool academicYearChanged = student.AcademicYearId != academicYearId;
         bool facultyChanged = student.FacultyId != program.FacultyId;
 
+        var hasAnyEnrollment = student.StudentAdmission != null
+            && await context.SemesterEnrollments
+                .IgnoreQueryFilters()
+                .AnyAsync(se => se.StudentAdmissionId == student.StudentAdmission.Id);
+        var recreateEnrollments = student.StudentAdmission != null
+            && (programChanged || academicYearChanged || !hasAnyEnrollment);
+
+        // Only a transfer that recreates enrollments needs an explicit target semester:
+        // it decides which SemesterInstance the student is enrolled into and keeps the
+        // closed history rows unambiguous. A college-only change keeps the existing
+        // enrollment, so requiring a semester here would demand a choice that is ignored.
+        if (recreateEnrollments && semesterId <= 0)
+        {
+            TempData["ErrorMessage"] = "Please select the semester you are transferring the student into.";
+            return RedirectToAction(nameof(Transfer), new { id });
+        }
+
         try
         {
             using var transaction = await context.Database.BeginTransactionAsync();
 
             if (student.StudentAdmission != null)
             {
-                var hasAnyEnrollment = await context.SemesterEnrollments
-                    .AnyAsync(se => se.StudentAdmissionId == student.StudentAdmission.Id);
-                var recreateEnrollments = programChanged || academicYearChanged || !hasAnyEnrollment;
-
                 // Closing enrollments and re-pointing the exam registrations are no longer
                 // mutually exclusive: previously a program change skipped the college
                 // cascade entirely, leaving ExamRegistration.CollegeId stale.
@@ -426,6 +441,14 @@ public class StudentTransfersController(
             {
                 message = $"Student {studentName} transferred to {program.ProgramName}. Prior semester enrollments were closed and kept as history.";
             }
+            else if (academicYearChanged)
+            {
+                message = $"Student {studentName} academic year updated. Prior semester enrollments were closed and kept as history.";
+            }
+            else if (!hasAnyEnrollment)
+            {
+                message = $"Student {studentName} was enrolled into the selected semester.";
+            }
             else if (facultyChanged)
             {
                 message = $"Student {studentName} faculty updated to {faculty.Name} (enrollments preserved).";
@@ -435,7 +458,7 @@ public class StudentTransfersController(
                 message = $"Student {studentName} college updated to {(await context.Colleges.FindAsync(collegeId))?.Name ?? "N/A"} (enrollments preserved).";
             }
             if (tenantChanged)
-                message += $" The student now sits under tenant '{targetTenantName}'; their closed history stays in the previous tenant.";
+                message += $" The student now sits under tenant '{targetTenantName}'; their semester enrollment data is not moved by this change.";
             TempData["SuccessMessage"] = message;
         }
         catch (Exception ex)
@@ -496,7 +519,11 @@ public class StudentTransfersController(
     /// </summary>
     private async Task UpdateExamRegistrationCollegesAsync(int admissionId, int newCollegeId)
     {
+        // These lookups are scoped by admission/voucher ids, which are unique, so bypassing
+        // the tenant filter is safe and avoids silently skipping rows that belong to the
+        // student's previous tenant during a cross-tenant transfer.
         var registrationIds = await context.StudentRegistrations
+            .IgnoreQueryFilters()
             .Where(s => s.StudentAdmission != null && s.StudentAdmission.Id == admissionId)
             .Select(s => s.Id)
             .ToListAsync();
@@ -504,12 +531,27 @@ public class StudentTransfersController(
         var voucherIds = registrationIds.Count == 0
             ? new List<int>()
             : await context.ApplicationVouchers
+                .IgnoreQueryFilters()
                 .Where(av => av.StudentRegistrationId != null
                           && registrationIds.Contains(av.StudentRegistrationId.Value))
                 .Select(av => av.Id)
                 .ToListAsync();
 
+        // Legacy rows can predate SemesterEnrollment linkage and be reachable only through
+        // their voucher. For those, the ExamSchedule still points at the semester instance,
+        // so use the closed instances to decide whether the row is history instead of
+        // treating every voucher-only row as active and rewriting its college.
+        var closedSemesterInstanceIds = await context.SemesterEnrollments
+            .IgnoreQueryFilters()
+            .Where(se => se.StudentAdmissionId == admissionId
+                      && se.EnrollmentStatus != StudentEnrollmentStatus.Active)
+            .Select(se => se.SemesterInstanceId)
+            .ToListAsync();
+
         var examRegistrations = await context.ExamRegistrations
+            .IgnoreQueryFilters()
+            .Include(er => er.SemesterEnrollment)
+            .Include(er => er.ExamSchedule)
             .Where(er => (er.SemesterEnrollment != null
                           && er.SemesterEnrollment.StudentAdmissionId == admissionId)
                       || (er.ApplicationVoucherId != null
@@ -518,8 +560,12 @@ public class StudentTransfersController(
 
         foreach (var er in examRegistrations)
         {
-            var isHistorical = er.SemesterEnrollment != null
-                && er.SemesterEnrollment.EnrollmentStatus != StudentEnrollmentStatus.Active;
+            var isHistorical =
+                (er.SemesterEnrollment != null
+                 && er.SemesterEnrollment.EnrollmentStatus != StudentEnrollmentStatus.Active)
+                || (er.SemesterEnrollment == null
+                    && er.ExamSchedule != null
+                    && closedSemesterInstanceIds.Contains(er.ExamSchedule.SemesterInstanceId));
 
             if (isHistorical)
             {
