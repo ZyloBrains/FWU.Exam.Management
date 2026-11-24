@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <form asp-action="Create" method="post" @@submit.prevent="submitForm()">
+    <form asp-action="Create" method="post" x-ref="soForm" @@submit.prevent="submitForm()">
         <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2 mb-4"></div>
 
         <div class="bg-white rounded-lg shadow border border-gray-200 p-4 mb-4">
@@ -95,7 +95,11 @@
                                         <span class="text-gray-400 mx-1">-</span>
                                         <span x-text="subject.name"></span>
                                     </p>
-                                    <p class="text-xs text-gray-400" x-text="subject.type + (subject.credits ? ' | ' + subject.credits + ' cr' : '')"></p>
+                                    <p class="text-xs text-gray-400">
+                                        <span x-text="subject.type + (subject.credits ? ' | ' + subject.credits + ' cr' : '')"></span>
+                                        <span x-show="sem.archivedSubjects[subject.id]"
+                                              class="ml-2 text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">Archived - click to restore</span>
+                                    </p>
                                 </div>
                                 <i class="fas fa-plus text-xs text-indigo-400"></i>
                             </div>
@@ -128,9 +132,9 @@
         <div class="flex items-center gap-4">
             <button type="submit"
                     class="px-6 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    x-bind:disabled="totalSelected === 0">
+                    x-bind:disabled="totalSelected === 0 && loadedExistingCount === 0">
                 <i class="fas fa-save mr-1.5"></i>
-                Save <span x-text="totalSelected"></span> Offering(s)
+                Save Changes <span x-text="changeSummary"></span>
             </button>
             <a asp-action="Index" class="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
                 Cancel
@@ -183,37 +187,63 @@
                 allSubjects: [],
                 semesters: [],
                 statusMessage: '',
+                loadedExistingCount: 0,
 
                 init() {
                     this.allSubjects = @Html.Raw(ViewBag.SubjectCatalogsJson ?? "[]");
                     const initial = @Html.Raw(ViewBag.InitialSemestersJson ?? "[]");
-                    const existing = @Html.Raw(ViewBag.InitialExistingJson ?? "{}");
-                    this.semesters = initial.map(s => ({
+                    this.semesters = initial.map(s => this.buildSemester(s));
+                    this.loadedExistingCount = @Html.Raw(ViewBag.LoadedExistingCount?.ToString() ?? "0");
+                    this.statusMessage = this.semesters.length
+                        ? 'Existing subjects are listed below. Remove unwanted ones, add new ones, or search for an archived subject to restore it.'
+                        : 'Select a program and curriculum version to load its subjects.';
+                },
+
+                buildSemester(s) {
+                    const all = (s.subjects || []).map(sub => this.toSubject(sub));
+                    const active = all.filter(sub => !sub.isArchived);
+                    const originals = {};
+                    const archived = {};
+
+                    active.forEach(sub => { originals[sub.id] = sub; });
+                    all.filter(sub => sub.isArchived).forEach(sub => { archived[sub.id] = sub; });
+
+                    return {
                         semesterId: s.semesterId,
                         semesterName: s.semesterName,
                         search: '',
                         showDropdown: false,
-                        existingSubjectIds: existing[s.semesterId] || [],
-                        selectedSubjects: (s.subjects || []).map(sub => ({
-                            id: sub.id,
-                            code: sub.code,
-                            name: sub.name,
-                            isCompulsory: !!sub.isCompulsory,
-                            displayOrder: sub.displayOrder || 1,
-                            hasTheory: !!sub.hasTheory,
-                            hasPractical: !!sub.hasPractical,
-                            hasInternal: !!sub.hasInternal,
-                            theoryFullMarks: sub.theoryFullMarks,
-                            theoryPassMarks: sub.theoryPassMarks,
-                            practicalFullMarks: sub.practicalFullMarks,
-                            practicalPassMarks: sub.practicalPassMarks,
-                            internalTheoryFullMarks: sub.internalTheoryFullMarks,
-                            internalTheoryPassMarks: sub.internalTheoryPassMarks
-                        }))
-                    }));
-                    this.statusMessage = this.semesters.length
-                        ? 'Add subjects for each semester below, then click Save.'
-                        : 'Select a program and curriculum version to load its semesters.';
+                        originalSubjects: originals,
+                        archivedSubjects: archived,
+                        selectedSubjects: active.map(sub => ({ ...sub }))
+                    };
+                },
+
+                toSubject(sub) {
+                    return {
+                        id: sub.id,
+                        offeringId: sub.offeringId || 0,
+                        isArchived: !!sub.isArchived,
+                        code: sub.code,
+                        name: sub.name,
+                        isCompulsory: !!sub.isCompulsory,
+                        displayOrder: sub.displayOrder || 1,
+                        hasTheory: !!sub.hasTheory,
+                        hasPractical: !!sub.hasPractical,
+                        hasInternal: !!sub.hasInternal,
+                        theoryFullMarks: sub.theoryFullMarks,
+                        theoryPassMarks: sub.theoryPassMarks,
+                        practicalFullMarks: sub.practicalFullMarks,
+                        practicalPassMarks: sub.practicalPassMarks,
+                        internalTheoryFullMarks: sub.internalTheoryFullMarks,
+                        internalTheoryPassMarks: sub.internalTheoryPassMarks
+                    };
+                },
+
+                countExisting() {
+                    return this.semesters.reduce(function (sum, sem) {
+                        return sum + sem.selectedSubjects.filter(s => s.offeringId > 0).length;
+                    }, 0);
                 },
 
                 get totalSelected() {
@@ -222,14 +252,42 @@
                     }, 0);
                 },
 
+                get existingCount() {
+                    return this.semesters.reduce(function (sum, sem) {
+                        return sum + sem.selectedSubjects.filter(s => s.offeringId > 0 && !s.isArchived).length;
+                    }, 0);
+                },
+
+                get newCount() {
+                    return this.semesters.reduce(function (sum, sem) {
+                        return sum + sem.selectedSubjects.filter(s => !(s.offeringId > 0)).length;
+                    }, 0);
+                },
+
+                get removalCount() {
+                    return Math.max(0, this.loadedExistingCount - this.existingCount);
+                },
+
+                get restoredCount() {
+                    return this.semesters.reduce(function (sum, sem) {
+                        return sum + sem.selectedSubjects.filter(s => s.isArchived).length;
+                    }, 0);
+                },
+
+                get changeSummary() {
+                    const parts = [];
+                    if (this.newCount > 0) parts.push(this.newCount + ' new');
+                    if (this.restoredCount > 0) parts.push(this.restoredCount + ' restored');
+                    if (this.removalCount > 0) parts.push(this.removalCount + ' removed');
+                    return parts.length ? ' (' + parts.join(', ') + ')' : '';
+                },
+
                 filteredSubjectsFor(sem) {
                     if (!sem.search.trim()) return [];
                     const q = sem.search.toLowerCase().trim();
                     const selectedIds = new Set(sem.selectedSubjects.map(s => s.id));
-                    const existingIdsSet = new Set(sem.existingSubjectIds);
                     return this.allSubjects.filter(s =>
-                        !selectedIds.has(s.id) &&
-                        !existingIdsSet.has(s.id) && (
+                        !selectedIds.has(s.id) && (
                             (s.code && s.code.toLowerCase().includes(q)) ||
                             (s.name && s.name.toLowerCase().includes(q)) ||
                             (s.type && s.type.toLowerCase().includes(q))
@@ -239,28 +297,33 @@
 
                 addSubject(sem, subject) {
                     if (sem.selectedSubjects.some(s => s.id === subject.id)) return;
-                    if (sem.existingSubjectIds.includes(subject.id)) {
-                        alert(`Already exists: "${subject.code} - ${subject.name}" is already offered in ${sem.semesterName} for the selected program.`);
-                        sem.search = '';
-                        sem.showDropdown = false;
-                        return;
+
+                    // Re-adding a removed or archived subject restores its original
+                    // offering (id + marks) instead of creating a duplicate row.
+                    const archived = sem.archivedSubjects[subject.id];
+                    const original = archived || sem.originalSubjects[subject.id];
+                    if (original) {
+                        sem.selectedSubjects.push({ ...original });
+                    } else {
+                        sem.selectedSubjects.push({
+                            id: subject.id,
+                            offeringId: 0,
+                            isArchived: false,
+                            code: subject.code,
+                            name: subject.name,
+                            isCompulsory: true,
+                            displayOrder: sem.selectedSubjects.length + 1,
+                            hasTheory: true,
+                            hasPractical: false,
+                            hasInternal: false,
+                            theoryFullMarks: 75,
+                            theoryPassMarks: 27,
+                            practicalFullMarks: null,
+                            practicalPassMarks: null,
+                            internalTheoryFullMarks: null,
+                            internalTheoryPassMarks: null
+                        });
                     }
-                    sem.selectedSubjects.push({
-                        id: subject.id,
-                        code: subject.code,
-                        name: subject.name,
-                        isCompulsory: true,
-                        displayOrder: sem.selectedSubjects.length + 1,
-                        hasTheory: true,
-                        hasPractical: false,
-                        hasInternal: false,
-                        theoryFullMarks: 75,
-                        theoryPassMarks: 27,
-                        practicalFullMarks: null,
-                        practicalPassMarks: null,
-                        internalTheoryFullMarks: null,
-                        internalTheoryPassMarks: null
-                    });
                     sem.search = '';
                     sem.showDropdown = false;
                 },
@@ -275,47 +338,38 @@
                     const curriculumVersionId = document.getElementById('CurriculumVersionId').value;
                     if (!programId || !curriculumVersionId) {
                         this.semesters = [];
-                        this.statusMessage = 'Select a program and curriculum version to load its semesters.';
+                        this.loadedExistingCount = 0;
+                        this.statusMessage = 'Select a program and curriculum version to load its subjects.';
                         return;
                     }
                     try {
                         const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetSemestersForCreate?programId=${programId}&curriculumVersionId=${curriculumVersionId}`));
                         const data = await resp.json();
-                        this.semesters = data.map(s => ({
-                            semesterId: s.semesterId,
-                            semesterName: s.semesterName,
-                            search: '',
-                            showDropdown: false,
-                            existingSubjectIds: [],
-                            selectedSubjects: []
-                        }));
+                        this.semesters = data.map(s => this.buildSemester(s));
+                        this.loadedExistingCount = this.countExisting();
                         this.statusMessage = this.semesters.length
-                            ? 'Add subjects for each semester below, then click Save.'
+                            ? 'Existing subjects are listed below. Remove unwanted ones, add new ones, or search for an archived subject to restore it.'
                             : 'No semesters were found for the selected curriculum version.';
-                        await this.refreshExistingSubjects();
                     } catch (e) {
                         this.semesters = [];
-                        this.statusMessage = 'Could not load semesters. Please try again.';
+                        this.loadedExistingCount = 0;
+                        this.statusMessage = 'Could not load subjects. Please try again.';
                     }
-                },
-
-                async refreshExistingSubjects() {
-                    const programId = document.getElementById('ProgramId').value;
-                    const curriculumVersionId = document.getElementById('CurriculumVersionId').value;
-                    if (!programId || !curriculumVersionId) return;
-                    const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetExistingSubjectsBySemesters?programId=${programId}&curriculumVersionId=${curriculumVersionId}`));
-                    const data = await resp.json();
-                    this.semesters.forEach(sem => {
-                        sem.existingSubjectIds = data[sem.semesterId] || [];
-                    });
                 },
 
                 submitForm() {
-                    if (this.totalSelected === 0) {
-                        alert('Please add at least one subject to at least one semester.');
+                    if (this.totalSelected === 0 && this.loadedExistingCount === 0) {
+                        alert('Add at least one subject or remove an existing subject to save changes.');
                         return;
                     }
-                    this.$el.submit();
+                    // x-data sits on the wrapper div, so $el is the div and has no
+                    // submit() method. Reference the form directly instead.
+                    const form = this.$refs.soForm;
+                    if (!form) {
+                        alert('Could not locate the form. Please reload the page and try again.');
+                        return;
+                    }
+                    form.submit();
                 }
             };
         }
@@ -332,14 +386,6 @@
             if (root && typeof Alpine !== 'undefined') {
                 var data = Alpine.$data(root);
                 if (data && typeof data.loadSemesters === 'function') data.loadSemesters();
-            }
-        }
-
-        function refreshExistingSubjects() {
-            var root = document.querySelector('[x-data="subjectOfferingForm()"]');
-            if (root && typeof Alpine !== 'undefined') {
-                var data = Alpine.$data(root);
-                if (data && typeof data.refreshExistingSubjects === 'function') data.refreshExistingSubjects();
             }
         }
 
@@ -362,7 +408,7 @@
                 });
                 if (selectedId) versionSelect.val(selectedId);
                 versionSelect.select2({ width: 'resolve' });
-                refreshExistingSubjects();
+                loadSemestersAlpine();
             }).fail(function () {
                 versionSelect.prop('disabled', true);
                 versionSelect.select2({ width: 'resolve' });

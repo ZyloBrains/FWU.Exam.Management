@@ -360,6 +360,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<ExamRegistration>()
             .HasIndex(er => new { er.ExamScheduleId, er.ProgramsId, er.IsActive });
 
+        // The student dashboard resolves a student's exam registration ids from
+        // ApplicationVoucherId on every schedule. Without this index SQL Server
+        // scans the whole ExamRegistrations table for each of those lookups.
+        builder.Entity<ExamRegistration>()
+            .HasIndex(er => new { er.ApplicationVoucherId, er.IsActive })
+            .HasFilter("[ApplicationVoucherId] IS NOT NULL");
+
         builder.Entity<ExamRegistration>()
             .HasIndex(er => er.SemesterEnrollmentId)
             .HasFilter("[SemesterEnrollmentId] IS NOT NULL");
@@ -1040,6 +1047,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasIndex(es => new { es.TenantId, es.ExamScheduleCode })
             .IsUnique()
             .HasFilter("[ExamScheduleCode] IS NOT NULL");
+
+        // Student-facing schedule visibility filters by program, active flag and
+        // semester instance repeatedly within a single request.
+        builder.Entity<ExamSchedule>()
+            .HasIndex(es => new { es.ProgramId, es.IsActive, es.SemesterInstanceId });
 
         builder.Entity<Semester>()
             .HasIndex(s => s.Code)

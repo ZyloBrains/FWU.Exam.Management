@@ -13,6 +13,10 @@
                     <span class="font-mono text-indigo-600" x-text="subject.code"></span>
                     <span class="text-gray-400 mx-1">-</span>
                     <span x-text="subject.name"></span>
+                    <span x-show="subject.isArchived"
+                          class="ml-2 text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">Archived - will restore</span>
+                    <span x-show="subject.offeringId > 0 && !subject.isArchived"
+                          class="ml-2 text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">Existing</span>
                 </p>
             </div>
         </div>
@@ -135,4 +139,6 @@
     </div>
 
     <input type="hidden" :name="'Semesters[' + semIndex + '].Subjects[' + index + '].SubjectCatalogId'" :value="subject.id" />
+    <input type="hidden" :name="'Semesters[' + semIndex + '].Subjects[' + index + '].OfferingId'" :value="subject.offeringId" />
+    <input type="hidden" :name="'Semesters[' + semIndex + '].Subjects[' + index + '].IsArchived'" :value="subject.isArchived" />
 </div>

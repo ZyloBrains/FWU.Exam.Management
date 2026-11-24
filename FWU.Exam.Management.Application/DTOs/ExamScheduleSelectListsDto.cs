@@ -33,3 +33,9 @@ public class ExamSlotSaveResultDto
     public int Updated { get; set; }
     public List<string> Errors { get; set; } = [];
 }
+
+public class ExamScheduleElectiveConfigDto
+{
+    public int AvailableElectives { get; set; }
+    public int MinElectiveSubjects { get; set; } = 1;
+}

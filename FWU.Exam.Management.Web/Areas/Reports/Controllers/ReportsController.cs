@@ -17,7 +17,8 @@ namespace FWU.Exam.Management.Web.Areas.Reports.Controllers;
 public class ReportsController(
     AppDbContext context,
     IUserContext userContext,
-    ISubjectTriplicateService subjectTriplicateService) : Controller
+    ISubjectTriplicateService subjectTriplicateService,
+    IAttendanceSheetService attendanceSheetService) : Controller
 {
     public IActionResult Index()
     {
@@ -102,7 +103,37 @@ public class ReportsController(
     public async Task<IActionResult> AttendanceSheet(ReportFilterViewModel filter)
     {
         await PopulateSelectLists(filter);
-        return View(filter);
+
+        ViewData["ShowAcademicYearFilter"] = false;
+        ViewData["ShowProgramFilter"] = false;
+        ViewData["ShowSemesterFilter"] = false;
+        ViewData["ShowExamTypeFilter"] = false;
+
+        var report = filter.ExamScheduleId.HasValue
+            ? await attendanceSheetService.BuildAsync(
+                filter.ExamScheduleId,
+                filter.CollegeId ?? userContext.CollegeId,
+                filter.ProgramId)
+            : null;
+
+        return View(new AttendanceSheetReportViewModel { Filter = filter, Report = report });
+    }
+
+    [RequirePermission("reports.attendanceheet")]
+    public async Task<IActionResult> AttendanceSheetPrint(int? examScheduleId, int? collegeId, int? programId)
+    {
+        if (!examScheduleId.HasValue)
+            return NotFound();
+
+        var report = await attendanceSheetService.BuildAsync(
+            examScheduleId.Value,
+            collegeId ?? userContext.CollegeId,
+            programId);
+
+        if (report == null)
+            return NotFound();
+
+        return View(report);
     }
 
     [RequirePermission("reports.marksfoil")]

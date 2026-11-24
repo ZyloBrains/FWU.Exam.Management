@@ -10,6 +10,12 @@ public class CollegeProgramBulkCreateViewModel
     public int CollegeId { get; set; }
 
     public List<CollegeProgramItemViewModel> Programs { get; set; } = new();
+
+    /// <summary>
+    /// Display-only. True when the user arrived from a specific college's "Add Program" button,
+    /// so the college selector is rendered locked instead of editable.
+    /// </summary>
+    public bool CollegeLocked { get; set; }
 }
 
 public class CollegeProgramItemViewModel

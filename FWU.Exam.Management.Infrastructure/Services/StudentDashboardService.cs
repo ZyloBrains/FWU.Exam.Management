@@ -23,6 +23,10 @@ public class StudentDashboardService(
     ILogger<StudentDashboardService> logger,
     IKhaltiService khaltiService) : IStudentDashboardService
 {
+    // The service is scoped to one request. The registration-id chain is otherwise
+    // re-executed once per schedule per helper in the Exam Forms listing.
+    private readonly Dictionary<string, List<int>> _studentExamRegistrationIdsCache = new(StringComparer.Ordinal);
+
     public async Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email)
     {
         return await RegistrationQuery()
@@ -125,15 +129,19 @@ public class StudentDashboardService(
 
             if (IsReExamType(schedule.ExamType?.Name))
             {
-                // Re-exams target papers of already-completed semesters: a student only
-                // ever sees forms for semesters strictly below their highest enrolled
-                // one. Eligibility then requires recorded failures, or no result
-                // history at all (legacy data not yet imported).
-                if (maxEnrolledSemesterNumber == null
-                    || schedule.SemesterInstance!.Semester!.Number >= maxEnrolledSemesterNumber.Value)
+                // Re-exam/partial forms target papers of completed or current semesters.
+                // Allow schedules at or below the student's highest enrolled semester;
+                // cross-cohort partials may use a different semester instance/academic
+                // year than the student's enrollment. Eligibility requires recorded
+                // failures, or no result history at all for that semester (legacy data).
+                if (maxEnrolledSemesterNumber == null)
                     continue;
 
-                if (!await IsEligibleForReExamAsync(userId, schedule.SemesterInstance.SemesterId, student.ProgramId ?? 0))
+                var scheduleSemesterNumber = schedule.SemesterInstance!.Semester!.Number;
+                if (scheduleSemesterNumber > maxEnrolledSemesterNumber.Value)
+                    continue;
+
+                if (!await IsEligibleForReExamAsync(userId, schedule, student))
                     continue;
             }
             else if (!enrolledSemesterInstanceIds.Contains(schedule.SemesterInstanceId))
@@ -1099,6 +1107,7 @@ public class StudentDashboardService(
             registration.SemesterEnrollmentId = semesterEnrollmentId.Value;
         }
         await context.SaveChangesAsync();
+        _studentExamRegistrationIdsCache.Remove(userId);
         logger.LogInformation("CreateExamRegistrationAsync: ExamRegistration created. RegId={RegId}, ScheduleId={ScheduleId}, UserId={UserId}, VoucherId={VoucherId}", registration.Id, examScheduleId, userId, voucher.Id);
 
         // Resolve the batch grading scheme once so every row created below is
@@ -1147,7 +1156,8 @@ public class StudentDashboardService(
                 var previousResult = await context.ExamSubjectResults!
                     .AsNoTracking()
                     .Where(esr => esr.SubjectOfferingId == subjectOfferingId
-                               && previousScheduleIds.Contains(esr.ExamScheduleId ?? 0)
+                               && esr.ExamScheduleId.HasValue
+                               && previousScheduleIds.Contains(esr.ExamScheduleId.Value)
                                && esr.ExamRegistration != null
                                && esr.ExamRegistration.IsActive
                                && esr.IsActive)
@@ -1250,7 +1260,8 @@ public class StudentDashboardService(
 
         return await context.ExamSubjectResults!
             .AsNoTracking()
-            .Where(esr => scheduleIds.Contains(esr.ExamScheduleId ?? 0)
+            .Where(esr => esr.ExamScheduleId.HasValue
+                       && scheduleIds.Contains(esr.ExamScheduleId.Value)
                        && esr.IsActive
                        && esr.ExamRegistration != null
                        && esr.ExamRegistration.IsActive
@@ -1259,15 +1270,57 @@ public class StudentDashboardService(
             .AnyAsync();
     }
 
-    public async Task<bool> IsEligibleForReExamAsync(string userId, int semesterId, int programId)
+    public async Task<bool> IsEligibleForReExamAsync(string userId, ExamSchedule schedule, StudentRegistration student)
     {
-        // Students with recorded failures qualify normally. Students with no result
-        // history at all (legacy data not yet imported) are allowed through; the
-        // gate tightens automatically once real results exist.
+        var semesterId = schedule.SemesterInstance?.SemesterId ?? 0;
+        var programId = schedule.ProgramId;
+
+        // Students with recorded failures qualify normally.
         if (await HasFailedSubjectsInSemesterAsync(userId, semesterId, programId))
             return true;
 
-        return !await HasAnyExamResultsInSemesterAsync(userId, semesterId, programId);
+        // Students with any recorded result history (and no failures) are not eligible.
+        if (await HasAnyExamResultsInSemesterAsync(userId, semesterId, programId))
+            return false;
+
+        // No result history: allow partial/re-exam forms only for students from an
+        // academic year below the exam schedule's academic year.
+        return IsAcademicYearBelowSchedule(student, schedule);
+    }
+
+    private static bool IsAcademicYearBelowSchedule(StudentRegistration student, ExamSchedule schedule)
+    {
+        var studentAy = student.AcademicYear;
+        var scheduleAy = schedule.SemesterInstance?.AcademicYear;
+
+        if (studentAy == null || scheduleAy == null)
+            return false;
+
+        if (studentAy.StartDate.HasValue && scheduleAy.StartDate.HasValue)
+            return studentAy.StartDate.Value < scheduleAy.StartDate.Value;
+
+        if (TryExtractYear(studentAy.AcademicYearCode) is int sy && TryExtractYear(scheduleAy.AcademicYearCode) is int scy)
+            return sy < scy;
+        if (TryExtractYear(studentAy.AcademicYearName) is int syn && TryExtractYear(scheduleAy.AcademicYearName) is int scyn)
+            return syn < scyn;
+
+        return studentAy.Id < scheduleAy.Id;
+    }
+
+    private static int? TryExtractYear(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        for (var i = 0; i <= value.Length - 4; i++)
+        {
+            if (!char.IsDigit(value[i]) || !char.IsDigit(value[i + 1]) || !char.IsDigit(value[i + 2]) || !char.IsDigit(value[i + 3]))
+                continue;
+
+            if (int.TryParse(value.AsSpan(i, 4), out var year) && year >= 1900 && year <= 2100)
+                return year;
+        }
+
+        return null;
     }
 
     public async Task<List<FailedSubjectOption>> GetFailedSubjectOptionsForStudentAsync(int examScheduleId, string userId)
@@ -1335,10 +1388,18 @@ public class StudentDashboardService(
 
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
 
-        var results = await context.ExamRegistrations!
+        // Keep the legacy fallback (no voucher-linked registrations -> all results
+        // for the semester) but as a separate branch. The old "empty || contains"
+        // OR made EF emit a predicate that prevented an index seek on ExamScheduleId
+        // for every student who does have registrations.
+        var registrationQuery = context.ExamRegistrations!
             .AsNoTracking()
-            .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive
-                      && (studentErIds.Count == 0 || studentErIds.Contains(er.Id)))
+            .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive);
+
+        if (studentErIds.Count > 0)
+            registrationQuery = registrationQuery.Where(er => studentErIds.Contains(er.Id));
+
+        var results = await registrationQuery
             .SelectMany(er => er.ExamSubjectResults!)
             .Where(esr => esr.IsActive
                        && (!string.IsNullOrEmpty(esr.GradeLetter)
@@ -1437,7 +1498,17 @@ public class StudentDashboardService(
 
     private async Task<List<int>> GetStudentExamRegistrationIdsAsync(string userId)
     {
-        var user = await context.Users.FindAsync(userId);
+        if (_studentExamRegistrationIdsCache.TryGetValue(userId, out var cached))
+            return cached;
+
+        var ids = await LoadStudentExamRegistrationIdsAsync(userId);
+        _studentExamRegistrationIdsCache[userId] = ids;
+        return ids;
+    }
+
+    private async Task<List<int>> LoadStudentExamRegistrationIdsAsync(string userId)
+    {
+        var user = await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
         if (user?.Email == null) return [];
 
         var sr = await context.StudentRegistrations!
@@ -1885,10 +1956,13 @@ public class StudentDashboardService(
     }
 
     /// <summary>
-    /// Returns true when the student has at least one active exam registration that has
-    /// moved past college verification (status != Pending and != Rejected). Used to lock
-    /// the student's profile so verified photo/signature and mandatory details cannot be
-    /// changed from the student portal.
+    /// Returns true when the student has at least one active exam registration, on a
+    /// currently active and non-expired exam schedule, with an explicit verified status
+    /// (CollegeVerified, AdminVerified, Registered or Withheld). Used to lock the student's
+    /// profile so verified photo/signature and mandatory details cannot be changed
+    /// from the student portal. Forms belonging to expired or deactivated schedules
+    /// no longer lock the profile, so students can update their details for a new
+    /// exam schedule.
     /// </summary>
     public async Task<bool> HasVerifiedExamFormAsync(string userId)
     {
@@ -1903,13 +1977,29 @@ public class StudentDashboardService(
 
         if (voucherIds.Count == 0) return false;
 
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var todayDateTime = DateTime.Today;
+
         return await context.ExamRegistrations!
             .AsNoTracking()
             .AnyAsync(er => er.ApplicationVoucherId != null
                           && voucherIds.Contains(er.ApplicationVoucherId!.Value)
                           && er.IsActive
-                          && er.Status != RegistrationStatus.Pending
-                          && er.Status != RegistrationStatus.Rejected);
+                          // Only an explicitly verified status locks the profile.
+                          // Pending (1), Rejected (6) and undefined values (e.g. 0
+                          // on admin-created rows) are not verified forms.
+                          && (er.Status == RegistrationStatus.CollegeVerified
+                              || er.Status == RegistrationStatus.AdminVerified
+                              || er.Status == RegistrationStatus.Registered
+                              || er.Status == RegistrationStatus.Withheld)
+                          && er.ExamSchedule != null
+                          && er.ExamSchedule.IsActive
+                          // Same definition of "expired" used by the exam schedule screen:
+                          // EndDate unless a still-valid ExtendedDate overrides it.
+                          && (!er.ExamSchedule.EndDate.HasValue
+                              || er.ExamSchedule.EndDate.Value >= today
+                              || (er.ExamSchedule.ExtendedDate.HasValue
+                                  && er.ExamSchedule.ExtendedDate.Value >= todayDateTime)));
     }
 
     public async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath)

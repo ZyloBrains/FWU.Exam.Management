@@ -22,6 +22,7 @@ using Serilog;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.ResponseCompression;
 using QuestPDF.Infrastructure;
 
@@ -138,6 +139,15 @@ public partial class EntryPoint
         });
 
         builder.Services.AddControllersWithViews();
+
+        // The bulk subject-offerings form posts one field set per subject. Large
+        // curricula can exceed the default 1,024 form-value limit, which makes
+        // Kestrel reject the whole POST with a bare 400 before the action runs.
+        builder.Services.Configure<FormOptions>(options =>
+        {
+            options.ValueCountLimit = 10_000;
+        });
+
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
@@ -273,6 +283,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IBulkUserCreationService, BulkUserCreationService>();
         builder.Services.AddScoped<IPaymentVerificationService, PaymentVerificationService>();
         builder.Services.AddScoped<ISubjectTriplicateService, SubjectTriplicateService>();
+        builder.Services.AddScoped<IAttendanceSheetService, AttendanceSheetService>();
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())

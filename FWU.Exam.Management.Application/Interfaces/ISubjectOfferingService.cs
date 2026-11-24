@@ -31,6 +31,10 @@ public interface ISubjectOfferingService
     Task<List<SelectOption>> GetCurriculumVersionsAsync(int? programId = null);
     Task<CurriculumVersion?> GetCurriculumVersionByIdAsync(int id);
     Task<List<SubjectOffering>> GetSearchResultsAsync(int? curriculumVersionId, int? programId, int? semesterId);
-    Task<List<SubjectOffering>> GetSubjectOfferingsByCurriculumVersionAsync(int curriculumVersionId);
+    Task<List<SubjectOffering>> GetSubjectOfferingsByCurriculumVersionAsync(int curriculumVersionId, bool includeInactive = false);
     Task<bool> IsCurriculumVersionForProgramAsync(int curriculumVersionId, int programId);
+    Task SaveSubjectOfferingChangesAsync(
+        IReadOnlyList<SubjectOffering> offeringsToCreate,
+        IReadOnlyList<SubjectOffering> offeringsToUpdate,
+        IReadOnlyList<int> offeringIdsToArchive);
 }

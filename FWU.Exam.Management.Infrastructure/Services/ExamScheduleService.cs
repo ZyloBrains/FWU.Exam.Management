@@ -14,9 +14,9 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class ExamScheduleService(AppDbContext context, IUserContext userContext, ITenantContext tenantContext) : IExamScheduleService
 {
-    public async Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, string? examTypeName = null)
+    public async Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, string? examTypeName = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null)
     {
-        var query = BuildQuery(search, sort, sortDir, examTypeName).ApplyScope(userContext);
+        var query = BuildQuery(search, sort, sortDir, examTypeName, academicYearId, programId, examTypeId, status).ApplyScope(userContext);
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -50,9 +50,9 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext,
             await context.SaveChangesAsync();
     }
 
-    public async Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, string? examTypeName = null)
+    public async Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, string? examTypeName = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null)
     {
-        var query = BuildQuery(search, "Id", "asc", examTypeName).ApplyScope(userContext);
+        var query = BuildQuery(search, "Id", "asc", examTypeName, academicYearId, programId, examTypeId, status).ApplyScope(userContext);
         return await query
             .Select(e => new ExamSchedule
             {
@@ -73,6 +73,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext,
                 ExtendedDateCharge = e.ExtendedDateCharge,
                 ExamFee = e.ExamFee,
                 PracticalSubjectFee = e.PracticalSubjectFee,
+                MinElectiveSubjects = e.MinElectiveSubjects,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
                 SemesterInstanceId = e.SemesterInstanceId,
@@ -97,7 +98,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext,
             .FirstOrDefaultAsync();
     }
 
-    public async Task CreateExamScheduleAsync(ExamSchedule examSchedule)
+    public async Task CreateExamScheduleAsync(ExamSchedule examSchedule, int? minElectiveSubjects = null)
     {
         ValidateScheduleDates(examSchedule, existing: null);
         EnsureBsDates(examSchedule);
@@ -111,11 +112,18 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext,
                 $"An exam schedule with code '{examSchedule.ExamScheduleCode}' already exists. Please use a different code.");
         }
 
+        if (minElectiveSubjects.HasValue)
+            examSchedule.MinElectiveSubjects = Math.Max(0, minElectiveSubjects.Value);
+
+        var availableElectives = await GetAvailableElectiveCountAsync(examSchedule.ProgramId, examSchedule.SemesterInstanceId);
+        if (examSchedule.MinElectiveSubjects > availableElectives)
+            examSchedule.MinElectiveSubjects = availableElectives;
+
         context.ExamSchedules.Add(examSchedule);
         await context.SaveChangesAsync();
     }
 
-    public async Task UpdateExamScheduleAsync(ExamSchedule examSchedule)
+    public async Task UpdateExamScheduleAsync(ExamSchedule examSchedule, int? minElectiveSubjects = null)
     {
         var existing = await context.ExamSchedules.FindAsync(examSchedule.Id);
         if (existing == null)
@@ -155,6 +163,14 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext,
         }
 
         context.Entry(existing).CurrentValues.SetValues(examSchedule);
+
+        if (minElectiveSubjects.HasValue)
+            existing.MinElectiveSubjects = Math.Max(0, minElectiveSubjects.Value);
+
+        var availableElectives = await GetAvailableElectiveCountAsync(examSchedule.ProgramId, examSchedule.SemesterInstanceId);
+        if (existing.MinElectiveSubjects > availableElectives)
+            existing.MinElectiveSubjects = availableElectives;
+
         await context.SaveChangesAsync();
     }
 
@@ -590,12 +606,138 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext,
         return await context.ExamRegistrations.ApplyScope(userContext).CountAsync(r => r.ExamScheduleId == scheduleId);
     }
 
-    private IQueryable<ExamSchedule> BuildQuery(string? search, string sort, string sortDir, string? examTypeName = null)
+    public async Task<ExamScheduleElectiveConfigDto> GetElectiveConfigAsync(int programId, int semesterInstanceId, int? examScheduleId = null)
+    {
+        var availableElectives = await GetAvailableElectiveCountAsync(programId, semesterInstanceId);
+        var minElectiveSubjects = 1;
+
+        if (examScheduleId.HasValue)
+        {
+            var configured = await context.ExamSchedules
+                .AsNoTracking()
+                .Where(e => e.Id == examScheduleId.Value)
+                .Select(e => (int?)e.MinElectiveSubjects)
+                .FirstOrDefaultAsync();
+            if (configured.HasValue)
+                minElectiveSubjects = configured.Value;
+        }
+
+        if (minElectiveSubjects < 0) minElectiveSubjects = 0;
+        if (minElectiveSubjects > availableElectives) minElectiveSubjects = availableElectives;
+
+        return new ExamScheduleElectiveConfigDto
+        {
+            AvailableElectives = availableElectives,
+            MinElectiveSubjects = minElectiveSubjects
+        };
+    }
+
+    private async Task<int> GetAvailableElectiveCountAsync(int programId, int semesterInstanceId)
+    {
+        if (programId <= 0 || semesterInstanceId <= 0)
+            return 0;
+
+        var semesterInstance = await context.SemesterInstances
+            .AsNoTracking()
+            .Include(si => si.Semester)
+            .FirstOrDefaultAsync(si => si.Id == semesterInstanceId);
+
+        if (semesterInstance?.Semester == null)
+            return 0;
+
+        var effectiveProgramId = programId > 0 ? programId : semesterInstance.ProgramId;
+        var scheduleSemesterNumber = semesterInstance.Semester.Number;
+
+        var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
+            context, effectiveProgramId, semesterInstance.AcademicYearId);
+
+        var offeringBase = context.SubjectOfferings
+            .AsNoTracking()
+            .Where(so => so.IsActive && so.ProgramId == effectiveProgramId
+                      && so.Semester != null && so.Semester.Number == scheduleSemesterNumber);
+
+        List<SubjectOffering> allSubjectOfferings;
+        if (curriculumVersionId.HasValue)
+        {
+            allSubjectOfferings = await offeringBase
+                .Where(so => so.CurriculumVersionId == curriculumVersionId.Value)
+                .Include(so => so.SubjectCatalog)
+                    .ThenInclude(sc => sc!.SubjectType)
+                .OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id)
+                .ToListAsync();
+            if (allSubjectOfferings.Count == 0)
+            {
+                allSubjectOfferings = await offeringBase
+                    .Where(so => so.CurriculumVersionId == null)
+                    .Include(so => so.SubjectCatalog)
+                        .ThenInclude(sc => sc!.SubjectType)
+                    .OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id)
+                    .ToListAsync();
+            }
+        }
+        else
+        {
+            allSubjectOfferings = await offeringBase
+                .Where(so => so.CurriculumVersionId == null)
+                .Include(so => so.SubjectCatalog)
+                    .ThenInclude(sc => sc!.SubjectType)
+                .OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id)
+                .ToListAsync();
+        }
+
+        var offerings = allSubjectOfferings
+            .GroupBy(so => so.SubjectCatalogId)
+            .Select(g => g.First())
+            .ToList();
+
+        static bool IsCompulsorySubjectType(string? name, string? code)
+        {
+            var n = (name ?? string.Empty).Trim();
+            var c = (code ?? string.Empty).Trim();
+            return n.Equals("Compulsory", StringComparison.OrdinalIgnoreCase)
+                || n.Equals("Comp", StringComparison.OrdinalIgnoreCase)
+                || c.Equals("COMP", StringComparison.OrdinalIgnoreCase)
+                || c.Equals("C", StringComparison.OrdinalIgnoreCase)
+                || n.Contains("Compulsory", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return offerings.Count(o =>
+            !o.IsCompulsory
+            && o.SubjectCatalog?.SubjectTypeId is > 0
+            && !IsCompulsorySubjectType(o.SubjectCatalog!.SubjectType?.Name, o.SubjectCatalog.SubjectType?.Code));
+    }
+
+    private IQueryable<ExamSchedule> BuildQuery(string? search, string sort, string sortDir, string? examTypeName = null, int? academicYearId = null, int? programId = null, int? examTypeId = null, string? status = null)
     {
         var query = context.ExamSchedules.AsNoTracking();
 
         if (!string.IsNullOrEmpty(examTypeName))
             query = query.Where(s => s.ExamType != null && s.ExamType.Name == examTypeName);
+
+        if (academicYearId.HasValue)
+            query = query.Where(s => s.SemesterInstance != null && s.SemesterInstance.AcademicYearId == academicYearId.Value);
+
+        if (programId.HasValue)
+            query = query.Where(s => s.ProgramId == programId.Value);
+
+        if (examTypeId.HasValue)
+            query = query.Where(s => s.ExamTypeId == examTypeId.Value);
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            var todayDate = DateOnly.FromDateTime(DateTime.Today);
+            var todayDateTime = DateTime.Today;
+
+            query = status.ToLower() switch
+            {
+                "active" => query.Where(s => s.IsActive && (s.EndDate == null || s.EndDate >= todayDate
+                    || (s.ExtendedDate != null && s.ExtendedDate >= todayDateTime))),
+                "expired" => query.Where(s => s.IsActive && s.EndDate != null && s.EndDate < todayDate
+                    && (s.ExtendedDate == null || s.ExtendedDate < todayDateTime)),
+                "inactive" => query.Where(s => !s.IsActive),
+                _ => query
+            };
+        }
 
         if (!string.IsNullOrEmpty(search))
         {

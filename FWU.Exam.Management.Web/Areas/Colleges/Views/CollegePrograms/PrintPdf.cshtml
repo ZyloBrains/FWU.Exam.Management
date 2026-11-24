@@ -4,9 +4,8 @@
     Layout = null;
     var title = "College Programs Report";
     var generatedDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-    var currentPage = ViewBag.CurrentPage ?? 1;
-    var pageSize = ViewBag.PageSize ?? 10;
     var totalCount = ViewBag.TotalCount ?? Model.Count();
+    var totalColleges = ViewBag.TotalColleges ?? Model.Select(x => x.CollegeId).Distinct().Count();
     var search = ViewBag.Search as string;
 }
 
@@ -119,8 +118,7 @@
         <h1>?? @title</h1>
         <div class="report-date">Generated on: @generatedDate</div>
         <div class="report-info">
-            Page @currentPage of @(Math.Ceiling((double)totalCount / pageSize)) | 
-            Showing @Model.Count() of @totalCount records
+            All matching records: @totalCount program(s) across @totalColleges college(s)
             @if (!string.IsNullOrEmpty(search))
             {
                 <text>| Search: "@search"</text>
@@ -129,6 +127,10 @@
     </div>
 
     <div class="summary">
+        <span class="summary-item">
+            <span class="summary-label">Colleges:</span>
+            <span class="summary-value">@totalColleges</span>
+        </span>
         <span class="summary-item">
             <span class="summary-label">Total Programs:</span>
             <span class="summary-value">@totalCount</span>
@@ -142,7 +144,7 @@
             <span class="summary-value">@Model.Count(x => !x.IsActive)</span>
         </span>
         <span class="summary-item">
-            <span class="summary-label">Total Students (Current Page):</span>
+            <span class="summary-label">Total Students:</span>
             <span class="summary-value">@Model.Sum(x => x.NumberOfStudents).ToString("N0")</span>
         </span>
     </div>
@@ -168,9 +170,9 @@
                     <td>@item.College?.Name</td>
                     <td>@item.Program?.ProgramCode</td>
                     <td>@item.Program?.ProgramName</td>
-                    <td>@(item.AffiliationDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                    <td>@(item.AffiliationDate?.ToString("yyyy-MM-dd") ?? "ï¿½")</td>
                     <td style="text-align: right;">@item.NumberOfStudents.ToString("N0")</td>
-                    <td>@(string.IsNullOrEmpty(item.Remarks) ? "—" : item.Remarks)</td>
+                    <td>@(string.IsNullOrEmpty(item.Remarks) ? "ï¿½" : item.Remarks)</td>
                     <td>
                         @if (item.IsActive)
                         {
@@ -195,7 +197,7 @@
 
     <div class="footer">
         <p>This is a system-generated report from Examination Management System.</p>
-        <p>© @DateTime.Now.Year - All Rights Reserved</p>
+        <p>ï¿½ @DateTime.Now.Year - All Rights Reserved</p>
     </div>
 
     <script>

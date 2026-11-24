@@ -9,6 +9,19 @@
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "StartDate";
     var currentSortDir = ViewBag.SortDir as string ?? "desc";
+    var currentAcademicYearId = (int?)ViewBag.AcademicYearId;
+    var currentProgramId = (int?)ViewBag.ProgramId;
+    var currentExamTypeId = (int?)ViewBag.ExamTypeId;
+    var currentStatus = ViewBag.Status as string ?? "";
+    var hasFilters = currentAcademicYearId.HasValue
+        || currentProgramId.HasValue
+        || currentExamTypeId.HasValue
+        || !string.IsNullOrWhiteSpace(currentStatus);
+    var exportRouteValues = new Dictionary<string, string> { ["search"] = currentSearch };
+    if (currentAcademicYearId.HasValue) exportRouteValues["academicYearId"] = currentAcademicYearId.Value.ToString();
+    if (currentProgramId.HasValue) exportRouteValues["programId"] = currentProgramId.Value.ToString();
+    if (currentExamTypeId.HasValue) exportRouteValues["examTypeId"] = currentExamTypeId.Value.ToString();
+    if (!string.IsNullOrWhiteSpace(currentStatus)) exportRouteValues["status"] = currentStatus;
     var today = DateOnly.FromDateTime(DateTime.Today);
 }
 
@@ -26,10 +39,7 @@
         <div class="flex items-center gap-3">
             @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
             {
-                RouteValues = new Dictionary<string, string>
-                {
-                    ["search"] = currentSearch
-                },
+                RouteValues = exportRouteValues,
                 ButtonClass = "bg-green-600 hover:bg-green-700",
                 ScopeLabel = " (All)"
             })
@@ -41,28 +51,105 @@
 
     @await Html.PartialAsync("_AlertMessages")
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <form method="get" asp-action="Index" asp-area="Exams" class="flex flex-col sm:flex-row gap-3">
-            <div class="relative flex-1">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <input type="text" name="search" value="@currentSearch"
-                       placeholder="Search by name, code, academic year, level, exam type, remarks..."
-                       class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4" x-data="{ showFilters: @(hasFilters ? "true" : "false") }">
+        <form method="get" asp-action="Index" asp-area="Exams" id="examScheduleFilterForm">
             <input type="hidden" name="sort" value="@currentSort" />
             <input type="hidden" name="sortDir" value="@currentSortDir" />
-            <input type="hidden" name="pageSize" value="@pageSize" />
-            <div class="flex gap-2">
-                <button type="submit" class="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-                    Search
-                </button>
-                @if (!string.IsNullOrEmpty(currentSearch))
-                {
-                    <a asp-action="Index" asp-area="Exams" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                       class="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
-                        <i class="fas fa-times text-xs"></i> Clear
-                    </a>
-                }
+            <input type="hidden" name="page" value="1" />
+
+            <!-- Row 1: Search Box + Actions -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div class="relative flex-1">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input id="searchBox" type="search" name="search" value="@currentSearch"
+                           placeholder="Search by name, code, academic year, exam type, remarks..."
+                           class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" x-on:click="showFilters = !showFilters"
+                            :class="showFilters ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-700 border-gray-200'"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-filter text-xs"></i> Filters
+                        <span x-show="activeFilterCount > 0" x-text="activeFilterCount"
+                              class="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-500 rounded-full"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Row 2: Filter Dropdowns (Collapsible) -->
+            <div x-show="showFilters" x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
+                 class="mt-4 pt-4 border-t border-gray-200">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Academic Year</label>
+                        <select id="filterAcademicYear" name="academicYearId" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                            <option value="">All Years</option>
+                            @if (ViewBag.AcademicYears is SelectList ayList)
+                            {
+                                foreach (var item in ayList)
+                                {
+                                    <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Program</label>
+                        <select id="filterProgram" name="programId" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                            <option value="">All Programs</option>
+                            @if (ViewBag.Programs is SelectList pList)
+                            {
+                                foreach (var item in pList)
+                                {
+                                    <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Exam Type</label>
+                        <select id="filterExamType" name="examTypeId" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                            <option value="">All Exam Types</option>
+                            @if (ViewBag.ExamTypes is SelectList etList)
+                            {
+                                foreach (var item in etList)
+                                {
+                                    <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                        <select id="filterStatus" name="status" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                            <option value="">All Statuses</option>
+                            <option value="Active" selected="@(currentStatus == "Active")">Active</option>
+                            <option value="Expired" selected="@(currentStatus == "Expired")">Expired</option>
+                            <option value="Inactive" selected="@(currentStatus == "Inactive")">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-3 gap-3">
+                    <div class="flex items-center gap-2 text-xs text-gray-400">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Filters apply automatically when changed</span>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <select id="pageSize" name="pageSize" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                            <option value="10" selected="@(pageSize == 10)">10 / page</option>
+                            <option value="25" selected="@(pageSize == 25)">25 / page</option>
+                            <option value="50" selected="@(pageSize == 50)">50 / page</option>
+                            <option value="9999" selected="@(pageSize == 9999)">All</option>
+                        </select>
+                        <button type="button" x-on:click="clearAllFilters()"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                            <i class="fas fa-times text-xs"></i> Clear All
+                        </button>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
@@ -286,7 +373,7 @@
             <div class="flex items-center justify-between sm:justify-end gap-2">
                 @if (currentPage > 1)
                 {
-                    <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir" asp-route-pageSize="@pageSize"
+                    <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir" asp-route-pageSize="@pageSize" asp-route-academicYearId="@currentAcademicYearId" asp-route-programId="@currentProgramId" asp-route-examTypeId="@currentExamTypeId" asp-route-status="@currentStatus"
                        class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
                         <i class="fas fa-chevron-left text-xs"></i> Previous
                     </a>
@@ -294,7 +381,7 @@
                 <span class="text-sm font-semibold text-gray-700 min-w-[4rem] text-center">@currentPage / @totalPages</span>
                 @if (currentPage < totalPages)
                 {
-                    <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir" asp-route-pageSize="@pageSize"
+                    <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir" asp-route-pageSize="@pageSize" asp-route-academicYearId="@currentAcademicYearId" asp-route-programId="@currentProgramId" asp-route-examTypeId="@currentExamTypeId" asp-route-status="@currentStatus"
                        class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
                         Next <i class="fas fa-chevron-right text-xs"></i>
                     </a>
@@ -303,4 +390,59 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const form = document.getElementById('examScheduleFilterForm');
+            const searchBox = document.getElementById('searchBox');
+            const pageSizeSelect = document.getElementById('pageSize');
+            const filterSelects = Array.from(document.querySelectorAll('.filter-select'));
+            let searchTimeout = null;
+
+            window.activeFilterCount = 0;
+            const updateFilterCount = () => {
+                window.activeFilterCount = filterSelects.filter(s => s.value).length;
+            };
+            updateFilterCount();
+
+            const submitFilters = () => {
+                const pageInput = form.querySelector('input[name="page"]');
+                if (pageInput) pageInput.value = '1';
+                form.submit();
+            };
+
+            searchBox.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(submitFilters, 700);
+            });
+
+            searchBox.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(searchTimeout);
+                    submitFilters();
+                }
+            });
+
+            filterSelects.forEach(sel => {
+                sel.addEventListener('change', () => {
+                    updateFilterCount();
+                    submitFilters();
+                });
+            });
+
+            if (pageSizeSelect) {
+                pageSizeSelect.addEventListener('change', submitFilters);
+            }
+
+            window.clearAllFilters = () => {
+                searchBox.value = '';
+                filterSelects.forEach(s => s.value = '');
+                updateFilterCount();
+                submitFilters();
+            };
+        })();
+    </script>
+}
 

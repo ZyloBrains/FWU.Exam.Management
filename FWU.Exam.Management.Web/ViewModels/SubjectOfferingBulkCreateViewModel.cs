@@ -28,6 +28,15 @@ public class SemesterSubjectOfferingGroup
 
 public class SubjectOfferingItemViewModel : IValidatableObject
 {
+    /// <summary>
+    /// Id of an existing SubjectOffering when the subject is already linked to the
+    /// selected curriculum version. Null/0 means this is a brand new offering.
+    /// </summary>
+    public int? OfferingId { get; set; }
+
+    /// <summary>True when the posted offering is currently archived and is being restored.</summary>
+    public bool IsArchived { get; set; }
+
     [Display(Name = "Subject")]
     [Range(1, int.MaxValue, ErrorMessage = "Subject is required.")]
     public int SubjectCatalogId { get; set; }
