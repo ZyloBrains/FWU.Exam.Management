@@ -27,6 +27,45 @@ public class StudentDashboardService(
     // re-executed once per schedule per helper in the Exam Forms listing.
     private readonly Dictionary<string, List<int>> _studentExamRegistrationIdsCache = new(StringComparer.Ordinal);
 
+    // Exam Forms / Dashboard evaluate eligibility once per re-exam schedule, and
+    // PayExamFee calls both helpers again. Memoize the per-semester answers for the
+    // lifetime of the request instead of re-running the same result query N times.
+    private readonly Dictionary<(string UserId, int SemesterId, int ProgramId), List<ExamSubjectResult>> _latestResultsCache = [];
+    private readonly Dictionary<(string UserId, int SemesterId, int ProgramId), bool> _hasAnyResultsCache = [];
+
+    // Dashboard, Profile, PayExamFee, ApplyAgain and several helpers all resolve
+    // the same admission for the signed-in user within one request.
+    private readonly Dictionary<string, StudentAdmission?> _studentAdmissionCache = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, StudentAdmission?> _admissionByAppUserCache = new(StringComparer.Ordinal);
+
+    private void InvalidateSemesterResultCaches()
+    {
+        _latestResultsCache.Clear();
+        _hasAnyResultsCache.Clear();
+    }
+
+    private void InvalidateAdmissionCaches(string userId)
+    {
+        _studentAdmissionCache.Remove(userId);
+        _admissionByAppUserCache.Remove(userId);
+    }
+
+    private async Task<StudentAdmission?> FindAdmissionByAppUserIdAsync(string userId)
+    {
+        if (_admissionByAppUserCache.TryGetValue(userId, out var cached))
+            return cached;
+
+        // Preserve the old admission choice: prefer an active row, then the newest.
+        var admission = await context.StudentAdmissions!
+            .AsNoTracking()
+            .OrderByDescending(sa => sa.IsActive)
+            .ThenByDescending(sa => sa.Id)
+            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+
+        _admissionByAppUserCache[userId] = admission;
+        return admission;
+    }
+
     public async Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email)
     {
         return await RegistrationQuery()
@@ -35,9 +74,7 @@ public class StudentDashboardService(
 
     public async Task<StudentRegistration?> GetStudentRegistrationByUserIdAsync(string userId)
     {
-        var admission = await context.StudentAdmissions!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+        var admission = await FindAdmissionByAppUserIdAsync(userId);
         if (admission != null)
         {
             var registration = await RegistrationQuery()
@@ -658,6 +695,8 @@ public class StudentDashboardService(
         }
 
         await context.SaveChangesAsync();
+        _studentExamRegistrationIdsCache.Remove(userId);
+        InvalidateSemesterResultCaches();
         logger.LogInformation("ReapplyExamRegistrationAsync: ExamRegistration {RegId} re-applied for scheduleId={ScheduleId}, userId={UserId}, subjects={SubjectCount}",
             target.Id, examScheduleId, userId, finalIds.Count);
 
@@ -980,9 +1019,7 @@ public class StudentDashboardService(
             .AsNoTracking()
             .FirstOrDefaultAsync(sr => sr.Id == studentRegistrationId);
 
-        var admission = await context.StudentAdmissions!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+        var admission = await FindAdmissionByAppUserIdAsync(userId);
 
         if (admission == null && studentReg != null)
         {
@@ -1011,6 +1048,7 @@ public class StudentDashboardService(
             {
                 trackedAdmission.AppUserId = userId;
                 await context.SaveChangesAsync();
+                InvalidateAdmissionCaches(userId);
                 logger.LogInformation("CreateExamRegistrationAsync: Linked AppUserId={UserId} to admissionId={AdmissionId}", userId, trackedAdmission.Id);
             }
         }
@@ -1091,6 +1129,7 @@ public class StudentDashboardService(
         }
         await context.SaveChangesAsync();
         _studentExamRegistrationIdsCache.Remove(userId);
+        InvalidateSemesterResultCaches();
         logger.LogInformation("CreateExamRegistrationAsync: ExamRegistration created. RegId={RegId}, ScheduleId={ScheduleId}, UserId={UserId}, VoucherId={VoucherId}", registration.Id, examScheduleId, userId, voucher.Id);
 
         // Resolve the batch grading scheme once so every row created below is
@@ -1207,6 +1246,10 @@ public class StudentDashboardService(
 
     public async Task<bool> HasAnyExamResultsInSemesterAsync(string userId, int semesterId, int programId)
     {
+        var cacheKey = (userId, semesterId, programId);
+        if (_hasAnyResultsCache.TryGetValue(cacheKey, out var cached))
+            return cached;
+
         var scheduleIds = await context.ExamSchedules!
             .AsNoTracking()
             .IgnoreQueryFilters()
@@ -1216,12 +1259,20 @@ public class StudentDashboardService(
             .Select(es => es.Id)
             .ToListAsync();
 
-        if (scheduleIds.Count == 0) return false;
+        if (scheduleIds.Count == 0)
+        {
+            _hasAnyResultsCache[cacheKey] = false;
+            return false;
+        }
 
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
-        if (studentErIds.Count == 0) return false;
+        if (studentErIds.Count == 0)
+        {
+            _hasAnyResultsCache[cacheKey] = false;
+            return false;
+        }
 
-        return await context.ExamSubjectResults!
+        var hasResults = await context.ExamSubjectResults!
             .AsNoTracking()
             .Where(esr => esr.ExamScheduleId.HasValue
                        && scheduleIds.Contains(esr.ExamScheduleId.Value)
@@ -1231,6 +1282,9 @@ public class StudentDashboardService(
                        && studentErIds.Contains(esr.ExamRegistrationId)
                        && !string.IsNullOrEmpty(esr.GradeLetter))
             .AnyAsync();
+
+        _hasAnyResultsCache[cacheKey] = hasResults;
+        return hasResults;
     }
 
     public async Task<bool> IsEligibleForReExamAsync(string userId, ExamSchedule schedule, StudentRegistration student)
@@ -1338,6 +1392,10 @@ public class StudentDashboardService(
 
     private async Task<List<ExamSubjectResult>> GetLatestResultsPerSubjectForSemesterAsync(string userId, int semesterId, int programId)
     {
+        var cacheKey = (userId, semesterId, programId);
+        if (_latestResultsCache.TryGetValue(cacheKey, out var cached))
+            return cached;
+
         var scheduleIds = await context.ExamSchedules!
             .AsNoTracking()
             .IgnoreQueryFilters()
@@ -1347,33 +1405,65 @@ public class StudentDashboardService(
             .Select(es => es.Id)
             .ToListAsync();
 
-        if (scheduleIds.Count == 0) return [];
+        if (scheduleIds.Count == 0)
+        {
+            _latestResultsCache[cacheKey] = [];
+            return [];
+        }
 
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
 
-        // Keep the legacy fallback (no voucher-linked registrations -> all results
-        // for the semester) but as a separate branch. The old "empty || contains"
-        // OR made EF emit a predicate that prevented an index seek on ExamScheduleId
-        // for every student who does have registrations.
-        var registrationQuery = context.ExamRegistrations!
+        // Never fall back to "all results for the semester" when the student has no
+        // voucher-linked registrations: that matched every student's graded rows,
+        // leaked other students' failures and drove the database to 100% DTU.
+        // Legacy admin-created registrations have no student link at all, so the
+        // only safe answer for this student is "no results".
+        if (studentErIds.Count == 0)
+        {
+            _latestResultsCache[cacheKey] = [];
+            return [];
+        }
+
+        // Project only the columns the eligibility checks need. Loading the full
+        // 30+ column rows just to group them in memory was the other half of the
+        // cost: every re-exam schedule repeated the same wide result set.
+        var rows = await context.ExamRegistrations!
             .AsNoTracking()
-            .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive);
-
-        if (studentErIds.Count > 0)
-            registrationQuery = registrationQuery.Where(er => studentErIds.Contains(er.Id));
-
-        var results = await registrationQuery
+            .Where(er => scheduleIds.Contains(er.ExamScheduleId)
+                      && er.IsActive
+                      && studentErIds.Contains(er.Id))
             .SelectMany(er => er.ExamSubjectResults!)
             .Where(esr => esr.IsActive
                        && (!string.IsNullOrEmpty(esr.GradeLetter)
                         || !string.IsNullOrEmpty(esr.GradeLetterTheory)
                         || !string.IsNullOrEmpty(esr.GradeLetterPractical)))
+            .OrderByDescending(esr => esr.Id)
+            .Select(esr => new
+            {
+                esr.Id,
+                esr.SubjectOfferingId,
+                esr.GradeLetter,
+                esr.GradeLetterTheory,
+                esr.GradeLetterPractical
+            })
             .ToListAsync();
 
-        return results
-            .GroupBy(esr => esr.SubjectOfferingId)
-            .Select(g => g.OrderByDescending(esr => esr.Id).First())
+        // Ordered by Id descending, so the first row per offering is the latest.
+        var results = rows
+            .GroupBy(r => r.SubjectOfferingId)
+            .Select(g => g.First())
+            .Select(r => new ExamSubjectResult
+            {
+                Id = r.Id,
+                SubjectOfferingId = r.SubjectOfferingId,
+                GradeLetter = r.GradeLetter,
+                GradeLetterTheory = r.GradeLetterTheory,
+                GradeLetterPractical = r.GradeLetterPractical
+            })
             .ToList();
+
+        _latestResultsCache[cacheKey] = results;
+        return results;
     }
 
     private static bool IsFailedResult(ExamSubjectResult esr) =>
@@ -1420,37 +1510,43 @@ public class StudentDashboardService(
 
     private async Task<StudentAdmission?> ResolveStudentAdmissionAsync(string userId)
     {
-        var admission = await context.StudentAdmissions!
-            .AsNoTracking()
-            .OrderByDescending(sa => sa.IsActive)
-            .ThenByDescending(sa => sa.Id)
-            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
-        if (admission != null) return admission;
+        if (_studentAdmissionCache.TryGetValue(userId, out var cached))
+            return cached;
 
-        var user = await context.Users.FindAsync(userId);
-        if (user?.UserName == null) return null;
-
-        var sr = await context.StudentRegistrations!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.RegistrationNumber == user.UserName);
-        if (sr == null) return null;
-
-        if (sr.StudentAdmissionId.HasValue)
+        var resolved = await FindAdmissionByAppUserIdAsync(userId);
+        if (resolved == null)
         {
-            return await context.StudentAdmissions!
-                .AsNoTracking()
-                .FirstOrDefaultAsync(sa => sa.Id == sr.StudentAdmissionId.Value);
+            var user = await context.Users.FindAsync(userId);
+            if (user?.UserName != null)
+            {
+                var sr = await context.StudentRegistrations!
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.RegistrationNumber == user.UserName);
+
+                if (sr != null)
+                {
+                    if (sr.StudentAdmissionId.HasValue)
+                    {
+                        resolved = await context.StudentAdmissions!
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(sa => sa.Id == sr.StudentAdmissionId.Value);
+                    }
+                    else if (sr.ProgramId.HasValue)
+                    {
+                        resolved = await context.StudentAdmissions!
+                            .AsNoTracking()
+                            .OrderByDescending(sa => sa.IsActive)
+                            .ThenByDescending(sa => sa.Id)
+                            .FirstOrDefaultAsync(sa => sa.CollegeId == sr.CollegeId
+                                                    && sa.ProgramsId == sr.ProgramId
+                                                    && sa.IsActive);
+                    }
+                }
+            }
         }
 
-        if (!sr.ProgramId.HasValue) return null;
-
-        return await context.StudentAdmissions!
-            .AsNoTracking()
-            .OrderByDescending(sa => sa.IsActive)
-            .ThenByDescending(sa => sa.Id)
-            .FirstOrDefaultAsync(sa => sa.CollegeId == sr.CollegeId
-                                    && sa.ProgramsId == sr.ProgramId
-                                    && sa.IsActive);
+        _studentAdmissionCache[userId] = resolved;
+        return resolved;
     }
 
     public async Task<bool> IsStudentFeeExemptAsync(string userId)
