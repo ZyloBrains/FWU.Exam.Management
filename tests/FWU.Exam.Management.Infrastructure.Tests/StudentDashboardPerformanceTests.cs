@@ -91,6 +91,68 @@ public class StudentDashboardPerformanceTests
     }
 
     [Fact]
+    public async Task GetFailedSubjectOfferingIdsForSemesterAsync_WithoutOwnRegistrations_DoesNotLeakOtherStudentsResults()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+
+            // The target student exists but has no voucher-linked exam registration.
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+
+            // A failed result belonging to another student for the same schedule.
+            ctx.Users.Add(TestData.User(UserIdOther, EmailOther));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(2, EmailOther));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(2, 2, 11));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(2, 11, 2));
+            ctx.ExamSubjectResults.Add(TestData.Result(2, 2, 102, TestData.Regular, "F", examScheduleId: 11));
+
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10)), null));
+        });
+
+        var service = CreateService(db);
+
+        Assert.Empty(await service.GetFailedSubjectOfferingIdsForSemesterAsync(UserId, 1, TestData.ProgramId));
+    }
+
+    [Fact]
+    public async Task RepeatedEligibilityChecks_WithinOneRequest_AreMemoized()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        var counter = new SelectCountingInterceptor();
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite(connection)
+            .AddInterceptors(counter)
+            .Options;
+        using var context = new AppDbContext(options, NullLogger<AppDbContext>.Instance, TestTenantContext.Standard());
+        context.Database.EnsureCreated();
+        TestData.SeedBase(context);
+        context.Users.Add(TestData.User(UserId, Email));
+        context.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+        context.ApplicationVouchers.Add(TestData.Voucher(1, 1, 11));
+        context.ExamRegistrations.Add(TestData.ExamRegistration(1, 11, 1));
+        context.ExamSubjectResults.Add(TestData.Result(1, 1, 101, TestData.Regular, "F", examScheduleId: 11));
+        context.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10)), null));
+        context.SaveChanges();
+
+        var service = new StudentDashboardService(context, new TestUserContext(),
+            NullLogger<StudentDashboardService>.Instance, new NullKhaltiService());
+
+        Assert.True(await service.HasFailedSubjectsInSemesterAsync(UserId, 1, TestData.ProgramId));
+        counter.Reset();
+        Assert.True(await service.HasFailedSubjectsInSemesterAsync(UserId, 1, TestData.ProgramId));
+        Assert.Equal(0, counter.SelectCount);
+
+        Assert.True(await service.HasAnyExamResultsInSemesterAsync(UserId, 1, TestData.ProgramId));
+        counter.Reset();
+        Assert.True(await service.HasAnyExamResultsInSemesterAsync(UserId, 1, TestData.ProgramId));
+        Assert.Equal(0, counter.SelectCount);
+    }
+
+    [Fact]
     public async Task RepeatedRegistrationIdLookups_WithinOneServiceInstance_AreMemoized()
     {
         var tenant = TestTenantContext.Standard();
