@@ -38,6 +38,11 @@ public class StudentDashboardPerformanceTests
         Assert.Contains(schedule.GetIndexes(), i =>
             i.Properties.Select(p => p.Name)
                 .SequenceEqual(["ProgramId", "IsActive", "SemesterInstanceId"]));
+
+        var admission = db.Context.Model.FindEntityType(typeof(StudentAdmission))!;
+        Assert.Contains(admission.GetIndexes(), i =>
+            i.Properties.Select(p => p.Name)
+                .SequenceEqual(["AppUserId", "IsActive", "Id"]));
     }
 
     [Fact]
@@ -149,6 +154,33 @@ public class StudentDashboardPerformanceTests
         Assert.True(await service.HasAnyExamResultsInSemesterAsync(UserId, 1, TestData.ProgramId));
         counter.Reset();
         Assert.True(await service.HasAnyExamResultsInSemesterAsync(UserId, 1, TestData.ProgramId));
+        Assert.Equal(0, counter.SelectCount);
+    }
+
+    [Fact]
+    public async Task RepeatedStudentAdmissionLookups_WithinOneRequest_AreMemoized()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        var counter = new SelectCountingInterceptor();
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite(connection)
+            .AddInterceptors(counter)
+            .Options;
+        using var context = new AppDbContext(options, NullLogger<AppDbContext>.Instance, TestTenantContext.Standard());
+        context.Database.EnsureCreated();
+        TestData.SeedBase(context);
+        context.Users.Add(TestData.User(UserId, Email));
+        context.StudentAdmissions.Add(TestData.Admission(1, UserId));
+        context.SaveChanges();
+
+        var service = new StudentDashboardService(context, new TestUserContext(),
+            NullLogger<StudentDashboardService>.Instance, new NullKhaltiService());
+
+        Assert.NotNull(await service.GetStudentAdmissionByUserIdAsync(UserId));
+        counter.Reset();
+        Assert.NotNull(await service.GetStudentAdmissionByUserIdAsync(UserId));
         Assert.Equal(0, counter.SelectCount);
     }
 

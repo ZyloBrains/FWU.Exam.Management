@@ -313,6 +313,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(sa => sa.AcademicYearId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Student dashboard endpoints repeatedly resolve the signed-in student's
+        // admission with AppUserId and prefer the active/newest row. Index the
+        // lookup and ordering keys together; IncludeProperties keeps the tenant
+        // filter check on the index without widening the key.
+        builder.Entity<StudentAdmission>()
+            .HasIndex(sa => new { sa.AppUserId, sa.IsActive, sa.Id })
+            .IncludeProperties(sa => new
+            {
+                sa.TenantId,
+                sa.CollegeId,
+                sa.ProgramsId,
+                sa.HasFeeExemption
+            });
+
         builder.Entity<StudentRegistration>()
             .HasOne(sr => sr.StudentAdmission)
             .WithOne(sa => sa.StudentRegistration)

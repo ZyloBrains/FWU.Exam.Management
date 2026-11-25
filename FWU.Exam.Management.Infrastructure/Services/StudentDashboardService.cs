@@ -33,10 +33,37 @@ public class StudentDashboardService(
     private readonly Dictionary<(string UserId, int SemesterId, int ProgramId), List<ExamSubjectResult>> _latestResultsCache = [];
     private readonly Dictionary<(string UserId, int SemesterId, int ProgramId), bool> _hasAnyResultsCache = [];
 
+    // Dashboard, Profile, PayExamFee, ApplyAgain and several helpers all resolve
+    // the same admission for the signed-in user within one request.
+    private readonly Dictionary<string, StudentAdmission?> _studentAdmissionCache = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, StudentAdmission?> _admissionByAppUserCache = new(StringComparer.Ordinal);
+
     private void InvalidateSemesterResultCaches()
     {
         _latestResultsCache.Clear();
         _hasAnyResultsCache.Clear();
+    }
+
+    private void InvalidateAdmissionCaches(string userId)
+    {
+        _studentAdmissionCache.Remove(userId);
+        _admissionByAppUserCache.Remove(userId);
+    }
+
+    private async Task<StudentAdmission?> FindAdmissionByAppUserIdAsync(string userId)
+    {
+        if (_admissionByAppUserCache.TryGetValue(userId, out var cached))
+            return cached;
+
+        // Preserve the old admission choice: prefer an active row, then the newest.
+        var admission = await context.StudentAdmissions!
+            .AsNoTracking()
+            .OrderByDescending(sa => sa.IsActive)
+            .ThenByDescending(sa => sa.Id)
+            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+
+        _admissionByAppUserCache[userId] = admission;
+        return admission;
     }
 
     public async Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email)
@@ -47,9 +74,7 @@ public class StudentDashboardService(
 
     public async Task<StudentRegistration?> GetStudentRegistrationByUserIdAsync(string userId)
     {
-        var admission = await context.StudentAdmissions!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+        var admission = await FindAdmissionByAppUserIdAsync(userId);
         if (admission != null)
         {
             var registration = await RegistrationQuery()
@@ -994,9 +1019,7 @@ public class StudentDashboardService(
             .AsNoTracking()
             .FirstOrDefaultAsync(sr => sr.Id == studentRegistrationId);
 
-        var admission = await context.StudentAdmissions!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+        var admission = await FindAdmissionByAppUserIdAsync(userId);
 
         if (admission == null && studentReg != null)
         {
@@ -1025,6 +1048,7 @@ public class StudentDashboardService(
             {
                 trackedAdmission.AppUserId = userId;
                 await context.SaveChangesAsync();
+                InvalidateAdmissionCaches(userId);
                 logger.LogInformation("CreateExamRegistrationAsync: Linked AppUserId={UserId} to admissionId={AdmissionId}", userId, trackedAdmission.Id);
             }
         }
@@ -1486,37 +1510,43 @@ public class StudentDashboardService(
 
     private async Task<StudentAdmission?> ResolveStudentAdmissionAsync(string userId)
     {
-        var admission = await context.StudentAdmissions!
-            .AsNoTracking()
-            .OrderByDescending(sa => sa.IsActive)
-            .ThenByDescending(sa => sa.Id)
-            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
-        if (admission != null) return admission;
+        if (_studentAdmissionCache.TryGetValue(userId, out var cached))
+            return cached;
 
-        var user = await context.Users.FindAsync(userId);
-        if (user?.UserName == null) return null;
-
-        var sr = await context.StudentRegistrations!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.RegistrationNumber == user.UserName);
-        if (sr == null) return null;
-
-        if (sr.StudentAdmissionId.HasValue)
+        var resolved = await FindAdmissionByAppUserIdAsync(userId);
+        if (resolved == null)
         {
-            return await context.StudentAdmissions!
-                .AsNoTracking()
-                .FirstOrDefaultAsync(sa => sa.Id == sr.StudentAdmissionId.Value);
+            var user = await context.Users.FindAsync(userId);
+            if (user?.UserName != null)
+            {
+                var sr = await context.StudentRegistrations!
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.RegistrationNumber == user.UserName);
+
+                if (sr != null)
+                {
+                    if (sr.StudentAdmissionId.HasValue)
+                    {
+                        resolved = await context.StudentAdmissions!
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(sa => sa.Id == sr.StudentAdmissionId.Value);
+                    }
+                    else if (sr.ProgramId.HasValue)
+                    {
+                        resolved = await context.StudentAdmissions!
+                            .AsNoTracking()
+                            .OrderByDescending(sa => sa.IsActive)
+                            .ThenByDescending(sa => sa.Id)
+                            .FirstOrDefaultAsync(sa => sa.CollegeId == sr.CollegeId
+                                                    && sa.ProgramsId == sr.ProgramId
+                                                    && sa.IsActive);
+                    }
+                }
+            }
         }
 
-        if (!sr.ProgramId.HasValue) return null;
-
-        return await context.StudentAdmissions!
-            .AsNoTracking()
-            .OrderByDescending(sa => sa.IsActive)
-            .ThenByDescending(sa => sa.Id)
-            .FirstOrDefaultAsync(sa => sa.CollegeId == sr.CollegeId
-                                    && sa.ProgramsId == sr.ProgramId
-                                    && sa.IsActive);
+        _studentAdmissionCache[userId] = resolved;
+        return resolved;
     }
 
     public async Task<bool> IsStudentFeeExemptAsync(string userId)

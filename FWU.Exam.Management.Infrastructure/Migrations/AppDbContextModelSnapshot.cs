@@ -17,7 +17,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -3482,8 +3482,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("AcademicYearId");
 
-                    b.HasIndex("AppUserId");
-
                     b.HasIndex("BatchId");
 
                     b.HasIndex("CollegeId");
@@ -3491,6 +3489,10 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("ProgramsId");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("AppUserId", "IsActive", "Id");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("AppUserId", "IsActive", "Id"), new[] { "TenantId", "CollegeId", "ProgramsId", "HasFeeExemption" });
 
                     b.ToTable("StudentAdmissions");
                 });
