@@ -11,8 +11,18 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
 {
     private static readonly ConcurrentDictionary<(int SchemeId, string Grade), decimal?> GradePointCache = new();
 
+    // Bulk marks entry calls AssignGrades once per student. Both lookups below used
+    // to hit the database for every row; the service is scoped to one request, so
+    // memoizing the scheme graph here removes hundreds of synchronous queries.
+    private readonly Dictionary<int, Domain.Entities.GradingScheme?> _schemeByIdCache = [];
+    private readonly Dictionary<(int ProgramId, int? AcademicYearId), Domain.Entities.GradingScheme?> _schemeByProgramCache = [];
+
     public Domain.Entities.GradingScheme? ResolveSchemeForProgram(int programId, int? academicYearId = null)
     {
+        var cacheKey = (programId, academicYearId);
+        if (_schemeByProgramCache.TryGetValue(cacheKey, out var cached))
+            return cached;
+
         var schemeId = context.GradingSchemePrograms
             .AsNoTracking()
             .Where(gsp => gsp.ProgramId == programId && gsp.IsActive)
@@ -23,12 +33,28 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
             .FirstOrDefault();
 
         if (schemeId == 0)
+        {
+            _schemeByProgramCache[cacheKey] = null;
             return null;
+        }
 
-        return context.GradingSchemes
+        var scheme = ResolveSchemeById(schemeId);
+        _schemeByProgramCache[cacheKey] = scheme;
+        return scheme;
+    }
+
+    private Domain.Entities.GradingScheme? ResolveSchemeById(int schemeId)
+    {
+        if (_schemeByIdCache.TryGetValue(schemeId, out var cached))
+            return cached;
+
+        var scheme = context.GradingSchemes
             .AsNoTracking()
             .Include(s => s.GradeDefinitions)
             .FirstOrDefault(s => s.Id == schemeId);
+
+        _schemeByIdCache[schemeId] = scheme;
+        return scheme;
     }
 
     public GradeResult CalculateGrade(float totalMarks, SubjectOffering subjectOffering, Domain.Entities.GradingScheme? gradingScheme = null)
@@ -87,12 +113,7 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         // wins; without one the newest program-wide scheme still applies.
         Domain.Entities.GradingScheme? gradingScheme = null;
         if (result.GradingSchemeId.HasValue)
-        {
-            gradingScheme = context.GradingSchemes
-                .AsNoTracking()
-                .Include(s => s.GradeDefinitions)
-                .FirstOrDefault(s => s.Id == result.GradingSchemeId.Value);
-        }
+            gradingScheme = ResolveSchemeById(result.GradingSchemeId.Value);
 
         AssignGradesWithScheme(result, offering, gradingScheme, isSupplementary);
     }
